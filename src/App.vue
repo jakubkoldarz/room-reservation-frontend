@@ -1,6 +1,7 @@
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <template>
-  <router-view/>
+    <div class="bg-background min-h-screen">
+        <router-view />
+    </div>
 </template>
