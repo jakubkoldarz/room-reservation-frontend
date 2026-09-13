@@ -40,7 +40,7 @@ const errorId = `${inputId}-error`;
 
         <label
             :for="inputId"
-            class="peer-placeholder-shown:text-sm text-xs peer-placeholder-shown:top-1/2 font-medium text-text-muted absolute left-7 top-0 peer-placeholder-shown:px-0 px-1 -translate-y-1/2 bg-background placeholder-shown:text-xs transition-all peer-placeholder-shown:left-8"
+            class="peer-placeholder-shown:text-sm text-xs peer-placeholder-shown:top-1/2 font-medium text-text-muted absolute left-7 top-0 peer-placeholder-shown:px-0 px-1 -translate-y-1/2 bg-surface placeholder-shown:text-xs transition-all peer-placeholder-shown:left-8"
         >
             {{ label }}
         </label>
