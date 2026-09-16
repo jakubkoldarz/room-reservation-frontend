@@ -1,7 +1,14 @@
 import { authRoutes } from "@/features/auth/routes";
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 
-const routes: RouteRecordRaw[] = [...Object.values(authRoutes)];
+const routes: RouteRecordRaw[] = [
+    {
+        component: () => import("@/App.vue"),
+        path: "/",
+        name: "index",
+    },
+    ...Object.values(authRoutes),
+];
 
 const router = createRouter({
     history: createWebHistory(),

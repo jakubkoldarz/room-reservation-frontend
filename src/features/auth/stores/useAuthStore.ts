@@ -11,14 +11,18 @@ export const useAuthStore = defineStore("auth", {
     },
 
     actions: {
-        async login(email: string, password: string) {
-            const result = await apiClient.postAuthlogin({ email, password });
+        async login(jwtToken: string) {
+            this.jwtToken = jwtToken;
+        },
+
+        async register(email: string, password: string) {
+            const result = await apiClient.postAuthregister({ email, password });
             return result;
         },
 
         async refreshToken() {
             const result = await apiClient.postAuthrefresh(undefined);
-            this.jwtToken = result.jwtToken;
+            if (result.jwtToken) this.jwtToken = result.jwtToken;
         },
     },
 });

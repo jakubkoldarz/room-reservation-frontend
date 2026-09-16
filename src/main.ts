@@ -6,5 +6,4 @@ import { createPinia } from "pinia";
 import "@fontsource-variable/inter";
 
 const pinia = createPinia();
-
 createApp(App).use(pinia).use(router).mount("#app");
