@@ -31,10 +31,13 @@ const onSubmit = handleSubmit(async (values) => {
         error.value = response.error?.message ?? "Unknown error occured";
     } else {
         const { requires2FA, jwtToken, verificationId } = response.data;
+        if (jwtToken) {
+            authStore.login(jwtToken);
+        }
+
         if (requires2FA) {
             router.push({ name: authRoutes.verification.name, params: { verificationId } });
-        } else if (jwtToken) {
-            authStore.login(jwtToken);
+        } else {
             router.push({ name: "index" });
         }
     }
