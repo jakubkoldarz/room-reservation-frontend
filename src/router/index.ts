@@ -23,15 +23,15 @@ const router = createRouter({
 
 export default router;
 
-router.beforeEach((to, _, next) => {
+router.beforeEach((to) => {
     const authStore = useAuthStore();
+
     if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-        return next({ name: authRoutes.login.name });
+        return { name: authRoutes.login.name };
     }
     if (to.meta.requiresGuest && authStore.isAuthenticated) {
-        return next({ name: dashboardRoutes.dashboard.name });
+        return { name: dashboardRoutes.dashboard.name };
     }
-    next();
 });
 
 async function handleIndexRouting() {

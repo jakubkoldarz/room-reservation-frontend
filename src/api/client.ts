@@ -4,6 +4,8 @@ import { HttpStatusCode, type AxiosError, type AxiosRequestConfig } from "axios"
 
 const apiClient = createApiClient(import.meta.env.VITE_API_BASE_URL);
 
+apiClient.axios.defaults.withCredentials = true;
+
 apiClient.axios.interceptors.request.use((request) => {
     const authStore = useAuthStore();
 
@@ -29,7 +31,7 @@ apiClient.axios.interceptors.response.use(null, async (error: AxiosError) => {
 
     try {
         const authStore = useAuthStore();
-        await authStore.refreshToken();
+        await authStore.tryRefreshToken();
 
         originalRequest.headers = originalRequest.headers ?? {};
         originalRequest.headers.Authorization = `Bearer ${authStore.jwtToken}`;

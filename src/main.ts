@@ -5,7 +5,20 @@ import router from "./router/index.ts";
 import { createPinia } from "pinia";
 import "@fontsource-variable/inter";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
+import { useAuthStore } from "./features/auth/stores/useAuthStore.ts";
 
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
-createApp(App).use(pinia).use(router).mount("#app");
+
+async function bootstrap() {
+    const app = createApp(App);
+    app.use(pinia);
+    app.use(router);
+
+    const authStore = useAuthStore(pinia);
+    await authStore.init();
+
+    app.mount("#app");
+}
+
+bootstrap();

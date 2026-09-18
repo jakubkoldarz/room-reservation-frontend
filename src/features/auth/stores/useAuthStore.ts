@@ -1,7 +1,13 @@
 import apiClient from "@/api/client";
+import { useApiCall } from "@/composables/useApiCall";
 import { defineStore } from "pinia";
 
 type UserDetails = Awaited<ReturnType<typeof apiClient.getAuthme>>;
+
+function isTokenExpired(token: string): boolean {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.exp * 1000 < Date.now();
+}
 
 export const useAuthStore = defineStore("auth", {
     state: () => ({
@@ -14,7 +20,8 @@ export const useAuthStore = defineStore("auth", {
     },
 
     getters: {
-        isAuthenticated: (state) => state.jwtToken !== null,
+        isAuthenticated: (state) => state.jwtToken !== null && !isTokenExpired(state.jwtToken),
+        isTokenExpired: (state) => state.jwtToken !== null && isTokenExpired(state.jwtToken),
     },
 
     actions: {
@@ -31,14 +38,33 @@ export const useAuthStore = defineStore("auth", {
             this.user = user;
         },
 
-        async register(email: string, password: string) {
-            const result = await apiClient.postAuthregister({ email, password });
-            return result;
+        async tryRefreshToken(): Promise<boolean> {
+            const { call } = useApiCall();
+            const result = await call(() => apiClient.postAuthrefresh(undefined));
+            console.log(result);
+            if (result.success && result.data.jwtToken) {
+                this.jwtToken = result.data.jwtToken;
+                return true;
+            } else {
+                return false;
+            }
         },
 
-        async refreshToken() {
-            const result = await apiClient.postAuthrefresh(undefined);
-            if (result.jwtToken) this.jwtToken = result.jwtToken;
+        async init() {
+            if (!this.jwtToken) return this.logout();
+
+            const { call } = useApiCall();
+            const response = await call(() => apiClient.getAuthme());
+
+            if (response.success) return this.setUser(response.data);
+
+            const refreshed = await this.tryRefreshToken();
+            if (!refreshed) return this.logout();
+
+            const retryResponse = await call(() => apiClient.getAuthme());
+            if (retryResponse.success) return this.setUser(retryResponse.data);
+
+            return this.logout();
         },
     },
 });
