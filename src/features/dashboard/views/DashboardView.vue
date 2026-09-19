@@ -1,3 +1,7 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import Navbar from "@/features/shared/Navbar.vue";
+</script>
 
-<template>Widok dashboardu</template>
+<template>
+    <Navbar />
+</template>

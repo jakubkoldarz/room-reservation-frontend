@@ -6,7 +6,8 @@ type UserDetails = Awaited<ReturnType<typeof apiClient.getAuthme>>;
 
 function isTokenExpired(token: string): boolean {
     const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload.exp * 1000 < Date.now();
+    const CLOCK_SKEW_MS = 5 * 60 * 1000; // zgodnie z ClockSkew backendu
+    return payload.exp * 1000 < Date.now() - CLOCK_SKEW_MS;
 }
 
 export const useAuthStore = defineStore("auth", {

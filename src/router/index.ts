@@ -1,5 +1,3 @@
-import apiClient from "@/api/client";
-import { useApiCall } from "@/composables/useApiCall";
 import { authRoutes } from "@/features/auth/routes";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
 import { dashboardRoutes } from "@/features/dashboard/routes";
@@ -35,11 +33,9 @@ router.beforeEach((to) => {
 });
 
 async function handleIndexRouting() {
-    const { call } = useApiCall();
-    const response = await call(() => apiClient.getAuthme());
     const authStore = useAuthStore();
-    if (response.success) {
-        authStore.setUser(response.data);
+
+    if (authStore.isAuthenticated) {
         router.push({ name: dashboardRoutes.dashboard.name });
     } else {
         router.push({ name: authRoutes.login.name });
