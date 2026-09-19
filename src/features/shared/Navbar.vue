@@ -4,9 +4,17 @@ import IconButton from "./IconButton.vue";
 import Logo from "./Logo.vue";
 import Searchbar from "./Searchbar.vue";
 import { MagnifyingGlassIcon } from "@heroicons/vue/24/solid";
-import { ref } from "vue";
+import { nextTick, ref } from "vue";
 
 const isMobileSearchOpen = ref(false);
+const searchbarRef = ref<InstanceType<typeof Searchbar>>();
+
+function toggleMobileSearch() {
+    isMobileSearchOpen.value = !isMobileSearchOpen.value;
+    if (isMobileSearchOpen.value) {
+        nextTick(() => searchbarRef.value?.focus());
+    }
+}
 </script>
 
 <template>
@@ -14,12 +22,13 @@ const isMobileSearchOpen = ref(false);
         <Logo :class="[!isMobileSearchOpen ? 'flex' : 'hidden', 'sm:flex']" />
         <div :class="[isMobileSearchOpen ? 'pr-2' : 'px-4', 'sm:px-4 grow flex justify-center']">
             <Searchbar
-                :class="[isMobileSearchOpen ? 'flex' : 'hidden', 'sm:flex w-full max-w-125']"
+                ref="searchbarRef"
+                :class="[isMobileSearchOpen ? 'flex' : 'hidden', 'sm:flex w-full max-w-175']"
                 placeholder="Search rooms..."
             />
         </div>
         <div class="flex gap-2">
-            <IconButton @click="isMobileSearchOpen = !isMobileSearchOpen" class="size-6 block sm:hidden">
+            <IconButton @click="toggleMobileSearch" class="size-6 block sm:hidden">
                 <MagnifyingGlassIcon />
             </IconButton>
             <IconButton @click="console.log('przycisk')" class="size-6">

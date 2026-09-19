@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { MagnifyingGlassIcon } from "@heroicons/vue/24/solid";
-import { useId } from "vue";
+import { ref, useId } from "vue";
 
 const model = defineModel<string>();
 const inputId = useId();
+const inputRef = ref<HTMLInputElement>();
 
 const props = defineProps<{
     placeholder?: string;
 }>();
+
+defineExpose({
+    focus: () => inputRef.value?.focus(),
+});
 </script>
 
 <template>
@@ -22,6 +27,7 @@ const props = defineProps<{
             v-model="model"
             v-bind="$attrs"
             type="text"
+            ref="inputRef"
             :placeholder="placeholder"
             spellcheck="false"
             class="peer border border-border-secondary bg-secondary-hover text-sm py-1 pl-8 rounded-md px-1 w-full outline-none focus-visible:ring-2 focus-visible:ring-primary placeholder:text-text-muted-secondary"

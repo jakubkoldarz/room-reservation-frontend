@@ -32,12 +32,7 @@ router.beforeEach((to) => {
     }
 });
 
-async function handleIndexRouting() {
+function handleIndexRouting() {
     const authStore = useAuthStore();
-
-    if (authStore.isAuthenticated) {
-        router.push({ name: dashboardRoutes.dashboard.name });
-    } else {
-        router.push({ name: authRoutes.login.name });
-    }
+    return authStore.isAuthenticated ? { name: dashboardRoutes.dashboard.name } : { name: authRoutes.login.name };
 }
