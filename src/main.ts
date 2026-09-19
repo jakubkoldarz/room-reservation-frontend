@@ -13,11 +13,11 @@ pinia.use(piniaPluginPersistedstate);
 async function bootstrap() {
     const app = createApp(App);
     app.use(pinia);
-    app.use(router);
 
     const authStore = useAuthStore(pinia);
     await authStore.init();
 
+    app.use(router);
     app.mount("#app");
 }
 
