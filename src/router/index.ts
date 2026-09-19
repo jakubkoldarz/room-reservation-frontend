@@ -1,5 +1,6 @@
 import { authRoutes } from "@/features/auth/routes";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
+import { buildingRoutes } from "@/features/buildings/routes";
 import { dashboardRoutes } from "@/features/dashboard/routes";
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 
@@ -12,6 +13,7 @@ const routes: RouteRecordRaw[] = [
     },
     ...Object.values(authRoutes),
     ...Object.values(dashboardRoutes),
+    ...Object.values(buildingRoutes),
 ];
 
 const router = createRouter({
