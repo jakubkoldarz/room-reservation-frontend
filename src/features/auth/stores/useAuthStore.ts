@@ -42,7 +42,6 @@ export const useAuthStore = defineStore("auth", {
         async tryRefreshToken(): Promise<boolean> {
             const { call } = useApiCall();
             const result = await call(() => apiClient.postAuthrefresh(undefined));
-            console.log(result);
             if (result.success && result.data.jwtToken) {
                 this.jwtToken = result.data.jwtToken;
                 return true;
