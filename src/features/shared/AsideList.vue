@@ -10,6 +10,7 @@ const props = defineProps<{
     title: string;
     totalCount?: number;
     isLoading?: boolean;
+    searchbarPlaceholder?: string;
     displayCount?: number;
     items?: { id: string; name: string; to: RouteLocationRaw }[];
 }>();
@@ -44,7 +45,7 @@ const itemsToShow = computed(() => {
 <template>
     <div class="flex flex-col">
         <div class="flex items-center mb-2">
-            <div v-if="!isSearchbarActive" class="flex items-center min-h-7.5">
+            <div v-if="!isSearchbarActive" class="flex items-center min-h-8">
                 <p class="text-text-muted text-sm uppercase font-bold">{{ title }}</p>
                 <span
                     class="ml-2 text-xs text-primary font-bold bg-primary/10 px-2 min-w-6 text-center py-0 rounded-md border border-primary/15"
@@ -53,12 +54,12 @@ const itemsToShow = computed(() => {
                     {{ totalCount }}
                 </span>
             </div>
-            <div v-else class="min-h-7.5 flex items-center">
+            <div v-else class="min-h-8 flex items-center w-full">
                 <Searchbar
                     v-model="searchbarModel"
                     ref="searchbarRef"
-                    placeholder="Search buildings..."
-                    class="text-xs border-border"
+                    :placeholder="props.searchbarPlaceholder"
+                    class="text-xs border-border w-full"
                 />
             </div>
             <span class="grow"></span>

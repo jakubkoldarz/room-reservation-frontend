@@ -15,11 +15,15 @@ function toggleMobileSearch() {
         nextTick(() => searchbarRef.value?.focus());
     }
 }
+
+const emit = defineEmits<{
+    mobileBurgerClick: [];
+}>();
 </script>
 
 <template>
-    <nav class="bg-secondary text-text-secondary px-4 py-2 items-center flex h-12">
-        <IconButton class="size-8 md:hidden block mr-2">
+    <nav class="bg-secondary text-text-secondary px-4 py-2 items-center flex h-12 z-1000">
+        <IconButton class="size-8 shrink-0 md:hidden block mr-2" @click="emit('mobileBurgerClick')">
             <Bars4Icon />
         </IconButton>
         <Logo :class="[!isMobileSearchOpen ? 'flex' : 'hidden', 'sm:flex']" />
