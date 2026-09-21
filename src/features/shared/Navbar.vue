@@ -26,7 +26,10 @@ function toggleMobileSearch() {
         <div :class="[isMobileSearchOpen ? 'pr-2' : 'px-4', 'sm:px-4 grow flex justify-center']">
             <Searchbar
                 ref="searchbarRef"
-                :class="[isMobileSearchOpen ? 'flex' : 'hidden', 'sm:flex w-full max-w-175']"
+                :class="[
+                    isMobileSearchOpen ? 'flex' : 'hidden',
+                    'sm:flex w-full max-w-175 border-border-secondary bg-secondary-hover',
+                ]"
                 placeholder="Search rooms..."
             />
         </div>

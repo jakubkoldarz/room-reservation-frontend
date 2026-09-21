@@ -3,7 +3,7 @@ import { usePermissions } from "@/composables/usePermissions";
 import { Permission } from "../auth/constants/permissions";
 import LinkButton from "./LinkButton.vue";
 import { dashboardRoutes } from "../dashboard/routes";
-import { BuildingOffice2Icon, HomeIcon } from "@heroicons/vue/24/solid";
+import { HomeIcon } from "@heroicons/vue/24/solid";
 import { buildingRoutes } from "../buildings/routes.ts";
 import { useBuildingsStore } from "../buildings/stores/useBuildingsStore.ts";
 import AsideList from "./AsideList.vue";
@@ -14,6 +14,10 @@ const buildingsStore = useBuildingsStore();
 if (hasPermission(Permission.BuildingList)) {
     buildingsStore.fetchBuildings();
 }
+
+async function refetchBuildings() {
+    await buildingsStore.fetchBuildings(true);
+}
 </script>
 
 <template>
@@ -23,20 +27,24 @@ if (hasPermission(Permission.BuildingList)) {
                 <HomeIcon />
                 Dashboard
             </LinkButton>
-            <LinkButton :to="buildingRoutes.list">
-                <BuildingOffice2Icon />
-                Buildings
-            </LinkButton>
             <AsideList
-                class="mt-2"
+                v-if="hasPermission(Permission.BuildingList)"
+                class="mt-4"
                 title="Buildings"
-                :items="buildingsStore.buildings?.map((b) => ({ name: b.name, id: b.id }))"
+                :items="
+                    buildingsStore.buildings?.map((b) => ({
+                        name: b.name,
+                        id: b.id,
+                        to: { name: buildingRoutes.view.name, params: { buildingId: b.id } },
+                    }))
+                "
+                :display-count="4"
                 :is-loading="buildingsStore.isLoading"
                 :total-count="buildingsStore.buildings?.length"
-                v-if="hasPermission(Permission.BuildingList)"
+                @searchbar-focus="refetchBuildings"
             />
             <AsideList
-                class="mt-2"
+                class="mt-4"
                 title="Rooms"
                 :is-loading="true"
                 :total-count="14"

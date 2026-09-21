@@ -7,4 +7,10 @@ export const buildingRoutes = {
         component: () => import("@/features/buildings/views/BuildingList.vue"),
         meta: { requiresAuth: true },
     },
+    view: {
+        path: "/buildings/:buildingId",
+        name: "buildings.view",
+        component: () => import("@/features/buildings/views/BuildingView.vue"),
+        meta: { requiresAuth: true },
+    },
 } as const satisfies Record<string, RouteRecordRaw>;

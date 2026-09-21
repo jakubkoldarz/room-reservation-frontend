@@ -11,7 +11,9 @@ export const useBuildingsStore = defineStore("buildings", {
     }),
 
     actions: {
-        async fetchBuildings() {
+        async fetchBuildings(force = false) {
+            if (this.buildings !== null && !force) return;
+
             this.isLoading = true;
             const { call } = useApiCall();
             const result = await call(() => apiClient.getBuildingslookup());
