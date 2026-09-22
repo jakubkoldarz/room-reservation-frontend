@@ -22,3 +22,16 @@
 
     --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 }
+
+@layer base {
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    p,
+    span {
+        @apply text-text;
+    }
+}

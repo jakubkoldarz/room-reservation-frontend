@@ -69,7 +69,7 @@ const itemsToShow = computed(() => {
             </IconButton>
         </div>
         <ul v-if="isLoading && !isSearchbarActive" class="flex flex-col gap-1">
-            <li class="h-6 w-full rounded bg-zinc-200 animate-pulse" :key="n" v-for="n in [1, 2, 3]"></li>
+            <li :key="n" v-for="n in [1, 2, 3]" class="h-6 w-full rounded bg-zinc-200 animate-pulse"></li>
         </ul>
         <ul v-else class="flex flex-col gap-1 min-h-27">
             <li

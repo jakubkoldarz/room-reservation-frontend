@@ -1,8 +1,7 @@
 import apiClient from "@/api/client";
 import { useApiCall } from "@/composables/useApiCall";
+import type { UserDetails } from "@/types/dtos";
 import { defineStore } from "pinia";
-
-type UserDetails = Awaited<ReturnType<typeof apiClient.getAuthme>>;
 
 function isTokenExpired(token: string): boolean {
     const payload = JSON.parse(atob(token.split(".")[1]));
