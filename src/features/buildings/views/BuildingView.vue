@@ -40,6 +40,7 @@ const localization = computed(() => {
         <div class="flex flex-col gap-4">
             <BuildingInfo
                 :is-loading="isLoading"
+                :building-id="buildingId"
                 :name="building?.buildingInfo.name"
                 :identifier="building?.buildingInfo.identifier"
                 :floors-count="building?.buildingInfo.floorsCount"

@@ -1,3 +1,4 @@
+import { usePermissions } from "@/composables/usePermissions";
 import { authRoutes } from "@/features/auth/routes";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
 import { buildingRoutes } from "@/features/buildings/routes";
@@ -25,11 +26,16 @@ export default router;
 
 router.beforeEach((to) => {
     const authStore = useAuthStore();
+    const { hasPermission } = usePermissions();
 
     if (to.meta.requiresAuth && !authStore.isAuthenticated) {
         return { name: authRoutes.login.name };
     }
     if (to.meta.requiresGuest && authStore.isAuthenticated) {
+        return { name: dashboardRoutes.dashboard.name };
+    }
+
+    if (to.meta.requiredPermission && !hasPermission(to.meta.requiredPermission)) {
         return { name: dashboardRoutes.dashboard.name };
     }
 });

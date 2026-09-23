@@ -6,17 +6,24 @@ import BaseButton from "@/features/shared/BaseButton.vue";
 import Container from "@/features/shared/Container.vue";
 import OutlineButton from "@/features/shared/OutlineButton.vue";
 import Skeleton from "@/features/shared/Skeleton.vue";
+import router from "@/router";
 import { BuildingOfficeIcon, MapPinIcon, PencilSquareIcon, PlusIcon } from "@heroicons/vue/24/solid";
+import { buildingRoutes } from "../routes";
 
 const { hasPermission } = usePermissions();
 
 const props = defineProps<{
+    buildingId?: string;
     name?: string;
     isLoading?: boolean;
     identifier?: string | null;
     localization?: string | null;
     floorsCount?: string | number | null;
 }>();
+
+function gotoEdit() {
+    router.push({ name: buildingRoutes.edit.name, params: { buildingId: props.buildingId } });
+}
 </script>
 
 <template>
@@ -52,7 +59,7 @@ const props = defineProps<{
                 v-if="hasPermission(Permission.BuildingEdit) || hasPermission(Permission.RoomAdd)"
                 class="flex flex-wrap mt-4 gap-2"
             >
-                <OutlineButton v-if="hasPermission(Permission.BuildingEdit)" class="py-1 rounded-lg">
+                <OutlineButton @click="gotoEdit" v-if="hasPermission(Permission.BuildingEdit)" class="py-1 rounded-lg">
                     <PencilSquareIcon class="size-5" /> Edit Building
                 </OutlineButton>
                 <BaseButton v-if="hasPermission(Permission.RoomAdd)" class="py-1 rounded-lg">
