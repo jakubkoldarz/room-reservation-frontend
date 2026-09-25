@@ -42,10 +42,10 @@ async function handleSave() {
 
     if (response.success) {
         toastsStore.pushSuccess({ message: "Building updated successfully" });
-    } else {
-        toastsStore.pushError({
+    } else if (response.success === false) {
+        toastsStore.pushApiError({
             title: "Failed to update building",
-            message: response.error?.message ?? "An unknown error occurred",
+            error: response.error,
         });
     }
 }

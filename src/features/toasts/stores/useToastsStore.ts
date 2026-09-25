@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import type { Toast, ToastOptions } from "../types/toast";
+import type { ApiErrorResponse } from "@/types/api-error";
 
 export const useToastsStore = defineStore("toasts", {
     state: () => ({
@@ -24,6 +25,12 @@ export const useToastsStore = defineStore("toasts", {
         pushError(options: ToastOptions) {
             const id = crypto.randomUUID();
             this.toasts.push({ id, ...options, type: "error" });
+        },
+        pushApiError(options: { title: string; error: ApiErrorResponse | null }) {
+            const id = crypto.randomUUID();
+            const title = options.title;
+            const message = options.error?.message ?? "Unknown error occured";
+            this.toasts.push({ id, title, message, type: "error" });
         },
         pushInfo(options: ToastOptions) {
             const id = crypto.randomUUID();
