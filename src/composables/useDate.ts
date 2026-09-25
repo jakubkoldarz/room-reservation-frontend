@@ -1,5 +1,5 @@
 export function useDate() {
-    const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] as const;
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
 
     function getDayName(dayOfWeek: number) {
         if (dayOfWeek < 0) return dayNames[0];

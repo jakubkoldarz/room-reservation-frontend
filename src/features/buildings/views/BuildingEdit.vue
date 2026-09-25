@@ -5,13 +5,15 @@ import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import type { BuildingDetails } from "@/types/dtos";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { usePermissions } from "@/composables/usePermissions.ts";
+import EditHeader from "../components/EditHeader.vue";
+import EditInfo from "../components/EditInfo.vue";
+
+const editRef = ref<InstanceType<typeof EditInfo>>();
 
 const route = useRoute();
 const buildingId = computed(() => route.params.buildingId as string);
 const building = ref<BuildingDetails | null>();
 const { call, isLoading } = useApiCall();
-const { hasPermission } = usePermissions();
 
 watch(() => buildingId.value, fetchBuilding, { immediate: true });
 async function fetchBuilding() {
@@ -20,10 +22,28 @@ async function fetchBuilding() {
         building.value = response.data;
     }
 }
+
+async function handleSave() {
+    const values = await editRef.value?.submit();
+    if (!values) return;
+    const response = await call(() =>
+        apiClient.putBuildingsBuildingId(
+            {
+                ...values,
+                availabilities: [{ dayOfWeek: 1, startTime: "08:00", endTime: "16:00" }],
+            },
+            { params: { buildingId: buildingId.value } },
+        ),
+    );
+    console.log(response);
+}
 </script>
 
 <template>
     <AsideNavbarLayout>
-        <div class="flex flex-col gap-4"></div>
+        <div class="flex flex-col gap-4">
+            <EditHeader :name="building?.buildingInfo.name" :is-loading="isLoading" @save="handleSave" />
+            <EditInfo ref="editRef" :building="building?.buildingInfo" :is-loading="isLoading" />
+        </div>
     </AsideNavbarLayout>
 </template>

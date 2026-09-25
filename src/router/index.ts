@@ -28,16 +28,23 @@ router.beforeEach((to) => {
     const authStore = useAuthStore();
     const { hasPermission } = usePermissions();
 
+    console.log("1");
     if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+        console.log("2");
+
         return { name: authRoutes.login.name };
     }
     if (to.meta.requiresGuest && authStore.isAuthenticated) {
+        console.log("3");
+
         return { name: dashboardRoutes.dashboard.name };
     }
 
     if (to.meta.requiredPermission && !hasPermission(to.meta.requiredPermission)) {
+        console.log("4");
         return { name: dashboardRoutes.dashboard.name };
     }
+    console.log("5");
 });
 
 function handleIndexRouting() {

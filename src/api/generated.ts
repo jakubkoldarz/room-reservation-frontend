@@ -101,14 +101,11 @@ const AvailabilityRequestDto = z
   .passthrough();
 const BuildingRequestDto = z
   .object({
-    name: z.string().max(100),
+    name: z.string().min(1).max(100),
     identifier: z.union([z.null(), z.string()]).optional(),
-    street: z.string().max(50),
-    city: z.string().max(50),
-    postalCode: z
-      .string()
-      .max(50)
-      .regex(/^[0-9]{2}-[0-9]{3}$/),
+    street: z.string().min(1).max(50),
+    city: z.string().min(1).max(50),
+    postalCode: z.string().regex(/^[0-9]{2}-[0-9]{3}$/),
     floorsCount: z.union([z.number(), z.string()]),
     availabilities: z.array(AvailabilityRequestDto),
   })
