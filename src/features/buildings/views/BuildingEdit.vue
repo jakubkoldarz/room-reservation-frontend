@@ -7,6 +7,7 @@ import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import EditHeader from "../components/EditHeader.vue";
 import EditInfo from "../components/EditInfo.vue";
+import { useToastsStore } from "@/features/toasts/stores/useToastsStore.ts";
 
 const editRef = ref<InstanceType<typeof EditInfo>>();
 
@@ -26,6 +27,9 @@ async function fetchBuilding() {
 async function handleSave() {
     const values = await editRef.value?.submit();
     if (!values) return;
+
+    const toastsStore = useToastsStore();
+
     const response = await call(() =>
         apiClient.putBuildingsBuildingId(
             {
@@ -35,7 +39,15 @@ async function handleSave() {
             { params: { buildingId: buildingId.value } },
         ),
     );
-    console.log(response);
+
+    if (response.success) {
+        toastsStore.pushSuccess({ message: "Building updated successfully" });
+    } else {
+        toastsStore.pushError({
+            title: "Failed to update building",
+            message: response.error?.message ?? "An unknown error occurred",
+        });
+    }
 }
 </script>
 
