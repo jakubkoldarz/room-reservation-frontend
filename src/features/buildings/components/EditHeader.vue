@@ -37,10 +37,10 @@ const emit = defineEmits<{
         </div>
     </Container>
 
-    <Container v-else class="@container py-2">
+    <Container v-else class="@container py-4 sm:py-4">
         <div class="flex flex-col @sm:flex-row @sm:items-center gap-2 justify-between">
             <Skeleton class="w-full" />
-            <Skeleton />
+            <Skeleton class="" />
         </div>
     </Container>
 </template>
