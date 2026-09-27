@@ -6,9 +6,11 @@ import type { BuildingDetails } from "@/types/dtos";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import BuildingInfo from "../components/BuildingInfo.vue";
-import AvailabilitiesTable from "@/features/shared/AvailabilitiesTable.vue";
 import { usePermissions } from "@/composables/usePermissions.ts";
 import { Permission } from "@/features/auth/constants/permissions.ts";
+import router from "@/router/index.ts";
+import { buildingRoutes } from "../routes.ts";
+import AvailabilitiesTable from "@/features/availabilities/components/AvailabilitiesTable.vue";
 
 const route = useRoute();
 const buildingId = computed(() => route.params.buildingId as string);
@@ -33,6 +35,10 @@ const localization = computed(() => {
 
     return [street, cityLine].filter(Boolean).join(", ");
 });
+
+function gotoBuildingEdit() {
+    router.push({ name: buildingRoutes.edit.name, params: { buildingId: buildingId.value } });
+}
 </script>
 
 <template>
@@ -47,6 +53,7 @@ const localization = computed(() => {
                 :localization="localization"
             />
             <AvailabilitiesTable
+                @edit="gotoBuildingEdit"
                 :is-loading="isLoading"
                 title="Building Availabilities"
                 :items="building?.availabilities"

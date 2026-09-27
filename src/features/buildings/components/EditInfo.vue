@@ -68,12 +68,14 @@ const [floorsCount, floorsCountAttrs] = defineField("floorsCount");
 
 <template>
     <Container class="@container flex flex-col gap-2">
-        <div class="flex gap-2 items-center">
-            <NumberCircle>1</NumberCircle>
-            <h2 class="text-lg font-semibold">Building details</h2>
+        <div>
+            <div class="flex gap-2 items-center">
+                <NumberCircle>1</NumberCircle>
+                <h2 class="text-lg font-semibold">Building details</h2>
+            </div>
+            <p class="text-text-muted text-sm">Edit details of the building. Please fill in all required fields.</p>
+            <hr class="border-border my-2" />
         </div>
-        <p class="text-text-muted text-sm">Edit details of the building. Please fill in all required fields.</p>
-        <hr class="border-border my-2" />
 
         <div class="grid grid-cols-1 @lg:grid-cols-2 @xl:grid-cols-3 gap-4">
             <BaseInput
