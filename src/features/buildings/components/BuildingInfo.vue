@@ -46,7 +46,7 @@ function gotoEdit() {
 
         <template v-else>
             <h1 class="text-lg sm:text-xl font-bold">{{ name }}</h1>
-            <Badge v-if="identifier" class="self-start mt-1" :text="identifier" />
+            <Badge v-if="identifier" class="self-start mt-1">{{ identifier }}</Badge>
             <div class="flex flex-wrap gap-2 mt-4" v-if="localization || floorsCount">
                 <p v-if="localization" class="text-sm flex items-center gap-1">
                     <MapPinIcon class="size-5" /> {{ localization }}

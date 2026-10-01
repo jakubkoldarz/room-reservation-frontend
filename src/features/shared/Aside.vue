@@ -66,6 +66,7 @@ async function refetchBuildings() {
                     v-if="hasPermission(Permission.BuildingList)"
                     class="mt-4"
                     title="Buildings"
+                    :to="buildingRoutes.list"
                     :items="
                         buildingsStore.buildings?.map((b) => ({
                             name: b.name,

@@ -5,9 +5,11 @@ import type { RouteLocationRaw } from "vue-router";
 import { computed, nextTick } from "vue";
 import { ref } from "vue";
 import Searchbar from "./Searchbar.vue";
+import Badge from "./Badge.vue";
 
 const props = defineProps<{
     title: string;
+    to?: RouteLocationRaw;
     totalCount?: number;
     isLoading?: boolean;
     searchbarPlaceholder?: string;
@@ -46,13 +48,15 @@ const itemsToShow = computed(() => {
     <div class="flex flex-col">
         <div class="flex items-center mb-2">
             <div v-if="!isSearchbarActive" class="flex items-center min-h-8">
-                <p class="text-text-muted text-sm uppercase font-bold">{{ title }}</p>
-                <span
-                    class="ml-2 text-xs text-primary font-bold bg-primary/10 px-2 min-w-6 text-center py-0 rounded-md border border-primary/15"
-                    v-if="totalCount && !isLoading"
-                >
+                <p class="text-sm uppercase font-semibold">
+                    <RouterLink v-if="to" :to="to" class="hover:text-primary">
+                        {{ title }}
+                    </RouterLink>
+                    <span v-else>{{ title }}</span>
+                </p>
+                <Badge v-if="totalCount && !isLoading" class="ml-2 px-2!">
                     {{ totalCount }}
-                </span>
+                </Badge>
             </div>
             <div v-else class="min-h-8 flex items-center w-full">
                 <Searchbar

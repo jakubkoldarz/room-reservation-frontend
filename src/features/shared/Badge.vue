@@ -2,7 +2,6 @@
 import type { BadgeType } from "@/types/badge-type";
 
 const props = defineProps<{
-    text?: string;
     type?: BadgeType;
 }>();
 
@@ -18,9 +17,9 @@ const colorClasses: Record<BadgeType, string> = {
     <div
         :class="[
             colorClasses[type ?? 'default'],
-            'border px-4 py-0.5 text-xs rounded text-center font-bold flex items-center',
+            'border px-4 py-0.5 text-xs rounded text-center font-bold flex items-center w-fit',
         ]"
     >
-        {{ text }}
+        <slot />
     </div>
 </template>

@@ -11,6 +11,7 @@ import { Permission } from "@/features/auth/constants/permissions.ts";
 import router from "@/router/index.ts";
 import { buildingRoutes } from "../routes.ts";
 import AvailabilitiesTable from "@/features/availabilities/components/AvailabilitiesTable.vue";
+import { formatAddress } from "../utils/formatAddres.ts";
 
 const route = useRoute();
 const buildingId = computed(() => route.params.buildingId as string);
@@ -27,13 +28,8 @@ async function fetchBuilding() {
 }
 
 const localization = computed(() => {
-    const info = building.value?.buildingInfo;
-    if (!info) return "";
-
-    const { street, postalCode, city } = info;
-    const cityLine = [postalCode, city].filter(Boolean).join(" ");
-
-    return [street, cityLine].filter(Boolean).join(", ");
+    if (!building.value) return null;
+    return formatAddress(building.value.buildingInfo);
 });
 
 function gotoBuildingEdit() {
