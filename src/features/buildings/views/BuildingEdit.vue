@@ -51,7 +51,7 @@ async function handleSave() {
 
     if (response.success) {
         toastsStore.pushSuccess({ message: "Building updated successfully" });
-        await buildingsStore.fetchBuildings(true);
+        await buildingsStore.fetchBuildings();
         gotoBuildingView();
     } else if (response.success === false) {
         toastsStore.pushApiError({

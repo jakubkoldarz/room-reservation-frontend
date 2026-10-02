@@ -2,20 +2,27 @@
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/vue/24/solid";
 import IconButton from "./IconButton.vue";
 import type { RouteLocationRaw } from "vue-router";
-import { computed, nextTick } from "vue";
+import { nextTick } from "vue";
 import { ref } from "vue";
 import Searchbar from "./Searchbar.vue";
 import Badge from "./Badge.vue";
+import Skeleton from "./Skeleton.vue";
 
-const props = defineProps<{
-    title: string;
-    to?: RouteLocationRaw;
-    totalCount?: number;
-    isLoading?: boolean;
-    searchbarPlaceholder?: string;
-    displayCount?: number;
-    items?: { id: string; name: string; to: RouteLocationRaw }[];
-}>();
+const props = withDefaults(
+    defineProps<{
+        title: string;
+        to?: RouteLocationRaw;
+        totalCount?: number;
+        isLoading?: boolean;
+        searchbarPlaceholder?: string;
+        displayCount?: number;
+        items?: { id: string; name: string; to: RouteLocationRaw }[];
+    }>(),
+    {
+        isLoading: false,
+        displayCount: 4,
+    },
+);
 
 const emit = defineEmits<{
     searchbarFocus: [];
@@ -24,7 +31,6 @@ const emit = defineEmits<{
 
 const isSearchbarActive = ref(false);
 const searchbarRef = ref<InstanceType<typeof Searchbar>>();
-const searchbarModel = ref<string>("");
 
 function onSearchbarClick() {
     isSearchbarActive.value = !isSearchbarActive.value;
@@ -35,13 +41,7 @@ function onSearchbarClick() {
     }
 }
 
-const itemsToShow = computed(() => {
-    if (!isSearchbarActive.value || !searchbarModel.value) return props.items?.slice(0, props.displayCount);
-
-    return props.items
-        ?.filter((item) => item.name.toLowerCase().includes(searchbarModel.value))
-        .slice(0, props.displayCount);
-});
+const searchbarModel = defineModel<string>();
 </script>
 
 <template>
@@ -73,11 +73,11 @@ const itemsToShow = computed(() => {
             </IconButton>
         </div>
         <ul v-if="isLoading && !isSearchbarActive" class="flex flex-col gap-1">
-            <li :key="n" v-for="n in [1, 2, 3]" class="h-6 w-full rounded bg-zinc-200 animate-pulse"></li>
+            <li :key="n" v-for="n in props.displayCount"><Skeleton class="w-full" /></li>
         </ul>
         <ul v-else class="flex flex-col gap-1 min-h-27">
             <li
-                v-for="item in itemsToShow"
+                v-for="item in items"
                 :key="item.id"
                 class="h-6 w-full flex gap-2 items-center rounded text-sm hover:text-primary text-text"
                 :title="item.name"

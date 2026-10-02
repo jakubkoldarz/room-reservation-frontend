@@ -62,7 +62,6 @@ const EmailRequestDto = z.object({ emailAddress: z.string() }).passthrough();
 const VerificationIdResponseDto = z
   .object({ verificationId: z.string().uuid() })
   .passthrough();
-const Page = z.union([z.number(), z.string()]).optional();
 const BasicBuildingResponseDto = z
   .object({
     id: z.string().uuid(),
@@ -71,7 +70,7 @@ const BasicBuildingResponseDto = z
     street: z.string(),
     city: z.string(),
     postalCode: z.string(),
-    floorsCount: z.union([z.number(), z.string()]),
+    floorsCount: z.number().int(),
   })
   .passthrough();
 const ErrorType = z.number();
@@ -83,10 +82,10 @@ const PagedResultOfBasicBuildingResponseDto = z
     isSuccess: z.boolean(),
     value: z.union([z.null(), z.array(BasicBuildingResponseDto)]),
     error: z.union([z.null(), Error]),
-    totalCount: z.union([z.number(), z.string()]),
-    page: z.union([z.number(), z.string()]),
-    pageSize: z.union([z.number(), z.string()]),
-    totalPages: z.union([z.number(), z.string()]),
+    totalCount: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
+    totalPages: z.number().int(),
     hasNextPage: z.boolean(),
   })
   .partial()
@@ -106,7 +105,7 @@ const BuildingRequestDto = z
     street: z.string().min(1).max(50),
     city: z.string().min(1).max(50),
     postalCode: z.string().regex(/^[0-9]{2}-[0-9]{3}$/),
-    floorsCount: z.union([z.number(), z.string()]),
+    floorsCount: z.number().int().gte(0).lte(100),
     availabilities: z.array(AvailabilityRequestDto),
   })
   .passthrough();
@@ -122,8 +121,8 @@ const BasicRoomResponseDto = z
     id: z.string().uuid(),
     identifier: z.string(),
     requiresApproval: z.boolean(),
-    capacity: z.union([z.number(), z.string()]),
-    floor: z.union([z.number(), z.string()]),
+    capacity: z.number().int(),
+    floor: z.number().int(),
   })
   .passthrough();
 const BuildingDetailsResponseDto = z
@@ -141,10 +140,10 @@ const PagedResultOfEquipmentResponseDto = z
     isSuccess: z.boolean(),
     value: z.union([z.null(), z.array(EquipmentResponseDto)]),
     error: z.union([z.null(), Error]),
-    totalCount: z.union([z.number(), z.string()]),
-    page: z.union([z.number(), z.string()]),
-    pageSize: z.union([z.number(), z.string()]),
-    totalPages: z.union([z.number(), z.string()]),
+    totalCount: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
+    totalPages: z.number().int(),
     hasNextPage: z.boolean(),
   })
   .partial()
@@ -211,10 +210,10 @@ const PagedResultOfReservationResponseDto = z
     isSuccess: z.boolean(),
     value: z.union([z.null(), z.array(ReservationResponseDto)]),
     error: z.union([z.null(), Error]),
-    totalCount: z.union([z.number(), z.string()]),
-    page: z.union([z.number(), z.string()]),
-    pageSize: z.union([z.number(), z.string()]),
-    totalPages: z.union([z.number(), z.string()]),
+    totalCount: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
+    totalPages: z.number().int(),
     hasNextPage: z.boolean(),
   })
   .partial()
@@ -246,10 +245,10 @@ const PagedResultOfRoleResponseDto = z
     isSuccess: z.boolean(),
     value: z.union([z.null(), z.array(RoleResponseDto)]),
     error: z.union([z.null(), Error]),
-    totalCount: z.union([z.number(), z.string()]),
-    page: z.union([z.number(), z.string()]),
-    pageSize: z.union([z.number(), z.string()]),
-    totalPages: z.union([z.number(), z.string()]),
+    totalCount: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
+    totalPages: z.number().int(),
     hasNextPage: z.boolean(),
   })
   .partial()
@@ -268,10 +267,10 @@ const PagedResultOfBasicRoomResponseDto = z
     isSuccess: z.boolean(),
     value: z.union([z.null(), z.array(BasicRoomResponseDto)]),
     error: z.union([z.null(), Error]),
-    totalCount: z.union([z.number(), z.string()]),
-    page: z.union([z.number(), z.string()]),
-    pageSize: z.union([z.number(), z.string()]),
-    totalPages: z.union([z.number(), z.string()]),
+    totalCount: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
+    totalPages: z.number().int(),
     hasNextPage: z.boolean(),
   })
   .partial()
@@ -281,8 +280,8 @@ const RoomRequestDto = z
     identifier: z.string().max(50),
     requiresApproval: z.boolean(),
     buildingId: z.string().uuid(),
-    floor: z.union([z.number(), z.string()]),
-    capacity: z.union([z.number(), z.string()]),
+    floor: z.number().int(),
+    capacity: z.number().int().gte(1).lte(2147483647),
     equipmentIds: z.array(z.string().uuid()).max(5),
     availabilities: z.array(AvailabilityRequestDto),
   })
@@ -292,10 +291,10 @@ const PagedResultOfBasicUserResponseDto = z
     isSuccess: z.boolean(),
     value: z.union([z.null(), z.array(BasicUserResponseDto)]),
     error: z.union([z.null(), Error]),
-    totalCount: z.union([z.number(), z.string()]),
-    page: z.union([z.number(), z.string()]),
-    pageSize: z.union([z.number(), z.string()]),
-    totalPages: z.union([z.number(), z.string()]),
+    totalCount: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
+    totalPages: z.number().int(),
     hasNextPage: z.boolean(),
   })
   .partial()
@@ -322,7 +321,6 @@ export const schemas = {
   ChangePasswordRequestDto,
   EmailRequestDto,
   VerificationIdResponseDto,
-  Page,
   BasicBuildingResponseDto,
   ErrorType,
   Error,
@@ -612,12 +610,12 @@ const endpoints = makeApi([
       {
         name: "Page",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
         name: "PageSize",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
     ],
     response: PagedResultOfBasicBuildingResponseDto,
@@ -704,12 +702,12 @@ const endpoints = makeApi([
       {
         name: "Page",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
         name: "PageSize",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
     ],
     response: PagedResultOfEquipmentResponseDto,
@@ -879,12 +877,12 @@ const endpoints = makeApi([
       {
         name: "Page",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
         name: "PageSize",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
     ],
     response: z.array(PermissionResponseDto),
@@ -933,12 +931,12 @@ const endpoints = makeApi([
       {
         name: "Page",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
         name: "PageSize",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
     ],
     response: PagedResultOfReservationResponseDto,
@@ -1154,12 +1152,12 @@ const endpoints = makeApi([
       {
         name: "Page",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
         name: "PageSize",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
         name: "userId",
@@ -1183,12 +1181,12 @@ const endpoints = makeApi([
       {
         name: "Page",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
         name: "PageSize",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
     ],
     response: PagedResultOfRoleResponseDto,
@@ -1307,12 +1305,12 @@ const endpoints = makeApi([
       {
         name: "MinCapacity",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().optional(),
       },
       {
         name: "Floor",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().optional(),
       },
       {
         name: "DayOfWeek",
@@ -1337,12 +1335,12 @@ const endpoints = makeApi([
       {
         name: "Page",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
         name: "PageSize",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
     ],
     response: PagedResultOfBasicRoomResponseDto,
@@ -1447,12 +1445,12 @@ const endpoints = makeApi([
       {
         name: "Page",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
         name: "PageSize",
         type: "Query",
-        schema: Page,
+        schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
     ],
     response: PagedResultOfBasicUserResponseDto,

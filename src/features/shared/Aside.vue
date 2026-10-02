@@ -9,6 +9,7 @@ import { useBuildingsStore } from "../buildings/stores/useBuildingsStore.ts";
 import AsideList from "./AsideList.vue";
 import { useRoute } from "vue-router";
 import { watch } from "vue";
+import { watchDebounced } from "@vueuse/core";
 
 const { hasPermission } = usePermissions();
 const buildingsStore = useBuildingsStore();
@@ -28,12 +29,22 @@ const emit = defineEmits<{
 }>();
 
 if (hasPermission(Permission.BuildingList)) {
-    buildingsStore.fetchBuildings();
+    buildingsStore.ensureLoaded();
 }
 
 async function refetchBuildings() {
-    await buildingsStore.fetchBuildings(true);
+    await buildingsStore.fetchBuildings();
 }
+
+watchDebounced(
+    () => buildingsStore.queryParam,
+    () => {
+        if (hasPermission(Permission.BuildingList)) {
+            refetchBuildings();
+        }
+    },
+    { debounce: 300 },
+);
 </script>
 
 <template>
@@ -63,6 +74,7 @@ async function refetchBuildings() {
                     Dashboard
                 </LinkButton>
                 <AsideList
+                    v-model="buildingsStore.queryParam"
                     v-if="hasPermission(Permission.BuildingList)"
                     class="mt-4"
                     title="Buildings"
@@ -76,7 +88,7 @@ async function refetchBuildings() {
                     "
                     :display-count="4"
                     :is-loading="buildingsStore.isLoading"
-                    :total-count="buildingsStore.buildings?.length"
+                    :total-count="buildingsStore.totalCount"
                     searchbar-placeholder="Search buildings..."
                     @searchbar-focus="refetchBuildings"
                 />
