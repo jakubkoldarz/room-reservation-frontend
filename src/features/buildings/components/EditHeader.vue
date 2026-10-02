@@ -21,7 +21,7 @@ const emit = defineEmits<{
     <Container v-if="!isLoading" class="@container sticky top-0 py-3 sm:py-3 z-10">
         <div class="flex flex-col @sm:flex-row @sm:items-center gap-2 justify-between">
             <div class="flex items-center gap-2 min-w-0 flex-1">
-                <Badge text="Editing" type="warning" class="shrink-0" />
+                <Badge type="warning" class="shrink-0">Editing</Badge>
                 <h1 class="sm:text-lg font-bold truncate min-w-0">
                     {{ name }}
                 </h1>

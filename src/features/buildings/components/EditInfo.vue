@@ -7,14 +7,14 @@ import { useForm } from "vee-validate";
 import { schemas } from "@/api/generated.ts";
 import { toTypedSchema } from "@vee-validate/zod";
 import { watch } from "vue";
-import type { BuildingInfo } from "@/types/dtos.ts";
 import { ref } from "vue";
+import type { Building } from "../types.ts";
 
 const idLabel = ref<string>("System Identifier (id / UUID)");
 let timeoutId = null as number | null;
 
 const { building } = defineProps<{
-    building?: BuildingInfo;
+    building?: Building;
     isLoading?: boolean;
 }>();
 
@@ -143,6 +143,7 @@ const [floorsCount, floorsCountAttrs] = defineField("floorsCount");
                 label="Floors Count"
                 placeholder="e.g. 1, 2, 3"
                 is-required
+                type="number"
             />
         </div>
     </Container>

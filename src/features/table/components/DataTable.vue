@@ -1,15 +1,20 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
-import type { Column } from "../types/table-column";
+import { InboxIcon } from "@heroicons/vue/24/solid";
+import type { Column, Pager } from "../types";
+import Skeleton from "@/features/shared/Skeleton.vue";
 
 const props = withDefaults(
     defineProps<{
         columns: Column[];
         items: T[];
         rowKey: keyof T & string;
+        isLoading?: boolean;
+        pager?: Pager;
     }>(),
     {
         columns: () => [],
         items: () => [],
+        isLoading: false,
     },
 );
 
@@ -34,7 +39,7 @@ function alignClass(align?: Column["align"]) {
                 <col
                     v-for="col in columns"
                     :key="col.key"
-                    :style="{ width: col.width ? `${col.width}px` : undefined }"
+                    :style="col.width ? `width: ${col.width}px` : 'min-width: 200px'"
                 />
             </colgroup>
 
@@ -52,14 +57,33 @@ function alignClass(align?: Column["align"]) {
             </thead>
 
             <tbody class="divide-y divide-border">
-                <tr v-for="item in items" :key="item[rowKey]">
-                    <td
-                        v-for="col in columns"
-                        :key="col.key"
-                        class="truncate px-4 py-2 text-sm"
-                        :class="alignClass(col.align)"
-                    >
-                        <slot :name="`cell-${col.key}`" :row="item" />
+                <template v-if="items.length > 0 && !isLoading">
+                    <tr v-for="item in items" :key="item[rowKey]">
+                        <td
+                            v-for="col in columns"
+                            :key="col.key"
+                            class="truncate px-4 py-2 text-sm"
+                            :class="alignClass(col.align)"
+                        >
+                            <slot :name="`cell-${col.key}`" :row="item" />
+                        </td>
+                    </tr>
+                </template>
+
+                <template v-else-if="isLoading">
+                    <tr v-for="i in props.pager?.pageSize ?? 5" :key="i">
+                        <td :colspan="columns.length" class="p-2">
+                            <Skeleton class="w-full" />
+                        </td>
+                    </tr>
+                </template>
+
+                <tr v-else>
+                    <td :colspan="columns.length" class="px-4 w-full py-12">
+                        <div class="flex flex-col items-center justify-center gap-2">
+                            <InboxIcon class="size-24 opacity-25 text-text-muted" />
+                            <span class="text-sm text-text-muted">No data available</span>
+                        </div>
                     </td>
                 </tr>
             </tbody>

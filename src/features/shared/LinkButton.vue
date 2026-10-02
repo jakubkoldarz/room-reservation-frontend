@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { RouteRecordRaw } from "vue-router";
+import type { RouteLocationRaw } from "vue-router";
 
 const props = defineProps<{
-    to: RouteRecordRaw;
+    to: RouteLocationRaw;
 }>();
 </script>
 
