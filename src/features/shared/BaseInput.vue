@@ -35,7 +35,9 @@ const errorId = `${inputId}-error`;
             <span v-if="isRequired" class="text-danger"> * </span>
         </label>
         <div class="relative">
-            <div class="size-5 absolute left-2 top-1/2 translate-y-[-50%] text-border group-focus-within:text-primary">
+            <div
+                class="size-5 absolute pointer-events-none left-2 top-1/2 translate-y-[-50%] text-border group-focus-within:text-primary"
+            >
                 <slot name="icon" />
             </div>
             <input
@@ -59,7 +61,7 @@ const errorId = `${inputId}-error`;
             <label
                 v-if="floatingLabel && label"
                 :for="inputId"
-                class="peer-placeholder-shown:text-sm text-xs peer-placeholder-shown:top-1/2 font-medium text-text-muted absolute top-0 peer-placeholder-shown:px-0 px-1 -translate-y-1/2 bg-surface placeholder-shown:text-xs transition-all"
+                class="pointer-events-none peer-placeholder-shown:text-sm text-xs peer-placeholder-shown:top-1/2 font-medium text-text-muted absolute top-0 peer-placeholder-shown:px-0 px-1 -translate-y-1/2 bg-surface placeholder-shown:text-xs transition-all"
                 :class="[hasIcon ? 'peer-placeholder-shown:left-8 left-7' : 'peer-placeholder-shown:left-2 left-2']"
             >
                 {{ label }}

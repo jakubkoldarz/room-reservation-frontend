@@ -44,11 +44,11 @@ function alignClass(align?: Column["align"]) {
             </colgroup>
 
             <thead>
-                <tr class="border-b border-border">
+                <tr class="border-b border-border bg-background">
                     <th
                         v-for="col in columns"
                         :key="col.key"
-                        class="px-4 py-2 text-sm font-semibold"
+                        class="px-4 py-2 text-sm font-medium"
                         :class="alignClass(col.align)"
                     >
                         {{ col.label }}
@@ -72,7 +72,7 @@ function alignClass(align?: Column["align"]) {
 
                 <template v-else-if="isLoading">
                     <tr v-for="i in props.pager?.pageSize ?? 5" :key="i">
-                        <td :colspan="columns.length" class="p-2">
+                        <td :colspan="columns.length" class="p-2 px-6">
                             <Skeleton class="w-full" />
                         </td>
                     </tr>

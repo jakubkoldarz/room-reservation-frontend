@@ -6,9 +6,3 @@ export type Column = {
 };
 
 export type ConditionalColumn = Column & { visible?: boolean };
-
-export type Pager = {
-    page: number;
-    pageSize: number;
-    totalCount: number;
-};

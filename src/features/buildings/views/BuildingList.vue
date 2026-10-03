@@ -4,21 +4,21 @@ import DataTable from "@/features/table/components/DataTable.vue";
 import Badge from "@/features/shared/Badge.vue";
 import { formatAddress } from "../utils/formatAddres";
 import Container from "@/features/shared/Container.vue";
-import type { BuildingsPage } from "../types";
-import { onMounted, ref } from "vue";
-import apiClient from "@/api/client";
-import { useApiCall } from "@/composables/useApiCall";
+import { onMounted, ref, watch } from "vue";
 import LinkButton from "@/features/shared/LinkButton.vue";
 import { buildingRoutes } from "../routes";
-import { ArrowRightIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import { ArrowRightIcon, PlusIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import IconButton from "@/features/shared/IconButton.vue";
 import { usePermissions } from "@/composables/usePermissions";
 import { Permission } from "@/features/auth/constants/permissions";
 import { useVisibleColumns } from "@/composables/useVisibleColumns";
-import type { Filter } from "@/features/filters/types";
+import { defineFilters, type FilterValues } from "@/features/filters/types";
 import Filters from "@/features/filters/components/Filters.vue";
+import { watchDebounced } from "@vueuse/core";
+import { useBuildingsList } from "../composables/useBuildingsList";
+import { usePager } from "@/features/pager/composables/usePager";
+import Pager from "@/features/pager/components/Pager.vue";
 
-const { call, isLoading } = useApiCall();
 const { hasPermission } = usePermissions();
 
 const columns = useVisibleColumns(() => [
@@ -30,44 +30,62 @@ const columns = useVisibleColumns(() => [
     { key: "delete", width: 65, align: "center", visible: hasPermission(Permission.BuildingDelete) },
 ]);
 
-console.log("Columns:", columns);
+const filters = defineFilters([{ type: "text", key: "Name", placeholder: "Building name" }]);
+const values = ref<FilterValues<typeof filters>>({});
+const { pager } = usePager(2);
 
-const pagedBuildings = ref<BuildingsPage>({
-    value: [],
-});
-
-onMounted(async () => {
-    const response = await call(() => apiClient.getBuildings({ queries: { Page: 1, PageSize: 25 } }));
-    if (response.success) {
-        pagedBuildings.value = response.data;
-    }
-});
+const { fetchBuildings, isLoading, pagedBuildings } = useBuildingsList();
+onMounted(() => fetchBuildings(values.value, pager.value));
 
 function deleteBuilding(buildingId: string) {
     // TODO: ADD MODAL CONFIRMATION
     console.log("Delete building with ID:", buildingId);
 }
 
-const filters = [{ type: "text", key: "name", placeholder: "Building name" }] as Filter[];
+async function refetchBuildings() {
+    await fetchBuildings(values.value, pager.value);
+}
+watchDebounced(
+    values,
+    () => {
+        pager.value.page = 1;
+        refetchBuildings();
+    },
+    { debounce: 300, deep: true },
+);
+
+watch(pager, () => {
+    refetchBuildings();
+});
 </script>
 
 <template>
     <AsideNavbarLayout>
-        <Container class="px-0!">
-            <div class="px-4 pb-6 border-b border-border">
-                <Filters :filters />
+        <Container class="px-0! py-0! @container">
+            <div
+                class="p-4 flex flex-col @md:flex-row border-b border-border items-center gap-2 justify-between flex-wrap"
+            >
+                <div class="flex flex-col @sm:flex-row items-center gap-2 shrink-0">
+                    <LinkButton
+                        v-if="hasPermission(Permission.BuildingAdd)"
+                        :to="{ name: buildingRoutes.add.name }"
+                        class="w-full sm:max-w-45 py-1.5! rounded!"
+                    >
+                        <PlusIcon />
+                        Add Building
+                    </LinkButton>
+                    <Filters :filters v-model="values" class="w-full @sm:w-auto shrink-0" />
+                </div>
+                <Pager :current-page="pagedBuildings.page" :total-pages="16" />
             </div>
+
             <DataTable
                 v-if="pagedBuildings.value"
                 :columns
                 :items="pagedBuildings.value"
                 row-key="id"
                 :is-loading="isLoading"
-                :pager="{
-                    page: pagedBuildings.page ?? 1,
-                    pageSize: pagedBuildings.pageSize ?? 25,
-                    totalCount: pagedBuildings.totalCount ?? 0,
-                }"
+                :pager="pager"
             >
                 <template #cell-link="{ row }">
                     <LinkButton
