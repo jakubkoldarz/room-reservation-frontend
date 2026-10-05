@@ -18,8 +18,15 @@ import { watchDebounced } from "@vueuse/core";
 import { useBuildingsList } from "../composables/useBuildingsList";
 import { usePager } from "@/features/pager/composables/usePager";
 import Pager from "@/features/pager/components/Pager.vue";
+import apiClient from "@/api/client";
+import { useApiCall } from "@/composables/useApiCall";
+import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
+import Overlay from "@/features/modal/components/Overlay.vue";
+import Modal from "@/features/modal/components/Modal.vue";
 
 const { hasPermission } = usePermissions();
+
+const { call } = useApiCall();
 
 const columns = useVisibleColumns(() => [
     { key: "link", width: 65, align: "center", visible: hasPermission(Permission.BuildingView) },
@@ -37,9 +44,20 @@ const { pager } = usePager(25);
 const { fetchBuildings, isLoading, pagedBuildings } = useBuildingsList();
 onMounted(() => fetchBuildings(values.value, pager.value));
 
-function deleteBuilding(buildingId: string) {
-    // TODO: ADD MODAL CONFIRMATION
-    console.log("Delete building with ID:", buildingId);
+async function deleteBuilding(buildingId: string) {
+    isModalOpen.value = true;
+    return;
+
+    const response = await call(() => apiClient.deleteBuildingsBuildingId(undefined, { params: { buildingId } }));
+    const toastsStore = useToastsStore();
+
+    // TODO: Dodać modal
+    if (response.success) {
+        refetchBuildings();
+        toastsStore.pushSuccess({ title: "Success", message: "Building deleted successfully" });
+    } else {
+        toastsStore.pushApiError({ title: "Failed to delete building", error: response.error });
+    }
 }
 
 async function refetchBuildings() {
@@ -57,10 +75,13 @@ watchDebounced(
 watch(pager, () => {
     refetchBuildings();
 });
+
+const isModalOpen = ref(false);
 </script>
 
 <template>
     <AsideNavbarLayout>
+        <Modal :is-open="isModalOpen" @close="isModalOpen = false" />
         <Container class="px-0! py-0! @container">
             <div
                 class="p-4 flex flex-col @md:flex-row border-b border-border items-center gap-2 justify-between flex-wrap"

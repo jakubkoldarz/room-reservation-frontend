@@ -15,7 +15,7 @@ import type { Availability } from "@/types/availabilities.ts";
 const building = ref<Building>();
 const availabilities = ref<Availability[]>([]);
 
-const { call, isLoading } = useApiCall();
+const { call } = useApiCall();
 const router = useRouter();
 const editRef = ref<InstanceType<typeof EditInfo> | null>(null);
 
