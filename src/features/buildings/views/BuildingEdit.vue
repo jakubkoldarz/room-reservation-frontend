@@ -2,7 +2,6 @@
 import apiClient from "@/api/client";
 import { useApiCall } from "@/composables/useApiCall";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
-import type { BuildingDetails } from "@/types/dtos";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import EditHeader from "../components/EditHeader.vue";
@@ -14,6 +13,7 @@ import { useBuildingsStore } from "../stores/useBuildingsStore.ts";
 import NumberCircle from "../components/NumberCircle.vue";
 import type { Availability } from "@/types/availabilities.ts";
 import AvailabilitiesEdit from "@/features/availabilities/components/AvailabilitiesEdit.vue";
+import type { BuildingDetails } from "../types.ts";
 
 const editRef = ref<InstanceType<typeof EditInfo>>();
 const availabilitiesModel = ref<Availability[]>([]);

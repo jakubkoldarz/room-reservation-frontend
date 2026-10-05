@@ -32,7 +32,7 @@ const columns = useVisibleColumns(() => [
 
 const filters = defineFilters([{ type: "text", key: "Name", placeholder: "Building name" }]);
 const values = ref<FilterValues<typeof filters>>({});
-const { pager } = usePager(2);
+const { pager } = usePager(25);
 
 const { fetchBuildings, isLoading, pagedBuildings } = useBuildingsList();
 onMounted(() => fetchBuildings(values.value, pager.value));
@@ -76,7 +76,7 @@ watch(pager, () => {
                     </LinkButton>
                     <Filters :filters v-model="values" class="w-full @sm:w-auto shrink-0" />
                 </div>
-                <Pager :current-page="pagedBuildings.page" :total-pages="16" />
+                <Pager :current-page="pagedBuildings.page" :total-pages="pagedBuildings.totalPages" />
             </div>
 
             <DataTable

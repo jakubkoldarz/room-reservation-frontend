@@ -22,7 +22,7 @@ const props = defineProps<{
     <LinkButton
         v-else
         :active="false"
-        class="py-0! px-2! rounded! opacity-90 cursor-not-allowed pointer-events-none select-none min-w-8 justify-center"
+        class="py-0! px-2! rounded! opacity-50 cursor-not-allowed pointer-events-none select-none min-w-8 justify-center"
         :to="{ query: { page } }"
     >
         {{ props.text || props.page }}

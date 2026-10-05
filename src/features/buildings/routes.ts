@@ -8,6 +8,12 @@ export const buildingRoutes = {
         component: () => import("@/features/buildings/views/BuildingList.vue"),
         meta: { requiresAuth: true, requiredPermission: Permission.BuildingList },
     },
+    add: {
+        path: "/buildings/new",
+        name: "building.add",
+        component: () => import("@/features/buildings/views/BuildingAdd.vue"),
+        meta: { requiresAuth: true, requiredPermission: Permission.BuildingAdd },
+    },
     view: {
         path: "/buildings/:buildingId",
         name: "buildings.view",
@@ -19,11 +25,5 @@ export const buildingRoutes = {
         name: "building.edit",
         component: () => import("@/features/buildings/views/BuildingEdit.vue"),
         meta: { requiresAuth: true, requiredPermission: Permission.BuildingEdit },
-    },
-    add: {
-        path: "/buildings/create",
-        name: "building.edit",
-        component: () => import("@/features/buildings/views/BuildingAdd.vue"),
-        meta: { requiresAuth: true, requiredPermission: Permission.BuildingAdd },
     },
 } as const satisfies Record<string, RouteRecordRaw>;

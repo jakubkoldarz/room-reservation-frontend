@@ -2,7 +2,6 @@
 import apiClient from "@/api/client";
 import { useApiCall } from "@/composables/useApiCall";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
-import type { BuildingDetails } from "@/types/dtos";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import BuildingInfo from "../components/BuildingInfo.vue";
@@ -12,6 +11,7 @@ import router from "@/router/index.ts";
 import { buildingRoutes } from "../routes.ts";
 import AvailabilitiesTable from "@/features/availabilities/components/AvailabilitiesTable.vue";
 import { formatAddress } from "../utils/formatAddres.ts";
+import type { BuildingDetails } from "../types.ts";
 
 const route = useRoute();
 const buildingId = computed(() => route.params.buildingId as string);
@@ -24,6 +24,8 @@ async function fetchBuilding() {
     const response = await call(() => apiClient.getBuildingsBuildingId({ params: { buildingId: buildingId.value } }));
     if (response.success) {
         building.value = response.data;
+    } else {
+        router.push({ name: buildingRoutes.list.name });
     }
 }
 

@@ -16,6 +16,7 @@ let timeoutId = null as number | null;
 const { building } = defineProps<{
     building?: Building;
     isLoading?: boolean;
+    isNew?: boolean;
 }>();
 
 const { copy, isSupported } = useClipboard();
@@ -79,6 +80,7 @@ const [floorsCount, floorsCountAttrs] = defineField("floorsCount");
 
         <div class="grid grid-cols-1 @lg:grid-cols-2 @xl:grid-cols-3 gap-4">
             <BaseInput
+                v-if="!isNew"
                 @focus="copyBuildingId"
                 class="bg-text-muted/10 text-text/60 font-mono cursor-pointer text-sm rounded-lg py-2 px-4"
                 readonly

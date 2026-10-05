@@ -4,12 +4,12 @@ import { Permission } from "../auth/constants/permissions";
 import LinkButton from "./LinkButton.vue";
 import { dashboardRoutes } from "../dashboard/routes";
 import { HomeIcon } from "@heroicons/vue/24/solid";
-import { buildingRoutes } from "../buildings/routes.ts";
 import { useBuildingsStore } from "../buildings/stores/useBuildingsStore.ts";
 import AsideList from "./AsideList.vue";
 import { useRoute } from "vue-router";
 import { watch } from "vue";
 import { watchDebounced } from "@vueuse/core";
+import { buildingRoutes } from "../buildings/routes.ts";
 
 const { hasPermission } = usePermissions();
 const buildingsStore = useBuildingsStore();
