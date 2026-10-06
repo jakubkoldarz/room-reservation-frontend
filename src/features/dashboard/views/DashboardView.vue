@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import Navbar from "@/features/shared/Navbar.vue";
+import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 </script>
 
 <template>
-    <Navbar />
+    <AsideNavbarLayout> Lorem ipsum dolor sit amet consectetur adipisicing elit. Ullam, excepturi. </AsideNavbarLayout>
 </template>

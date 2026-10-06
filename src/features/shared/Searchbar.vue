@@ -30,7 +30,7 @@ defineExpose({
             ref="inputRef"
             :placeholder="placeholder"
             spellcheck="false"
-            class="peer border border-border-secondary bg-secondary-hover text-sm py-1 pl-8 rounded-md px-1 w-full outline-none focus-visible:ring-2 focus-visible:ring-primary placeholder:text-text-muted-secondary"
+            class="peer border text-sm py-1 pl-8 rounded-md px-1 w-full outline-none focus-visible:ring-2 focus-visible:ring-primary placeholder:text-text-muted-secondary"
         />
     </div>
 </template>
