@@ -3,17 +3,26 @@ import { usePermissions } from "@/composables/usePermissions";
 import { Permission } from "../auth/constants/permissions";
 import LinkButton from "./LinkButton.vue";
 import { dashboardRoutes } from "../dashboard/routes";
-import { HomeIcon } from "@heroicons/vue/24/solid";
+import { HomeIcon, RectangleGroupIcon, StarIcon } from "@heroicons/vue/24/solid";
 import { useBuildingsStore } from "../buildings/stores/useBuildingsStore.ts";
 import AsideList from "./AsideList.vue";
 import { useRoute } from "vue-router";
-import { watch } from "vue";
+import { computed, onMounted, watch } from "vue";
 import { watchDebounced } from "@vueuse/core";
 import { buildingRoutes } from "../buildings/routes.ts";
+import { equipmentRoutes } from "../equipment/routes.ts";
 
 const { hasPermission } = usePermissions();
 const buildingsStore = useBuildingsStore();
 const route = useRoute();
+
+const buildingItems = computed(() => {
+    return buildingsStore.buildings?.map((b) => ({
+        name: b.name,
+        id: b.id,
+        to: { name: buildingRoutes.view.name, params: { buildingId: b.id } },
+    }));
+});
 
 watch(
     () => route.fullPath,
@@ -28,9 +37,11 @@ const emit = defineEmits<{
     forceClose: [];
 }>();
 
-if (hasPermission(Permission.BuildingList)) {
-    buildingsStore.ensureLoaded();
-}
+onMounted(() => {
+    if (hasPermission(Permission.BuildingList)) {
+        buildingsStore.ensureLoaded();
+    }
+});
 
 async function refetchBuildings() {
     await buildingsStore.fetchBuildings();
@@ -73,19 +84,21 @@ watchDebounced(
                     <HomeIcon />
                     Dashboard
                 </LinkButton>
+                <LinkButton :to="equipmentRoutes.list">
+                    <RectangleGroupIcon />
+                    Equipment
+                </LinkButton>
+                <LinkButton :to="equipmentRoutes.list">
+                    <StarIcon />
+                    Events
+                </LinkButton>
                 <AsideList
                     v-model="buildingsStore.queryParam"
                     v-if="hasPermission(Permission.BuildingList)"
                     class="mt-4"
                     title="Buildings"
                     :to="buildingRoutes.list"
-                    :items="
-                        buildingsStore.buildings?.map((b) => ({
-                            name: b.name,
-                            id: b.id,
-                            to: { name: buildingRoutes.view.name, params: { buildingId: b.id } },
-                        }))
-                    "
+                    :items="buildingItems"
                     :display-count="4"
                     :is-loading="buildingsStore.isLoading"
                     :total-count="buildingsStore.totalCount"
