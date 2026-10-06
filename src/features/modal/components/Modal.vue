@@ -18,8 +18,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-    <Overlay :is-open="isOpen" @close="emit('close')" />
-    <Teleport to="body">
+    <Overlay :is-open="isOpen" @close="emit('close')">
         <div
             :class="[isOpen ? 'flex' : 'hidden']"
             class="fixed z-1000 inset-0 items-end sm:items-center justify-center p-4"
@@ -44,5 +43,5 @@ const emit = defineEmits<{
                 </div>
             </Container>
         </div>
-    </Teleport>
+    </Overlay>
 </template>

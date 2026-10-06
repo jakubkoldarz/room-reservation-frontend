@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
-import Badge from "@/features/shared/Badge.vue";
 import Container from "@/features/shared/Container.vue";
 import { onMounted, ref, watch } from "vue";
 import LinkButton from "@/features/shared/LinkButton.vue";
 import { ArrowRightIcon, PlusIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import * as SolidIcons from "@heroicons/vue/24/solid";
 import IconButton from "@/features/shared/IconButton.vue";
 import { usePermissions } from "@/composables/usePermissions";
 import { Permission } from "@/features/auth/constants/permissions";
@@ -27,7 +27,7 @@ const { call } = useApiCall();
 
 const columns = useVisibleColumns(() => [
     { key: "link", width: 65, align: "center", visible: hasPermission(Permission.EquipmentView) },
-    { key: "icon", label: "Icon", width: 150, align: "left" },
+    { key: "icon", label: "Icon", width: 75, align: "center" },
     { key: "name", label: "Equipment", align: "left" },
     { key: "delete", width: 65, align: "center", visible: hasPermission(Permission.EquipmentDelete) },
 ]);
@@ -113,15 +113,20 @@ const isModalOpen = ref(false);
                 </template>
 
                 <template #cell-icon="{ row }">
-                    {{ row.icon }}
+                    <div class="flex items-center justify-center">
+                        <component
+                            :is="SolidIcons[row.icon]"
+                            class="size-5 text-text/65 border border-text/20 bg-text/5 rounded-md p-0.5"
+                        />
+                    </div>
                 </template>
 
                 <template #cell-name="{ row }">
                     {{ row.name }}
                 </template>
 
-                <template #cell-delete=>
-                    <IconButton type="danger">
+                <template #cell-delete="{ row }">
+                    <IconButton type="danger" @click="deleteEquipment(row.id)">
                         <TrashIcon class="size-4" />
                     </IconButton>
                 </template>
