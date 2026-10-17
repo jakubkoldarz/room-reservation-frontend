@@ -1,5 +1,5 @@
 <script setup lang="ts"></script>
 
 <template>
-    <div class="h-6 w-48 bg-gray-200 rounded" />
+  <div class="h-6 w-48 rounded bg-gray-200" />
 </template>

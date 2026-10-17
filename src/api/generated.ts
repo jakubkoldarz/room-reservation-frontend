@@ -1,43 +1,39 @@
-import { makeApi, Zodios, type ZodiosOptions } from "@zodios/core";
-import { z } from "zod";
+import { makeApi, Zodios, type ZodiosOptions } from '@zodios/core'
+import { z } from 'zod'
 
 const RegisterRequestDto = z
   .object({ email: z.string(), password: z.string().min(8) })
-  .passthrough();
-const JwtTokenResponseDto = z.object({ jwtToken: z.string() }).passthrough();
-const VerificationCodedRequestDto = z
-  .object({ verificationCode: z.string() })
-  .passthrough();
-const LoginRequestDto = z
-  .object({ email: z.string(), password: z.string() })
-  .passthrough();
+  .passthrough()
+const JwtTokenResponseDto = z.object({ jwtToken: z.string() }).passthrough()
+const VerificationCodedRequestDto = z.object({ verificationCode: z.string() }).passthrough()
+const LoginRequestDto = z.object({ email: z.string(), password: z.string() }).passthrough()
 const LoginResponseDto = z
   .object({
     requires2FA: z.boolean(),
     verificationId: z.union([z.null(), z.string()]).optional(),
     jwtToken: z.union([z.null(), z.string()]).optional(),
   })
-  .passthrough();
+  .passthrough()
 const VerificationRequestDto = z
   .object({ verificationId: z.string().uuid(), verificationCode: z.string() })
-  .passthrough();
+  .passthrough()
 const BasicUserResponseDto = z
   .object({
     id: z.string().uuid(),
     firstname: z.union([z.null(), z.string()]).optional(),
     lastname: z.union([z.null(), z.string()]).optional(),
   })
-  .passthrough();
+  .passthrough()
 const UserAccountStatusResponseDto = z
   .object({
     hasProfileCompleted: z.boolean(),
     hasEmailVerified: z.boolean(),
     has2faEnabled: z.boolean(),
   })
-  .passthrough();
+  .passthrough()
 const RoleWithPermissionsResponseDto = z
   .object({ role: z.string(), permissions: z.array(z.string()) })
-  .passthrough();
+  .passthrough()
 const RefreshTokenResponseDto = z
   .object({
     id: z.string().uuid(),
@@ -46,7 +42,7 @@ const RefreshTokenResponseDto = z
     ipAddress: z.union([z.null(), z.string()]).optional(),
     userAgent: z.union([z.null(), z.string()]).optional(),
   })
-  .passthrough();
+  .passthrough()
 const UserDetailsResponseDto = z
   .object({
     userInfo: BasicUserResponseDto,
@@ -54,14 +50,12 @@ const UserDetailsResponseDto = z
     roleInfo: RoleWithPermissionsResponseDto,
     refreshTokens: z.array(RefreshTokenResponseDto),
   })
-  .passthrough();
+  .passthrough()
 const ChangePasswordRequestDto = z
   .object({ oldPassword: z.string().min(8), newPassword: z.string().min(8) })
-  .passthrough();
-const EmailRequestDto = z.object({ emailAddress: z.string() }).passthrough();
-const VerificationIdResponseDto = z
-  .object({ verificationId: z.string().uuid() })
-  .passthrough();
+  .passthrough()
+const EmailRequestDto = z.object({ emailAddress: z.string() }).passthrough()
+const VerificationIdResponseDto = z.object({ verificationId: z.string().uuid() }).passthrough()
 const BasicBuildingResponseDto = z
   .object({
     id: z.string().uuid(),
@@ -72,11 +66,9 @@ const BasicBuildingResponseDto = z
     postalCode: z.string(),
     floorsCount: z.number().int(),
   })
-  .passthrough();
-const ErrorType = z.number();
-const Error = z
-  .object({ errorMessage: z.string(), errorType: ErrorType.int() })
-  .passthrough();
+  .passthrough()
+const ErrorType = z.number()
+const Error = z.object({ errorMessage: z.string(), errorType: ErrorType.int() }).passthrough()
 const PagedResultOfBasicBuildingResponseDto = z
   .object({
     isSuccess: z.boolean(),
@@ -89,15 +81,15 @@ const PagedResultOfBasicBuildingResponseDto = z
     hasNextPage: z.boolean(),
   })
   .partial()
-  .passthrough();
-const DayOfWeek = z.number();
+  .passthrough()
+const DayOfWeek = z.number()
 const AvailabilityRequestDto = z
   .object({
     dayOfWeek: DayOfWeek.int(),
     startTime: z.string(),
     endTime: z.string(),
   })
-  .passthrough();
+  .passthrough()
 const BuildingRequestDto = z
   .object({
     name: z.string().min(1).max(100),
@@ -108,14 +100,14 @@ const BuildingRequestDto = z
     floorsCount: z.number().int().gte(0).lte(100),
     availabilities: z.array(AvailabilityRequestDto),
   })
-  .passthrough();
+  .passthrough()
 const AvailabilityResponseDto = z
   .object({
     dayOfWeek: DayOfWeek.int(),
     startTime: z.string(),
     endTime: z.string(),
   })
-  .passthrough();
+  .passthrough()
 const BasicRoomResponseDto = z
   .object({
     id: z.string().uuid(),
@@ -124,17 +116,17 @@ const BasicRoomResponseDto = z
     capacity: z.number().int(),
     floor: z.number().int(),
   })
-  .passthrough();
+  .passthrough()
 const BuildingDetailsResponseDto = z
   .object({
     buildingInfo: BasicBuildingResponseDto,
     availabilities: z.array(AvailabilityResponseDto),
     rooms: z.array(BasicRoomResponseDto),
   })
-  .passthrough();
+  .passthrough()
 const EquipmentResponseDto = z
   .object({ id: z.string().uuid(), name: z.string(), icon: z.string() })
-  .passthrough();
+  .passthrough()
 const PagedResultOfEquipmentResponseDto = z
   .object({
     isSuccess: z.boolean(),
@@ -147,10 +139,10 @@ const PagedResultOfEquipmentResponseDto = z
     hasNextPage: z.boolean(),
   })
   .partial()
-  .passthrough();
+  .passthrough()
 const EquipmentRequestDto = z
   .object({ name: z.string().max(50), icon: z.string().max(50) })
-  .passthrough();
+  .passthrough()
 const EventResponseDto = z
   .object({
     id: z.string().uuid(),
@@ -162,7 +154,7 @@ const EventResponseDto = z
     endTime: z.union([z.null(), z.string()]).optional(),
     rooms: z.array(BasicRoomResponseDto),
   })
-  .passthrough();
+  .passthrough()
 const EventRequestDto = z
   .object({
     name: z.string().max(100),
@@ -173,16 +165,14 @@ const EventRequestDto = z
     startTime: z.union([z.null(), z.string()]).optional(),
     endTime: z.union([z.null(), z.string()]).optional(),
   })
-  .passthrough();
-const PermissionResponseDto = z
-  .object({ id: z.string().uuid(), name: z.string() })
-  .passthrough();
+  .passthrough()
+const PermissionResponseDto = z.object({ id: z.string().uuid(), name: z.string() }).passthrough()
 const ReservationActorResponseDto = z
   .object({
     at: z.string().datetime({ offset: true }),
     by: BasicUserResponseDto,
   })
-  .passthrough();
+  .passthrough()
 const ReservationResponseDto = z
   .object({
     id: z.string().uuid(),
@@ -197,14 +187,14 @@ const ReservationResponseDto = z
     reason: z.union([z.null(), z.string()]).optional(),
     status: z.string().optional(),
   })
-  .passthrough();
+  .passthrough()
 const UpdateReservationRequestDto = z
   .object({
     startTime: z.string(),
     endTime: z.string(),
     purpose: z.union([z.null(), z.string()]).optional(),
   })
-  .passthrough();
+  .passthrough()
 const PagedResultOfReservationResponseDto = z
   .object({
     isSuccess: z.boolean(),
@@ -217,7 +207,7 @@ const PagedResultOfReservationResponseDto = z
     hasNextPage: z.boolean(),
   })
   .partial()
-  .passthrough();
+  .passthrough()
 const CreateReservationRequestDto = z
   .object({
     roomId: z.string().uuid(),
@@ -226,11 +216,11 @@ const CreateReservationRequestDto = z
     endTime: z.string(),
     purpose: z.union([z.null(), z.string()]).optional(),
   })
-  .passthrough();
+  .passthrough()
 const ReservationReasonRequestDto = z
   .object({ reason: z.union([z.null(), z.string()]) })
   .partial()
-  .passthrough();
+  .passthrough()
 const RoleResponseDto = z
   .object({
     id: z.string().uuid(),
@@ -239,7 +229,7 @@ const RoleResponseDto = z
     isSuperAdmin: z.boolean(),
     permissions: z.array(z.string()),
   })
-  .passthrough();
+  .passthrough()
 const PagedResultOfRoleResponseDto = z
   .object({
     isSuccess: z.boolean(),
@@ -252,7 +242,7 @@ const PagedResultOfRoleResponseDto = z
     hasNextPage: z.boolean(),
   })
   .partial()
-  .passthrough();
+  .passthrough()
 const RoleRequestDto = z
   .object({
     name: z.string().max(50),
@@ -261,7 +251,7 @@ const RoleRequestDto = z
     isSuperAdmin: z.boolean(),
     permissionIds: z.array(z.string().uuid()),
   })
-  .passthrough();
+  .passthrough()
 const PagedResultOfBasicRoomResponseDto = z
   .object({
     isSuccess: z.boolean(),
@@ -274,7 +264,7 @@ const PagedResultOfBasicRoomResponseDto = z
     hasNextPage: z.boolean(),
   })
   .partial()
-  .passthrough();
+  .passthrough()
 const RoomRequestDto = z
   .object({
     identifier: z.string().max(50),
@@ -285,7 +275,7 @@ const RoomRequestDto = z
     equipmentIds: z.array(z.string().uuid()).max(5),
     availabilities: z.array(AvailabilityRequestDto),
   })
-  .passthrough();
+  .passthrough()
 const PagedResultOfBasicUserResponseDto = z
   .object({
     isSuccess: z.boolean(),
@@ -298,13 +288,13 @@ const PagedResultOfBasicUserResponseDto = z
     hasNextPage: z.boolean(),
   })
   .partial()
-  .passthrough();
+  .passthrough()
 const UpdateProfileRequestDto = z
   .object({
     firstname: z.string().min(3).max(50),
     lastname: z.string().max(100),
   })
-  .passthrough();
+  .passthrough()
 
 export const schemas = {
   RegisterRequestDto,
@@ -350,1148 +340,1148 @@ export const schemas = {
   RoomRequestDto,
   PagedResultOfBasicUserResponseDto,
   UpdateProfileRequestDto,
-};
+}
 
 const endpoints = makeApi([
   {
-    method: "post",
-    path: "/auth/2fa/disable",
-    alias: "postAuth2fadisable",
-    requestFormat: "json",
+    method: 'post',
+    path: '/auth/2fa/disable',
+    alias: 'postAuth2fadisable',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: z.object({ verificationId: z.string().uuid() }).passthrough(),
   },
   {
-    method: "post",
-    path: "/auth/2fa/enable",
-    alias: "postAuth2faenable",
-    requestFormat: "json",
+    method: 'post',
+    path: '/auth/2fa/enable',
+    alias: 'postAuth2faenable',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: z.object({ verificationId: z.string().uuid() }).passthrough(),
   },
   {
-    method: "patch",
-    path: "/auth/email",
-    alias: "patchAuthemail",
-    requestFormat: "json",
+    method: 'patch',
+    path: '/auth/email',
+    alias: 'patchAuthemail',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: z.object({ emailAddress: z.string() }).passthrough(),
       },
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: z.object({ verificationId: z.string().uuid() }).passthrough(),
   },
   {
-    method: "post",
-    path: "/auth/email/confirmation",
-    alias: "postAuthemailconfirmation",
-    requestFormat: "json",
+    method: 'post',
+    path: '/auth/email/confirmation',
+    alias: 'postAuthemailconfirmation',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: z.object({ verificationId: z.string().uuid() }).passthrough(),
   },
   {
-    method: "post",
-    path: "/auth/email/confirmation/verify",
-    alias: "postAuthemailconfirmationverify",
-    requestFormat: "json",
+    method: 'post',
+    path: '/auth/email/confirmation/verify',
+    alias: 'postAuthemailconfirmationverify',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: z.object({ verificationCode: z.string() }).passthrough(),
       },
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: z.void(),
   },
   {
-    method: "post",
-    path: "/auth/email/verify",
-    alias: "postAuthemailverify",
-    requestFormat: "json",
+    method: 'post',
+    path: '/auth/email/verify',
+    alias: 'postAuthemailverify',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: VerificationRequestDto,
       },
     ],
     response: z.void(),
   },
   {
-    method: "post",
-    path: "/auth/login",
-    alias: "postAuthlogin",
-    requestFormat: "json",
+    method: 'post',
+    path: '/auth/login',
+    alias: 'postAuthlogin',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: LoginRequestDto,
       },
     ],
     response: LoginResponseDto,
   },
   {
-    method: "post",
-    path: "/auth/login/2fa",
-    alias: "postAuthlogin2fa",
-    requestFormat: "json",
+    method: 'post',
+    path: '/auth/login/2fa',
+    alias: 'postAuthlogin2fa',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: VerificationRequestDto,
       },
     ],
     response: z.object({ jwtToken: z.string() }).passthrough(),
   },
   {
-    method: "post",
-    path: "/auth/logout",
-    alias: "postAuthlogout",
-    requestFormat: "json",
+    method: 'post',
+    path: '/auth/logout',
+    alias: 'postAuthlogout',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: z.void(),
   },
   {
-    method: "get",
-    path: "/auth/me",
-    alias: "getAuthme",
-    requestFormat: "json",
+    method: 'get',
+    path: '/auth/me',
+    alias: 'getAuthme',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: UserDetailsResponseDto,
   },
   {
-    method: "patch",
-    path: "/auth/password",
-    alias: "patchAuthpassword",
-    requestFormat: "json",
+    method: 'patch',
+    path: '/auth/password',
+    alias: 'patchAuthpassword',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: ChangePasswordRequestDto,
       },
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: z.void(),
   },
   {
-    method: "post",
-    path: "/auth/refresh",
-    alias: "postAuthrefresh",
-    requestFormat: "json",
+    method: 'post',
+    path: '/auth/refresh',
+    alias: 'postAuthrefresh',
+    requestFormat: 'json',
     response: z.object({ jwtToken: z.string() }).passthrough(),
   },
   {
-    method: "post",
-    path: "/auth/register",
-    alias: "postAuthregister",
-    requestFormat: "json",
+    method: 'post',
+    path: '/auth/register',
+    alias: 'postAuthregister',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: RegisterRequestDto,
       },
     ],
     response: z.object({ jwtToken: z.string() }).passthrough(),
   },
   {
-    method: "delete",
-    path: "/auth/sessions",
-    alias: "deleteAuthsessions",
-    requestFormat: "json",
+    method: 'delete',
+    path: '/auth/sessions',
+    alias: 'deleteAuthsessions',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: z.void(),
   },
   {
-    method: "delete",
-    path: "/auth/sessions/:refreshTokenId",
-    alias: "deleteAuthsessionsRefreshTokenId",
-    requestFormat: "json",
+    method: 'delete',
+    path: '/auth/sessions/:refreshTokenId',
+    alias: 'deleteAuthsessionsRefreshTokenId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
       {
-        name: "refreshTokenId",
-        type: "Path",
+        name: 'refreshTokenId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
     response: z.void(),
   },
   {
-    method: "get",
-    path: "/buildings",
-    alias: "getBuildings",
-    requestFormat: "json",
+    method: 'get',
+    path: '/buildings',
+    alias: 'getBuildings',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "Name",
-        type: "Query",
+        name: 'Name',
+        type: 'Query',
         schema: z.string().optional(),
       },
       {
-        name: "Identifier",
-        type: "Query",
+        name: 'Identifier',
+        type: 'Query',
         schema: z.string().optional(),
       },
       {
-        name: "Street",
-        type: "Query",
+        name: 'Street',
+        type: 'Query',
         schema: z.string().optional(),
       },
       {
-        name: "City",
-        type: "Query",
+        name: 'City',
+        type: 'Query',
         schema: z.string().optional(),
       },
       {
-        name: "PostalCode",
-        type: "Query",
+        name: 'PostalCode',
+        type: 'Query',
         schema: z.string().optional(),
       },
       {
-        name: "Page",
-        type: "Query",
+        name: 'Page',
+        type: 'Query',
         schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
-        name: "PageSize",
-        type: "Query",
+        name: 'PageSize',
+        type: 'Query',
         schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
     ],
     response: PagedResultOfBasicBuildingResponseDto,
   },
   {
-    method: "post",
-    path: "/buildings",
-    alias: "postBuildings",
-    requestFormat: "json",
+    method: 'post',
+    path: '/buildings',
+    alias: 'postBuildings',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: BuildingRequestDto,
       },
     ],
     response: BasicBuildingResponseDto,
   },
   {
-    method: "get",
-    path: "/buildings/:buildingId",
-    alias: "getBuildingsBuildingId",
-    requestFormat: "json",
+    method: 'get',
+    path: '/buildings/:buildingId',
+    alias: 'getBuildingsBuildingId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "buildingId",
-        type: "Path",
+        name: 'buildingId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
     response: BuildingDetailsResponseDto,
   },
   {
-    method: "put",
-    path: "/buildings/:buildingId",
-    alias: "putBuildingsBuildingId",
-    requestFormat: "json",
+    method: 'put',
+    path: '/buildings/:buildingId',
+    alias: 'putBuildingsBuildingId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: BuildingRequestDto,
       },
       {
-        name: "buildingId",
-        type: "Path",
+        name: 'buildingId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
     response: BasicBuildingResponseDto,
   },
   {
-    method: "delete",
-    path: "/buildings/:buildingId",
-    alias: "deleteBuildingsBuildingId",
-    requestFormat: "json",
+    method: 'delete',
+    path: '/buildings/:buildingId',
+    alias: 'deleteBuildingsBuildingId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "buildingId",
-        type: "Path",
+        name: 'buildingId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
     response: z.void(),
   },
   {
-    method: "get",
-    path: "/buildings/lookup",
-    alias: "getBuildingslookup",
-    requestFormat: "json",
+    method: 'get',
+    path: '/buildings/lookup',
+    alias: 'getBuildingslookup',
+    requestFormat: 'json',
     response: z.array(BasicBuildingResponseDto),
   },
   {
-    method: "get",
-    path: "/equipment",
-    alias: "getEquipment",
-    requestFormat: "json",
+    method: 'get',
+    path: '/equipment',
+    alias: 'getEquipment',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "Name",
-        type: "Query",
+        name: 'Name',
+        type: 'Query',
         schema: z.string().optional(),
       },
       {
-        name: "Page",
-        type: "Query",
+        name: 'Page',
+        type: 'Query',
         schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
-        name: "PageSize",
-        type: "Query",
+        name: 'PageSize',
+        type: 'Query',
         schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
     ],
     response: PagedResultOfEquipmentResponseDto,
   },
   {
-    method: "post",
-    path: "/equipment",
-    alias: "postEquipment",
-    requestFormat: "json",
+    method: 'post',
+    path: '/equipment',
+    alias: 'postEquipment',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: EquipmentRequestDto,
       },
     ],
     response: EquipmentResponseDto,
   },
   {
-    method: "get",
-    path: "/equipment/:equipmentId",
-    alias: "getEquipmentEquipmentId",
-    requestFormat: "json",
+    method: 'get',
+    path: '/equipment/:equipmentId',
+    alias: 'getEquipmentEquipmentId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "equipmentId",
-        type: "Path",
+        name: 'equipmentId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
     response: EquipmentResponseDto,
   },
   {
-    method: "put",
-    path: "/equipment/:equipmentId",
-    alias: "putEquipmentEquipmentId",
-    requestFormat: "json",
+    method: 'put',
+    path: '/equipment/:equipmentId',
+    alias: 'putEquipmentEquipmentId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: EquipmentRequestDto,
       },
       {
-        name: "equipmentId",
-        type: "Path",
+        name: 'equipmentId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
     response: EquipmentResponseDto,
   },
   {
-    method: "delete",
-    path: "/equipment/:equipmentId",
-    alias: "deleteEquipmentEquipmentId",
-    requestFormat: "json",
+    method: 'delete',
+    path: '/equipment/:equipmentId',
+    alias: 'deleteEquipmentEquipmentId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "equipmentId",
-        type: "Path",
+        name: 'equipmentId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
     response: z.void(),
   },
   {
-    method: "post",
-    path: "/events",
-    alias: "postEvents",
-    requestFormat: "json",
+    method: 'post',
+    path: '/events',
+    alias: 'postEvents',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: EventRequestDto,
       },
       {
-        name: "force",
-        type: "Query",
+        name: 'force',
+        type: 'Query',
         schema: z.boolean().optional().default(false),
       },
     ],
     response: EventResponseDto,
   },
   {
-    method: "get",
-    path: "/events/:eventId",
-    alias: "getEventsEventId",
-    requestFormat: "json",
+    method: 'get',
+    path: '/events/:eventId',
+    alias: 'getEventsEventId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "eventId",
-        type: "Path",
+        name: 'eventId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
     response: EventResponseDto,
   },
   {
-    method: "put",
-    path: "/events/:eventId",
-    alias: "putEventsEventId",
-    requestFormat: "json",
+    method: 'put',
+    path: '/events/:eventId',
+    alias: 'putEventsEventId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: EventRequestDto,
       },
       {
-        name: "eventId",
-        type: "Path",
+        name: 'eventId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "force",
-        type: "Query",
+        name: 'force',
+        type: 'Query',
         schema: z.boolean().optional().default(false),
       },
     ],
     response: EventResponseDto,
   },
   {
-    method: "delete",
-    path: "/events/:eventId",
-    alias: "deleteEventsEventId",
-    requestFormat: "json",
+    method: 'delete',
+    path: '/events/:eventId',
+    alias: 'deleteEventsEventId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "eventId",
-        type: "Path",
+        name: 'eventId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "force",
-        type: "Query",
+        name: 'force',
+        type: 'Query',
         schema: z.boolean().optional().default(false),
       },
     ],
     response: z.void(),
   },
   {
-    method: "get",
-    path: "/events/rooms/:roomId",
-    alias: "getEventsroomsRoomId",
-    requestFormat: "json",
+    method: 'get',
+    path: '/events/rooms/:roomId',
+    alias: 'getEventsroomsRoomId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "roomId",
-        type: "Path",
+        name: 'roomId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
     response: z.array(EventResponseDto),
   },
   {
-    method: "get",
-    path: "/permissions",
-    alias: "getPermissions",
-    requestFormat: "json",
+    method: 'get',
+    path: '/permissions',
+    alias: 'getPermissions',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "Name",
-        type: "Query",
+        name: 'Name',
+        type: 'Query',
         schema: z.string().optional(),
       },
       {
-        name: "Page",
-        type: "Query",
+        name: 'Page',
+        type: 'Query',
         schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
-        name: "PageSize",
-        type: "Query",
+        name: 'PageSize',
+        type: 'Query',
         schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
     ],
     response: z.array(PermissionResponseDto),
   },
   {
-    method: "get",
-    path: "/reservations",
-    alias: "getReservations",
-    requestFormat: "json",
+    method: 'get',
+    path: '/reservations',
+    alias: 'getReservations',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "CreatedById",
-        type: "Query",
+        name: 'CreatedById',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
       {
-        name: "ApprovedById",
-        type: "Query",
+        name: 'ApprovedById',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
       {
-        name: "CanceledById",
-        type: "Query",
+        name: 'CanceledById',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
       {
-        name: "RoomId",
-        type: "Query",
+        name: 'RoomId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
       {
-        name: "BuildingId",
-        type: "Query",
+        name: 'BuildingId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
       {
-        name: "Date",
-        type: "Query",
+        name: 'Date',
+        type: 'Query',
         schema: z.string().optional(),
       },
       {
-        name: "Status",
-        type: "Query",
+        name: 'Status',
+        type: 'Query',
         schema: z.number().int().optional(),
       },
       {
-        name: "Page",
-        type: "Query",
+        name: 'Page',
+        type: 'Query',
         schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
-        name: "PageSize",
-        type: "Query",
+        name: 'PageSize',
+        type: 'Query',
         schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
     ],
     response: PagedResultOfReservationResponseDto,
   },
   {
-    method: "post",
-    path: "/reservations",
-    alias: "postReservations",
-    requestFormat: "json",
+    method: 'post',
+    path: '/reservations',
+    alias: 'postReservations',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: CreateReservationRequestDto,
       },
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: ReservationResponseDto,
   },
   {
-    method: "get",
-    path: "/reservations/:reservationId",
-    alias: "getReservationsReservationId",
-    requestFormat: "json",
+    method: 'get',
+    path: '/reservations/:reservationId',
+    alias: 'getReservationsReservationId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "reservationId",
-        type: "Path",
+        name: 'reservationId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
     response: ReservationResponseDto,
   },
   {
-    method: "delete",
-    path: "/reservations/:reservationId",
-    alias: "deleteReservationsReservationId",
-    requestFormat: "json",
+    method: 'delete',
+    path: '/reservations/:reservationId',
+    alias: 'deleteReservationsReservationId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "reservationId",
-        type: "Path",
+        name: 'reservationId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: z.void(),
   },
   {
-    method: "put",
-    path: "/reservations/:reservationId",
-    alias: "putReservationsReservationId",
-    requestFormat: "json",
+    method: 'put',
+    path: '/reservations/:reservationId',
+    alias: 'putReservationsReservationId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: UpdateReservationRequestDto,
       },
       {
-        name: "reservationId",
-        type: "Path",
+        name: 'reservationId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: ReservationResponseDto,
   },
   {
-    method: "post",
-    path: "/reservations/:reservationId/approve",
-    alias: "postReservationsReservationIdapprove",
-    requestFormat: "json",
+    method: 'post',
+    path: '/reservations/:reservationId/approve',
+    alias: 'postReservationsReservationIdapprove',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "reservationId",
-        type: "Path",
+        name: 'reservationId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: z.void(),
   },
   {
-    method: "post",
-    path: "/reservations/:reservationId/cancel",
-    alias: "postReservationsReservationIdcancel",
-    requestFormat: "json",
+    method: 'post',
+    path: '/reservations/:reservationId/cancel',
+    alias: 'postReservationsReservationIdcancel',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: ReservationReasonRequestDto,
       },
       {
-        name: "reservationId",
-        type: "Path",
+        name: 'reservationId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: z.void(),
   },
   {
-    method: "post",
-    path: "/reservations/:reservationId/force-cancel",
-    alias: "postReservationsReservationIdforceCancel",
-    requestFormat: "json",
+    method: 'post',
+    path: '/reservations/:reservationId/force-cancel',
+    alias: 'postReservationsReservationIdforceCancel',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: ReservationReasonRequestDto,
       },
       {
-        name: "reservationId",
-        type: "Path",
+        name: 'reservationId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: z.void(),
   },
   {
-    method: "post",
-    path: "/reservations/:reservationId/reject",
-    alias: "postReservationsReservationIdreject",
-    requestFormat: "json",
+    method: 'post',
+    path: '/reservations/:reservationId/reject',
+    alias: 'postReservationsReservationIdreject',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: ReservationReasonRequestDto,
       },
       {
-        name: "reservationId",
-        type: "Path",
+        name: 'reservationId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: z.void(),
   },
   {
-    method: "get",
-    path: "/reservations/mine",
-    alias: "getReservationsmine",
-    requestFormat: "json",
+    method: 'get',
+    path: '/reservations/mine',
+    alias: 'getReservationsmine',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "CreatedById",
-        type: "Query",
+        name: 'CreatedById',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
       {
-        name: "ApprovedById",
-        type: "Query",
+        name: 'ApprovedById',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
       {
-        name: "CanceledById",
-        type: "Query",
+        name: 'CanceledById',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
       {
-        name: "RoomId",
-        type: "Query",
+        name: 'RoomId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
       {
-        name: "BuildingId",
-        type: "Query",
+        name: 'BuildingId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
       {
-        name: "Date",
-        type: "Query",
+        name: 'Date',
+        type: 'Query',
         schema: z.string().optional(),
       },
       {
-        name: "Status",
-        type: "Query",
+        name: 'Status',
+        type: 'Query',
         schema: z.number().int().optional(),
       },
       {
-        name: "Page",
-        type: "Query",
+        name: 'Page',
+        type: 'Query',
         schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
-        name: "PageSize",
-        type: "Query",
+        name: 'PageSize',
+        type: 'Query',
         schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: PagedResultOfReservationResponseDto,
   },
   {
-    method: "get",
-    path: "/roles",
-    alias: "getRoles",
-    requestFormat: "json",
+    method: 'get',
+    path: '/roles',
+    alias: 'getRoles',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "Name",
-        type: "Query",
+        name: 'Name',
+        type: 'Query',
         schema: z.string().optional(),
       },
       {
-        name: "Page",
-        type: "Query",
+        name: 'Page',
+        type: 'Query',
         schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
-        name: "PageSize",
-        type: "Query",
+        name: 'PageSize',
+        type: 'Query',
         schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
     ],
     response: PagedResultOfRoleResponseDto,
   },
   {
-    method: "post",
-    path: "/roles",
-    alias: "postRoles",
-    requestFormat: "json",
+    method: 'post',
+    path: '/roles',
+    alias: 'postRoles',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: RoleRequestDto,
       },
       {
-        name: "force",
-        type: "Query",
+        name: 'force',
+        type: 'Query',
         schema: z.boolean().optional().default(false),
       },
     ],
     response: RoleResponseDto,
   },
   {
-    method: "get",
-    path: "/roles/:roleId",
-    alias: "getRolesRoleId",
-    requestFormat: "json",
+    method: 'get',
+    path: '/roles/:roleId',
+    alias: 'getRolesRoleId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "roleId",
-        type: "Path",
+        name: 'roleId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
     response: RoleResponseDto,
   },
   {
-    method: "put",
-    path: "/roles/:roleId",
-    alias: "putRolesRoleId",
-    requestFormat: "json",
+    method: 'put',
+    path: '/roles/:roleId',
+    alias: 'putRolesRoleId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: RoleRequestDto,
       },
       {
-        name: "roleId",
-        type: "Path",
+        name: 'roleId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "force",
-        type: "Query",
+        name: 'force',
+        type: 'Query',
         schema: z.boolean().optional().default(false),
       },
     ],
     response: RoleResponseDto,
   },
   {
-    method: "delete",
-    path: "/roles/:roleId",
-    alias: "deleteRolesRoleId",
-    requestFormat: "json",
+    method: 'delete',
+    path: '/roles/:roleId',
+    alias: 'deleteRolesRoleId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "roleId",
-        type: "Path",
+        name: 'roleId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
     response: z.void(),
   },
   {
-    method: "post",
-    path: "/roles/:roleId/assign",
-    alias: "postRolesRoleIdassign",
-    requestFormat: "json",
+    method: 'post',
+    path: '/roles/:roleId/assign',
+    alias: 'postRolesRoleIdassign',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "roleId",
-        type: "Path",
+        name: 'roleId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
       {
-        name: "requestingUserId",
-        type: "Query",
+        name: 'requestingUserId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: z.void(),
   },
   {
-    method: "get",
-    path: "/rooms",
-    alias: "getRooms",
-    requestFormat: "json",
+    method: 'get',
+    path: '/rooms',
+    alias: 'getRooms',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "BuildingId",
-        type: "Query",
+        name: 'BuildingId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
       {
-        name: "Identifier",
-        type: "Query",
+        name: 'Identifier',
+        type: 'Query',
         schema: z.string().optional(),
       },
       {
-        name: "MinCapacity",
-        type: "Query",
+        name: 'MinCapacity',
+        type: 'Query',
         schema: z.number().int().optional(),
       },
       {
-        name: "Floor",
-        type: "Query",
+        name: 'Floor',
+        type: 'Query',
         schema: z.number().int().optional(),
       },
       {
-        name: "DayOfWeek",
-        type: "Query",
+        name: 'DayOfWeek',
+        type: 'Query',
         schema: z.number().int().optional(),
       },
       {
-        name: "StartTime",
-        type: "Query",
+        name: 'StartTime',
+        type: 'Query',
         schema: z.string().optional(),
       },
       {
-        name: "EndTime",
-        type: "Query",
+        name: 'EndTime',
+        type: 'Query',
         schema: z.string().optional(),
       },
       {
-        name: "EquipmentIds",
-        type: "Query",
+        name: 'EquipmentIds',
+        type: 'Query',
         schema: z.array(z.string().uuid()).optional(),
       },
       {
-        name: "Page",
-        type: "Query",
+        name: 'Page',
+        type: 'Query',
         schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
-        name: "PageSize",
-        type: "Query",
+        name: 'PageSize',
+        type: 'Query',
         schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
     ],
     response: PagedResultOfBasicRoomResponseDto,
   },
   {
-    method: "post",
-    path: "/rooms",
-    alias: "postRooms",
-    requestFormat: "json",
+    method: 'post',
+    path: '/rooms',
+    alias: 'postRooms',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: RoomRequestDto,
       },
     ],
     response: BasicRoomResponseDto,
   },
   {
-    method: "get",
-    path: "/rooms/:roomId",
-    alias: "getRoomsRoomId",
-    requestFormat: "json",
+    method: 'get',
+    path: '/rooms/:roomId',
+    alias: 'getRoomsRoomId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "roomId",
-        type: "Path",
+        name: 'roomId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
     response: BasicRoomResponseDto,
   },
   {
-    method: "put",
-    path: "/rooms/:roomId",
-    alias: "putRoomsRoomId",
-    requestFormat: "json",
+    method: 'put',
+    path: '/rooms/:roomId',
+    alias: 'putRoomsRoomId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: RoomRequestDto,
       },
       {
-        name: "roomId",
-        type: "Path",
+        name: 'roomId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "force",
-        type: "Query",
+        name: 'force',
+        type: 'Query',
         schema: z.boolean().optional().default(false),
       },
     ],
     response: BasicRoomResponseDto,
   },
   {
-    method: "delete",
-    path: "/rooms/:roomId",
-    alias: "deleteRoomsRoomId",
-    requestFormat: "json",
+    method: 'delete',
+    path: '/rooms/:roomId',
+    alias: 'deleteRoomsRoomId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "roomId",
-        type: "Path",
+        name: 'roomId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "force",
-        type: "Query",
+        name: 'force',
+        type: 'Query',
         schema: z.boolean().optional().default(false),
       },
     ],
     response: z.void(),
   },
   {
-    method: "get",
-    path: "/users",
-    alias: "getUsers",
-    requestFormat: "json",
+    method: 'get',
+    path: '/users',
+    alias: 'getUsers',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "Firstname",
-        type: "Query",
+        name: 'Firstname',
+        type: 'Query',
         schema: z.string().optional(),
       },
       {
-        name: "Lastname",
-        type: "Query",
+        name: 'Lastname',
+        type: 'Query',
         schema: z.string().optional(),
       },
       {
-        name: "Email",
-        type: "Query",
+        name: 'Email',
+        type: 'Query',
         schema: z.string().optional(),
       },
       {
-        name: "RoleId",
-        type: "Query",
+        name: 'RoleId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
       {
-        name: "Page",
-        type: "Query",
+        name: 'Page',
+        type: 'Query',
         schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
       {
-        name: "PageSize",
-        type: "Query",
+        name: 'PageSize',
+        type: 'Query',
         schema: z.number().int().gte(1).lte(2147483647).optional(),
       },
     ],
     response: PagedResultOfBasicUserResponseDto,
   },
   {
-    method: "get",
-    path: "/users/:userId",
-    alias: "getUsersUserId",
-    requestFormat: "json",
+    method: 'get',
+    path: '/users/:userId',
+    alias: 'getUsersUserId',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "userId",
-        type: "Path",
+        name: 'userId',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
     response: UserDetailsResponseDto,
   },
   {
-    method: "put",
-    path: "/users/profile",
-    alias: "putUsersprofile",
-    requestFormat: "json",
+    method: 'put',
+    path: '/users/profile',
+    alias: 'putUsersprofile',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: UpdateProfileRequestDto,
       },
       {
-        name: "userId",
-        type: "Query",
+        name: 'userId',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
     ],
     response: BasicUserResponseDto,
   },
-]);
+])
 
-export const api = new Zodios(endpoints);
+export const api = new Zodios(endpoints)
 
 export function createApiClient(baseUrl: string, options?: ZodiosOptions) {
-  return new Zodios(baseUrl, endpoints, options);
+  return new Zodios(baseUrl, endpoints, options)
 }

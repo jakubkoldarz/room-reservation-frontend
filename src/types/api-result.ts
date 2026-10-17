@@ -1,3 +1,4 @@
-import type { ApiErrorResponse } from "./api-error";
+import type { ApiErrorResponse } from './api-error'
 
-export type ApiResult<T> = { success: true; data: T } | { success: false; error: ApiErrorResponse | null };
+export type ApiResult<T> =
+  { success: true; data: T } | { success: false; error: ApiErrorResponse | null }
