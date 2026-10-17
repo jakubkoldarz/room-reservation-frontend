@@ -1,4 +1,4 @@
 export type Pager = {
-    page: number;
-    pageSize: number;
-};
+  page: number
+  pageSize: number
+}

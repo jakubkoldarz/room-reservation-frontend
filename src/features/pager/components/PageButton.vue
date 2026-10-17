@@ -1,30 +1,30 @@
 <script setup lang="ts">
-import LinkButton from "@/features/shared/LinkButton.vue";
+import LinkButton from '@/features/shared/LinkButton.vue'
 
 const props = defineProps<{
-    disabled?: boolean;
-    isActive?: boolean;
-    text?: string;
-    page: number;
-}>();
+  disabled?: boolean
+  isActive?: boolean
+  text?: string
+  page: number
+}>()
 </script>
 
 <template>
-    <LinkButton
-        v-if="!disabled"
-        :active="isActive"
-        class="py-0! px-2! rounded! select-none min-w-8 justify-center"
-        :to="{ query: { page } }"
-    >
-        {{ props.text || props.page }}
-    </LinkButton>
+  <LinkButton
+    v-if="!disabled"
+    :active="isActive"
+    class="min-w-8 justify-center rounded! px-2! py-0! select-none"
+    :to="{ query: { page } }"
+  >
+    {{ props.text || props.page }}
+  </LinkButton>
 
-    <LinkButton
-        v-else
-        :active="false"
-        class="py-0! px-2! rounded! opacity-50 cursor-not-allowed pointer-events-none select-none min-w-8 justify-center"
-        :to="{ query: { page } }"
-    >
-        {{ props.text || props.page }}
-    </LinkButton>
+  <LinkButton
+    v-else
+    :active="false"
+    class="pointer-events-none min-w-8 cursor-not-allowed justify-center rounded! px-2! py-0! opacity-50 select-none"
+    :to="{ query: { page } }"
+  >
+    {{ props.text || props.page }}
+  </LinkButton>
 </template>

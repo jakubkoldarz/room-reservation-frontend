@@ -1,30 +1,30 @@
 <script setup lang="ts">
 const props = withDefaults(
-    defineProps<{
-        isOpen?: boolean;
-    }>(),
-    {
-        isOpen: false,
-    },
-);
+  defineProps<{
+    isOpen?: boolean
+  }>(),
+  {
+    isOpen: false,
+  },
+)
 
 const emit = defineEmits<{
-    close: [];
-}>();
+  close: []
+}>()
 </script>
 
 <template>
-    <Teleport to="body">
-        <div
-            v-bind="$attrs"
-            @click="emit('close')"
-            :class="[
-                isOpen ? 'fixed opacity-100' : 'hidden opacity-0',
-                'inset-0 z-1000 bg-black/30 backdrop-blur-sm',
-                'transition-discrete transition-opacity duration-300 ease-out starting:opacity-0',
-            ]"
-        >
-            <slot />
-        </div>
-    </Teleport>
+  <Teleport to="body">
+    <div
+      v-bind="$attrs"
+      @click="emit('close')"
+      :class="[
+        isOpen ? 'fixed opacity-100' : 'hidden opacity-0',
+        'inset-0 z-1000 bg-black/30 backdrop-blur-sm',
+        'transition-opacity transition-discrete duration-300 ease-out starting:opacity-0',
+      ]"
+    >
+      <slot />
+    </div>
+  </Teleport>
 </template>
