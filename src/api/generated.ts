@@ -1,305 +1,249 @@
 import { makeApi, Zodios, type ZodiosOptions } from "@zodios/core";
 import { z } from "zod";
 
-const RegisterRequestDto = z
-    .object({ email: z.string(), password: z.string().min(8) })
-    .passthrough();
-const JwtTokenResponseDto = z.object({ jwtToken: z.string() }).passthrough();
-const VerificationCodedRequestDto = z.object({ verificationCode: z.string() }).passthrough();
-const LoginRequestDto = z.object({ email: z.string(), password: z.string() }).passthrough();
-const LoginResponseDto = z
-    .object({
-        requires2FA: z.boolean(),
-        verificationId: z.union([z.null(), z.string()]).optional(),
-        jwtToken: z.union([z.null(), z.string()]).optional(),
-    })
-    .passthrough();
-const VerificationRequestDto = z
-    .object({ verificationId: z.string().uuid(), verificationCode: z.string() })
-    .passthrough();
-const BasicUserResponseDto = z
-    .object({
-        id: z.string().uuid(),
-        firstname: z.union([z.null(), z.string()]).optional(),
-        lastname: z.union([z.null(), z.string()]).optional(),
-    })
-    .passthrough();
-const UserAccountStatusResponseDto = z
-    .object({
-        hasProfileCompleted: z.boolean(),
-        hasEmailVerified: z.boolean(),
-        has2faEnabled: z.boolean(),
-    })
-    .passthrough();
-const RoleWithPermissionsResponseDto = z
-    .object({ role: z.string(), permissions: z.array(z.string()) })
-    .passthrough();
-const RefreshTokenResponseDto = z
-    .object({
-        id: z.string().uuid(),
-        created: z.string().datetime({ offset: true }),
-        expires: z.string().datetime({ offset: true }),
-        ipAddress: z.union([z.null(), z.string()]).optional(),
-        userAgent: z.union([z.null(), z.string()]).optional(),
-    })
-    .passthrough();
-const UserDetailsResponseDto = z
-    .object({
-        userInfo: BasicUserResponseDto,
-        accountStatus: UserAccountStatusResponseDto,
-        roleInfo: RoleWithPermissionsResponseDto,
-        refreshTokens: z.array(RefreshTokenResponseDto),
-    })
-    .passthrough();
-const ChangePasswordRequestDto = z
-    .object({ oldPassword: z.string().min(8), newPassword: z.string().min(8) })
-    .passthrough();
-const EmailRequestDto = z.object({ emailAddress: z.string() }).passthrough();
-const VerificationIdResponseDto = z.object({ verificationId: z.string().uuid() }).passthrough();
-const BasicBuildingResponseDto = z
-    .object({
-        id: z.string().uuid(),
-        name: z.string(),
-        identifier: z.union([z.null(), z.string()]).optional(),
-        street: z.string(),
-        city: z.string(),
-        postalCode: z.string(),
-        floorsCount: z.number().int(),
-    })
-    .passthrough();
-const ErrorType = z.number();
-const Error = z.object({ errorMessage: z.string(), errorType: ErrorType.int() }).passthrough();
-const PagedResultOfBasicBuildingResponseDto = z
-    .object({
-        isSuccess: z.boolean(),
-        value: z.union([z.null(), z.array(BasicBuildingResponseDto)]),
-        error: z.union([z.null(), Error]),
-        totalCount: z.number().int(),
-        page: z.number().int(),
-        pageSize: z.number().int(),
-        totalPages: z.number().int(),
-        hasNextPage: z.boolean(),
-    })
-    .partial()
-    .passthrough();
+const RegisterRequestDto = z.object({ email: z.string(), password: z.string().min(8) });
+const JwtTokenResponseDto = z.object({ jwtToken: z.string() });
+const VerificationCodeRequestDto = z.object({ verificationCode: z.string() });
+const LoginRequestDto = z.object({ email: z.string(), password: z.string() });
+const LoginResponseDto = z.object({
+    requires2FA: z.boolean(),
+    verificationId: z.union([z.null(), z.string()]).optional(),
+    jwtToken: z.union([z.null(), z.string()]).optional(),
+});
+const VerificationRequestDto = z.object({
+    verificationId: z.string().uuid(),
+    verificationCode: z.string(),
+});
+const BasicUserResponseDto = z.object({
+    id: z.string().uuid(),
+    firstname: z.union([z.null(), z.string()]).optional(),
+    lastname: z.union([z.null(), z.string()]).optional(),
+});
+const UserAccountStatusResponseDto = z.object({
+    hasProfileCompleted: z.boolean(),
+    hasEmailVerified: z.boolean(),
+    has2faEnabled: z.boolean(),
+});
+const RoleWithPermissionsResponseDto = z.object({
+    role: z.string(),
+    permissions: z.array(z.string()),
+});
+const RefreshTokenResponseDto = z.object({
+    id: z.string().uuid(),
+    created: z.string().datetime({ offset: true }),
+    expires: z.string().datetime({ offset: true }),
+    ipAddress: z.union([z.null(), z.string()]).optional(),
+    userAgent: z.union([z.null(), z.string()]).optional(),
+});
+const UserDetailsResponseDto = z.object({
+    userInfo: BasicUserResponseDto,
+    accountStatus: UserAccountStatusResponseDto,
+    roleInfo: RoleWithPermissionsResponseDto,
+    refreshTokens: z.array(RefreshTokenResponseDto),
+});
+const ChangePasswordRequestDto = z.object({
+    oldPassword: z.string().min(8),
+    newPassword: z.string().min(8),
+});
+const EmailRequestDto = z.object({ emailAddress: z.string() });
+const VerificationIdResponseDto = z.object({ verificationId: z.string().uuid() });
+const ConfirmPasswordRequestDto = z.object({ password: z.string() });
+const BasicBuildingResponseDto = z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    identifier: z.union([z.null(), z.string()]).optional(),
+    street: z.string(),
+    city: z.string(),
+    postalCode: z.string(),
+    floorsCount: z.number().int(),
+});
+const PagedResponseDtoOfBasicBuildingResponseDto = z.object({
+    items: z.array(BasicBuildingResponseDto),
+    totalCount: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
+    totalPages: z.number().int(),
+    hasNextPage: z.boolean(),
+});
 const DayOfWeek = z.number();
-const AvailabilityRequestDto = z
-    .object({
-        dayOfWeek: DayOfWeek.int(),
-        startTime: z.string(),
-        endTime: z.string(),
-    })
-    .passthrough();
-const BuildingRequestDto = z
-    .object({
-        name: z.string().min(1).max(100),
-        identifier: z.union([z.null(), z.string()]).optional(),
-        street: z.string().min(1).max(50),
-        city: z.string().min(1).max(50),
-        postalCode: z.string().regex(/^[0-9]{2}-[0-9]{3}$/),
-        floorsCount: z.number().int().gte(0).lte(100),
-        availabilities: z.array(AvailabilityRequestDto),
-    })
-    .passthrough();
-const AvailabilityResponseDto = z
-    .object({
-        dayOfWeek: DayOfWeek.int(),
-        startTime: z.string(),
-        endTime: z.string(),
-    })
-    .passthrough();
-const BasicRoomResponseDto = z
-    .object({
-        id: z.string().uuid(),
-        identifier: z.string(),
-        requiresApproval: z.boolean(),
-        capacity: z.number().int(),
-        floor: z.number().int(),
-    })
-    .passthrough();
-const BuildingDetailsResponseDto = z
-    .object({
-        buildingInfo: BasicBuildingResponseDto,
-        availabilities: z.array(AvailabilityResponseDto),
-        rooms: z.array(BasicRoomResponseDto),
-    })
-    .passthrough();
-const EquipmentResponseDto = z
-    .object({ id: z.string().uuid(), name: z.string(), icon: z.string() })
-    .passthrough();
-const PagedResultOfEquipmentResponseDto = z
-    .object({
-        isSuccess: z.boolean(),
-        value: z.union([z.null(), z.array(EquipmentResponseDto)]),
-        error: z.union([z.null(), Error]),
-        totalCount: z.number().int(),
-        page: z.number().int(),
-        pageSize: z.number().int(),
-        totalPages: z.number().int(),
-        hasNextPage: z.boolean(),
-    })
-    .partial()
-    .passthrough();
-const EquipmentRequestDto = z
-    .object({ name: z.string().max(50), icon: z.string().max(50) })
-    .passthrough();
-const EventResponseDto = z
-    .object({
-        id: z.string().uuid(),
-        name: z.string(),
-        startDate: z.string(),
-        endDate: z.string(),
-        isClosed: z.boolean(),
-        startTime: z.union([z.null(), z.string()]).optional(),
-        endTime: z.union([z.null(), z.string()]).optional(),
-        rooms: z.array(BasicRoomResponseDto),
-    })
-    .passthrough();
-const EventRequestDto = z
-    .object({
-        name: z.string().max(100),
-        roomIds: z.array(z.string().uuid()),
-        startDate: z.string(),
-        endDate: z.string(),
-        isClosed: z.boolean(),
-        startTime: z.union([z.null(), z.string()]).optional(),
-        endTime: z.union([z.null(), z.string()]).optional(),
-    })
-    .passthrough();
-const PermissionResponseDto = z.object({ id: z.string().uuid(), name: z.string() }).passthrough();
-const ReservationActorResponseDto = z
-    .object({
-        at: z.string().datetime({ offset: true }),
-        by: BasicUserResponseDto,
-    })
-    .passthrough();
-const ReservationResponseDto = z
-    .object({
-        id: z.string().uuid(),
-        createdBy: ReservationActorResponseDto,
-        approvedBy: z.union([z.null(), ReservationActorResponseDto]).optional(),
-        canceledBy: z.union([z.null(), ReservationActorResponseDto]).optional(),
-        rejectedBy: z.union([z.null(), ReservationActorResponseDto]).optional(),
-        date: z.string(),
-        startTime: z.string(),
-        endTime: z.string(),
-        purpose: z.union([z.null(), z.string()]).optional(),
-        reason: z.union([z.null(), z.string()]).optional(),
-        status: z.string().optional(),
-    })
-    .passthrough();
-const UpdateReservationRequestDto = z
-    .object({
-        startTime: z.string(),
-        endTime: z.string(),
-        purpose: z.union([z.null(), z.string()]).optional(),
-    })
-    .passthrough();
-const PagedResultOfReservationResponseDto = z
-    .object({
-        isSuccess: z.boolean(),
-        value: z.union([z.null(), z.array(ReservationResponseDto)]),
-        error: z.union([z.null(), Error]),
-        totalCount: z.number().int(),
-        page: z.number().int(),
-        pageSize: z.number().int(),
-        totalPages: z.number().int(),
-        hasNextPage: z.boolean(),
-    })
-    .partial()
-    .passthrough();
-const CreateReservationRequestDto = z
-    .object({
-        roomId: z.string().uuid(),
-        date: z.string(),
-        startTime: z.string(),
-        endTime: z.string(),
-        purpose: z.union([z.null(), z.string()]).optional(),
-    })
-    .passthrough();
-const ReservationReasonRequestDto = z
-    .object({ reason: z.union([z.null(), z.string()]) })
-    .partial()
-    .passthrough();
-const RoleResponseDto = z
-    .object({
-        id: z.string().uuid(),
-        name: z.string(),
-        isDefault: z.boolean(),
-        isSuperAdmin: z.boolean(),
-        permissions: z.array(z.string()),
-    })
-    .passthrough();
-const PagedResultOfRoleResponseDto = z
-    .object({
-        isSuccess: z.boolean(),
-        value: z.union([z.null(), z.array(RoleResponseDto)]),
-        error: z.union([z.null(), Error]),
-        totalCount: z.number().int(),
-        page: z.number().int(),
-        pageSize: z.number().int(),
-        totalPages: z.number().int(),
-        hasNextPage: z.boolean(),
-    })
-    .partial()
-    .passthrough();
-const RoleRequestDto = z
-    .object({
-        name: z.string().max(50),
-        description: z.union([z.null(), z.string()]).optional(),
-        isDefault: z.boolean(),
-        isSuperAdmin: z.boolean(),
-        permissionIds: z.array(z.string().uuid()),
-    })
-    .passthrough();
-const PagedResultOfBasicRoomResponseDto = z
-    .object({
-        isSuccess: z.boolean(),
-        value: z.union([z.null(), z.array(BasicRoomResponseDto)]),
-        error: z.union([z.null(), Error]),
-        totalCount: z.number().int(),
-        page: z.number().int(),
-        pageSize: z.number().int(),
-        totalPages: z.number().int(),
-        hasNextPage: z.boolean(),
-    })
-    .partial()
-    .passthrough();
-const RoomRequestDto = z
-    .object({
-        identifier: z.string().max(50),
-        requiresApproval: z.boolean(),
-        buildingId: z.string().uuid(),
-        floor: z.number().int(),
-        capacity: z.number().int().gte(1).lte(2147483647),
-        equipmentIds: z.array(z.string().uuid()).max(5),
-        availabilities: z.array(AvailabilityRequestDto),
-    })
-    .passthrough();
-const PagedResultOfBasicUserResponseDto = z
-    .object({
-        isSuccess: z.boolean(),
-        value: z.union([z.null(), z.array(BasicUserResponseDto)]),
-        error: z.union([z.null(), Error]),
-        totalCount: z.number().int(),
-        page: z.number().int(),
-        pageSize: z.number().int(),
-        totalPages: z.number().int(),
-        hasNextPage: z.boolean(),
-    })
-    .partial()
-    .passthrough();
-const UpdateProfileRequestDto = z
-    .object({
-        firstname: z.string().min(3).max(50),
-        lastname: z.string().max(100),
-    })
-    .passthrough();
+const AvailabilityRequestDto = z.object({
+    dayOfWeek: DayOfWeek.int(),
+    startTime: z.string(),
+    endTime: z.string(),
+});
+const BuildingRequestDto = z.object({
+    name: z.string().min(1).max(100),
+    identifier: z.union([z.null(), z.string()]).optional(),
+    street: z.string().min(1).max(50),
+    city: z.string().min(1).max(50),
+    postalCode: z.string().regex(/^[0-9]{2}-[0-9]{3}$/),
+    floorsCount: z.number().int().gte(0).lte(100),
+    availabilities: z.array(AvailabilityRequestDto),
+});
+const AvailabilityResponseDto = z.object({
+    dayOfWeek: DayOfWeek.int(),
+    startTime: z.string(),
+    endTime: z.string(),
+});
+const BasicRoomResponseDto = z.object({
+    id: z.string().uuid(),
+    identifier: z.string(),
+    requiresApproval: z.boolean(),
+    capacity: z.number().int(),
+    floor: z.number().int(),
+});
+const BuildingDetailsResponseDto = z.object({
+    buildingInfo: BasicBuildingResponseDto,
+    availabilities: z.array(AvailabilityResponseDto),
+    rooms: z.array(BasicRoomResponseDto),
+});
+const EquipmentResponseDto = z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    icon: z.string(),
+});
+const PagedResponseDtoOfEquipmentResponseDto = z.object({
+    items: z.array(EquipmentResponseDto),
+    totalCount: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
+    totalPages: z.number().int(),
+    hasNextPage: z.boolean(),
+});
+const EquipmentRequestDto = z.object({ name: z.string().max(50), icon: z.string().max(50) });
+const EventResponseDto = z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    startDate: z.string(),
+    endDate: z.string(),
+    isClosed: z.boolean(),
+    startTime: z.union([z.null(), z.string()]).optional(),
+    endTime: z.union([z.null(), z.string()]).optional(),
+    rooms: z.array(BasicRoomResponseDto),
+});
+const EventRequestDto = z.object({
+    name: z.string().max(100),
+    roomIds: z.array(z.string().uuid()),
+    startDate: z.string(),
+    endDate: z.string(),
+    isClosed: z.boolean(),
+    startTime: z.union([z.null(), z.string()]).optional(),
+    endTime: z.union([z.null(), z.string()]).optional(),
+});
+const PermissionResponseDto = z.object({ id: z.string().uuid(), name: z.string() });
+const PagedResponseDtoOfPermissionResponseDto = z.object({
+    items: z.array(PermissionResponseDto),
+    totalCount: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
+    totalPages: z.number().int(),
+    hasNextPage: z.boolean(),
+});
+const ReservationActorResponseDto = z.object({
+    at: z.string().datetime({ offset: true }),
+    by: BasicUserResponseDto,
+});
+const ReservationResponseDto = z.object({
+    id: z.string().uuid(),
+    createdBy: ReservationActorResponseDto,
+    approvedBy: z.union([z.null(), ReservationActorResponseDto]).optional(),
+    canceledBy: z.union([z.null(), ReservationActorResponseDto]).optional(),
+    rejectedBy: z.union([z.null(), ReservationActorResponseDto]).optional(),
+    date: z.string(),
+    startTime: z.string(),
+    endTime: z.string(),
+    purpose: z.union([z.null(), z.string()]).optional(),
+    reason: z.union([z.null(), z.string()]).optional(),
+    status: z.string().optional(),
+});
+const UpdateReservationRequestDto = z.object({
+    startTime: z.string(),
+    endTime: z.string(),
+    purpose: z.union([z.null(), z.string()]).optional(),
+});
+const PagedResponseDtoOfReservationResponseDto = z.object({
+    items: z.array(ReservationResponseDto),
+    totalCount: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
+    totalPages: z.number().int(),
+    hasNextPage: z.boolean(),
+});
+const CreateReservationRequestDto = z.object({
+    roomId: z.string().uuid(),
+    date: z.string(),
+    startTime: z.string(),
+    endTime: z.string(),
+    purpose: z.union([z.null(), z.string()]).optional(),
+});
+const ReservationReasonRequestDto = z.object({ reason: z.union([z.null(), z.string()]) }).partial();
+const RoleResponseDto = z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    isDefault: z.boolean(),
+    isSuperAdmin: z.boolean(),
+    permissions: z.array(z.string()),
+});
+const PagedResponseDtoOfRoleResponseDto = z.object({
+    items: z.array(RoleResponseDto),
+    totalCount: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
+    totalPages: z.number().int(),
+    hasNextPage: z.boolean(),
+});
+const RoleRequestDto = z.object({
+    name: z.string().max(50),
+    description: z.union([z.null(), z.string()]).optional(),
+    isDefault: z.boolean(),
+    isSuperAdmin: z.boolean(),
+    permissionIds: z.array(z.string().uuid()),
+});
+const PagedResponseDtoOfBasicRoomResponseDto = z.object({
+    items: z.array(BasicRoomResponseDto),
+    totalCount: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
+    totalPages: z.number().int(),
+    hasNextPage: z.boolean(),
+});
+const RoomRequestDto = z.object({
+    identifier: z.string().max(50),
+    requiresApproval: z.boolean(),
+    buildingId: z.string().uuid(),
+    floor: z.number().int(),
+    capacity: z.number().int().gte(1).lte(2147483647),
+    equipmentIds: z.array(z.string().uuid()).max(5),
+    availabilities: z.array(AvailabilityRequestDto),
+});
+const RoomResponseDto = z.object({
+    roomInfo: BasicRoomResponseDto,
+    buildingInfo: BasicBuildingResponseDto,
+    equipment: z.array(EquipmentResponseDto),
+});
+const RoomDetailsResponseDto = z.object({
+    details: RoomResponseDto,
+    reservations: z.array(ReservationResponseDto),
+    availabilities: z.array(AvailabilityResponseDto),
+    events: z.array(EventResponseDto),
+});
+const PagedResponseDtoOfBasicUserResponseDto = z.object({
+    items: z.array(BasicUserResponseDto),
+    totalCount: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
+    totalPages: z.number().int(),
+    hasNextPage: z.boolean(),
+});
+const UpdateProfileRequestDto = z.object({
+    firstname: z.string().min(3).max(50),
+    lastname: z.string().max(100),
+});
 
 export const schemas = {
     RegisterRequestDto,
     JwtTokenResponseDto,
-    VerificationCodedRequestDto,
+    VerificationCodeRequestDto,
     LoginRequestDto,
     LoginResponseDto,
     VerificationRequestDto,
@@ -311,10 +255,9 @@ export const schemas = {
     ChangePasswordRequestDto,
     EmailRequestDto,
     VerificationIdResponseDto,
+    ConfirmPasswordRequestDto,
     BasicBuildingResponseDto,
-    ErrorType,
-    Error,
-    PagedResultOfBasicBuildingResponseDto,
+    PagedResponseDtoOfBasicBuildingResponseDto,
     DayOfWeek,
     AvailabilityRequestDto,
     BuildingRequestDto,
@@ -322,23 +265,26 @@ export const schemas = {
     BasicRoomResponseDto,
     BuildingDetailsResponseDto,
     EquipmentResponseDto,
-    PagedResultOfEquipmentResponseDto,
+    PagedResponseDtoOfEquipmentResponseDto,
     EquipmentRequestDto,
     EventResponseDto,
     EventRequestDto,
     PermissionResponseDto,
+    PagedResponseDtoOfPermissionResponseDto,
     ReservationActorResponseDto,
     ReservationResponseDto,
     UpdateReservationRequestDto,
-    PagedResultOfReservationResponseDto,
+    PagedResponseDtoOfReservationResponseDto,
     CreateReservationRequestDto,
     ReservationReasonRequestDto,
     RoleResponseDto,
-    PagedResultOfRoleResponseDto,
+    PagedResponseDtoOfRoleResponseDto,
     RoleRequestDto,
-    PagedResultOfBasicRoomResponseDto,
+    PagedResponseDtoOfBasicRoomResponseDto,
     RoomRequestDto,
-    PagedResultOfBasicUserResponseDto,
+    RoomResponseDto,
+    RoomDetailsResponseDto,
+    PagedResponseDtoOfBasicUserResponseDto,
     UpdateProfileRequestDto,
 };
 
@@ -350,12 +296,17 @@ const endpoints = makeApi([
         requestFormat: "json",
         parameters: [
             {
+                name: "body",
+                type: "Body",
+                schema: z.object({ password: z.string() }),
+            },
+            {
                 name: "userId",
                 type: "Query",
                 schema: z.string().uuid().optional(),
             },
         ],
-        response: z.object({ verificationId: z.string().uuid() }).passthrough(),
+        response: z.void(),
     },
     {
         method: "post",
@@ -369,7 +320,7 @@ const endpoints = makeApi([
                 schema: z.string().uuid().optional(),
             },
         ],
-        response: z.object({ verificationId: z.string().uuid() }).passthrough(),
+        response: z.void(),
     },
     {
         method: "patch",
@@ -380,7 +331,7 @@ const endpoints = makeApi([
             {
                 name: "body",
                 type: "Body",
-                schema: z.object({ emailAddress: z.string() }).passthrough(),
+                schema: z.object({ emailAddress: z.string() }),
             },
             {
                 name: "userId",
@@ -388,7 +339,7 @@ const endpoints = makeApi([
                 schema: z.string().uuid().optional(),
             },
         ],
-        response: z.object({ verificationId: z.string().uuid() }).passthrough(),
+        response: z.object({ verificationId: z.string().uuid() }),
     },
     {
         method: "post",
@@ -402,7 +353,7 @@ const endpoints = makeApi([
                 schema: z.string().uuid().optional(),
             },
         ],
-        response: z.object({ verificationId: z.string().uuid() }).passthrough(),
+        response: z.object({ verificationId: z.string().uuid() }),
     },
     {
         method: "post",
@@ -413,7 +364,7 @@ const endpoints = makeApi([
             {
                 name: "body",
                 type: "Body",
-                schema: z.object({ verificationCode: z.string() }).passthrough(),
+                schema: z.object({ verificationCode: z.string() }),
             },
             {
                 name: "userId",
@@ -463,7 +414,7 @@ const endpoints = makeApi([
                 schema: VerificationRequestDto,
             },
         ],
-        response: z.object({ jwtToken: z.string() }).passthrough(),
+        response: z.object({ jwtToken: z.string() }),
     },
     {
         method: "post",
@@ -517,7 +468,7 @@ const endpoints = makeApi([
         path: "/auth/refresh",
         alias: "postAuthrefresh",
         requestFormat: "json",
-        response: z.object({ jwtToken: z.string() }).passthrough(),
+        response: z.object({ jwtToken: z.string() }),
     },
     {
         method: "post",
@@ -531,7 +482,7 @@ const endpoints = makeApi([
                 schema: RegisterRequestDto,
             },
         ],
-        response: z.object({ jwtToken: z.string() }).passthrough(),
+        response: z.object({ jwtToken: z.string() }),
     },
     {
         method: "delete",
@@ -605,10 +556,10 @@ const endpoints = makeApi([
             {
                 name: "PageSize",
                 type: "Query",
-                schema: z.number().int().gte(1).lte(2147483647).optional(),
+                schema: z.number().int().gte(1).lte(100).optional(),
             },
         ],
-        response: PagedResultOfBasicBuildingResponseDto,
+        response: PagedResponseDtoOfBasicBuildingResponseDto,
     },
     {
         method: "post",
@@ -673,13 +624,6 @@ const endpoints = makeApi([
     },
     {
         method: "get",
-        path: "/buildings/lookup",
-        alias: "getBuildingslookup",
-        requestFormat: "json",
-        response: z.array(BasicBuildingResponseDto),
-    },
-    {
-        method: "get",
         path: "/equipment",
         alias: "getEquipment",
         requestFormat: "json",
@@ -697,10 +641,10 @@ const endpoints = makeApi([
             {
                 name: "PageSize",
                 type: "Query",
-                schema: z.number().int().gte(1).lte(2147483647).optional(),
+                schema: z.number().int().gte(1).lte(100).optional(),
             },
         ],
-        response: PagedResultOfEquipmentResponseDto,
+        response: PagedResponseDtoOfEquipmentResponseDto,
     },
     {
         method: "post",
@@ -872,10 +816,10 @@ const endpoints = makeApi([
             {
                 name: "PageSize",
                 type: "Query",
-                schema: z.number().int().gte(1).lte(2147483647).optional(),
+                schema: z.number().int().gte(1).lte(100).optional(),
             },
         ],
-        response: z.array(PermissionResponseDto),
+        response: PagedResponseDtoOfPermissionResponseDto,
     },
     {
         method: "get",
@@ -926,10 +870,10 @@ const endpoints = makeApi([
             {
                 name: "PageSize",
                 type: "Query",
-                schema: z.number().int().gte(1).lte(2147483647).optional(),
+                schema: z.number().int().gte(1).lte(100).optional(),
             },
         ],
-        response: PagedResultOfReservationResponseDto,
+        response: PagedResponseDtoOfReservationResponseDto,
     },
     {
         method: "post",
@@ -1147,7 +1091,7 @@ const endpoints = makeApi([
             {
                 name: "PageSize",
                 type: "Query",
-                schema: z.number().int().gte(1).lte(2147483647).optional(),
+                schema: z.number().int().gte(1).lte(100).optional(),
             },
             {
                 name: "userId",
@@ -1155,7 +1099,7 @@ const endpoints = makeApi([
                 schema: z.string().uuid().optional(),
             },
         ],
-        response: PagedResultOfReservationResponseDto,
+        response: PagedResponseDtoOfReservationResponseDto,
     },
     {
         method: "get",
@@ -1176,10 +1120,10 @@ const endpoints = makeApi([
             {
                 name: "PageSize",
                 type: "Query",
-                schema: z.number().int().gte(1).lte(2147483647).optional(),
+                schema: z.number().int().gte(1).lte(100).optional(),
             },
         ],
-        response: PagedResultOfRoleResponseDto,
+        response: PagedResponseDtoOfRoleResponseDto,
     },
     {
         method: "post",
@@ -1330,10 +1274,10 @@ const endpoints = makeApi([
             {
                 name: "PageSize",
                 type: "Query",
-                schema: z.number().int().gte(1).lte(2147483647).optional(),
+                schema: z.number().int().gte(1).lte(100).optional(),
             },
         ],
-        response: PagedResultOfBasicRoomResponseDto,
+        response: PagedResponseDtoOfBasicRoomResponseDto,
     },
     {
         method: "post",
@@ -1361,7 +1305,7 @@ const endpoints = makeApi([
                 schema: z.string().uuid(),
             },
         ],
-        response: BasicRoomResponseDto,
+        response: RoomDetailsResponseDto,
     },
     {
         method: "put",
@@ -1440,10 +1384,10 @@ const endpoints = makeApi([
             {
                 name: "PageSize",
                 type: "Query",
-                schema: z.number().int().gte(1).lte(2147483647).optional(),
+                schema: z.number().int().gte(1).lte(100).optional(),
             },
         ],
-        response: PagedResultOfBasicUserResponseDto,
+        response: PagedResponseDtoOfBasicUserResponseDto,
     },
     {
         method: "get",
@@ -1457,7 +1401,7 @@ const endpoints = makeApi([
                 schema: z.string().uuid(),
             },
         ],
-        response: UserDetailsResponseDto,
+        response: BasicUserResponseDto,
     },
     {
         method: "put",

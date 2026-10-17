@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import type { FunctionalComponent } from "vue";
-import type { Toast, ToastType } from "../types/toast";
+import type { Toast, ToastType } from "../types";
 import {
     CheckCircleIcon,
     XCircleIcon,

@@ -1,8 +1,6 @@
-import type { BuildingInfo } from "@/types/dtos";
+import type { Building } from "../types";
 
-export function formatAddress(info?: BuildingInfo | null): string {
-    if (!info) return "";
-
+export function formatAddress(info: Building): string {
     const { street, postalCode, city } = info;
     const cityLine = [postalCode, city].filter(Boolean).join(" ");
 

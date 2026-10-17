@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import type { Toast, ToastOptions } from "../types/toast";
+import type { Toast, ToastOptions } from "../types";
 import type { ApiErrorResponse } from "@/types/api-error";
 
 export const useToastsStore = defineStore("toasts", {
