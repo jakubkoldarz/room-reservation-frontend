@@ -1,97 +1,97 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import type { FunctionalComponent } from 'vue'
-import type { Toast, ToastType } from '../types/toast'
+import { computed, onMounted, ref, watch } from "vue";
+import type { FunctionalComponent } from "vue";
+import type { Toast, ToastType } from "../types/toast";
 import {
-  CheckCircleIcon,
-  XCircleIcon,
-  InformationCircleIcon,
-  ExclamationTriangleIcon,
-} from '@heroicons/vue/24/solid'
-import { useTransition } from '@vueuse/core'
-import { useToastsStore } from '../stores/useToastsStore'
+    CheckCircleIcon,
+    XCircleIcon,
+    InformationCircleIcon,
+    ExclamationTriangleIcon,
+} from "@heroicons/vue/24/solid";
+import { useTransition } from "@vueuse/core";
+import { useToastsStore } from "../stores/useToastsStore";
 
-const source = ref(1)
+const source = ref(1);
 const progress = useTransition(source, {
-  duration: 3500,
-})
+    duration: 3500,
+});
 
 interface ToastStyleConfig {
-  icon: FunctionalComponent
-  borderClass: string
-  iconClass: string
-  progressClass: string
+    icon: FunctionalComponent;
+    borderClass: string;
+    iconClass: string;
+    progressClass: string;
 }
 
 const TOAST_THEMES: Record<ToastType, ToastStyleConfig> = {
-  success: {
-    icon: CheckCircleIcon,
-    borderClass: 'border-success',
-    iconClass: 'text-success',
-    progressClass: 'bg-success',
-  },
-  error: {
-    icon: XCircleIcon,
-    borderClass: 'border-danger',
-    iconClass: 'text-danger',
-    progressClass: 'bg-danger',
-  },
-  info: {
-    icon: InformationCircleIcon,
-    borderClass: 'border-primary',
-    iconClass: 'text-primary',
-    progressClass: 'bg-primary',
-  },
-  warning: {
-    icon: ExclamationTriangleIcon,
-    borderClass: 'border-warning',
-    iconClass: 'text-warning',
-    progressClass: 'bg-warning',
-  },
-}
+    success: {
+        icon: CheckCircleIcon,
+        borderClass: "border-success",
+        iconClass: "text-success",
+        progressClass: "bg-success",
+    },
+    error: {
+        icon: XCircleIcon,
+        borderClass: "border-danger",
+        iconClass: "text-danger",
+        progressClass: "bg-danger",
+    },
+    info: {
+        icon: InformationCircleIcon,
+        borderClass: "border-primary",
+        iconClass: "text-primary",
+        progressClass: "bg-primary",
+    },
+    warning: {
+        icon: ExclamationTriangleIcon,
+        borderClass: "border-warning",
+        iconClass: "text-warning",
+        progressClass: "bg-warning",
+    },
+};
 
 const props = defineProps<{
-  toast: Toast
-}>()
+    toast: Toast;
+}>();
 
 const currentTheme = computed(() => {
-  return TOAST_THEMES[props.toast.type] ?? TOAST_THEMES.info
-})
+    return TOAST_THEMES[props.toast.type] ?? TOAST_THEMES.info;
+});
 
 onMounted(() => {
-  source.value = 0
-})
+    source.value = 0;
+});
 
 watch(
-  () => progress.value,
-  () => {
-    if (progress.value === 0) {
-      const toastsStore = useToastsStore()
-      toastsStore.remove(props.toast.id)
-    }
-  },
-)
+    () => progress.value,
+    () => {
+        if (progress.value === 0) {
+            const toastsStore = useToastsStore();
+            toastsStore.remove(props.toast.id);
+        }
+    },
+);
 </script>
 
 <template>
-  <div
-    :class="[
-      currentTheme.borderClass,
-      'bg-surface w-full overflow-hidden rounded-lg border shadow-md',
-    ]"
-  >
-    <div class="flex gap-2 p-2">
-      <div :class="[currentTheme.iconClass, 'flex shrink-0 items-center justify-center']">
-        <component :is="currentTheme.icon" class="size-5" />
-      </div>
-      <div class="flex flex-col">
-        <p class="text-sm font-semibold">{{ toast.title }}</p>
-        <p class="text-sm">{{ toast.message }}</p>
-      </div>
-    </div>
     <div
-      :class="[currentTheme.progressClass, 'h-2 w-full']"
-      :style="`max-width: ${progress * 100}%`"
-    ></div>
-  </div>
+        :class="[
+            currentTheme.borderClass,
+            'bg-surface w-full overflow-hidden rounded-lg border shadow-md',
+        ]"
+    >
+        <div class="flex gap-2 p-2">
+            <div :class="[currentTheme.iconClass, 'flex shrink-0 items-center justify-center']">
+                <component :is="currentTheme.icon" class="size-5" />
+            </div>
+            <div class="flex flex-col">
+                <p class="text-sm font-semibold">{{ toast.title }}</p>
+                <p class="text-sm">{{ toast.message }}</p>
+            </div>
+        </div>
+        <div
+            :class="[currentTheme.progressClass, 'h-2 w-full']"
+            :style="`max-width: ${progress * 100}%`"
+        ></div>
+    </div>
 </template>

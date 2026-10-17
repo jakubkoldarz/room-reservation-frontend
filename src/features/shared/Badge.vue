@@ -1,25 +1,25 @@
 <script setup lang="ts">
-import type { BadgeType } from '@/types/badge-type'
+import type { BadgeType } from "@/types/badge-type";
 
 const props = defineProps<{
-  type?: BadgeType
-}>()
+    type?: BadgeType;
+}>();
 
 const colorClasses: Record<BadgeType, string> = {
-  default: 'bg-primary/10 border-primary/20 text-primary',
-  error: 'bg-danger/10 border-danger/20 text-danger',
-  success: 'bg-success/10 border-success/30 text-success',
-  warning: 'bg-warning/10 border-warning/30 text-warning-text',
-}
+    default: "bg-primary/10 border-primary/20 text-primary",
+    error: "bg-danger/10 border-danger/20 text-danger",
+    success: "bg-success/10 border-success/30 text-success",
+    warning: "bg-warning/10 border-warning/30 text-warning-text",
+};
 </script>
 
 <template>
-  <div
-    :class="[
-      colorClasses[type ?? 'default'],
-      'flex w-fit items-center rounded border px-4 py-0.5 text-center text-xs font-bold',
-    ]"
-  >
-    <slot />
-  </div>
+    <div
+        :class="[
+            colorClasses[type ?? 'default'],
+            'flex w-fit items-center rounded border px-4 py-0.5 text-center text-xs font-bold',
+        ]"
+    >
+        <slot />
+    </div>
 </template>
