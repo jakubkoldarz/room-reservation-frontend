@@ -1,148 +1,142 @@
 <script setup lang="ts">
-import AsideNavbarLayout from '@/features/layouts/AsideNavbarLayout.vue'
-import DataTable from '@/features/table/components/DataTable.vue'
-import Badge from '@/features/shared/Badge.vue'
-import { formatAddress } from '../utils/formatAddres'
-import Container from '@/features/shared/Container.vue'
-import { onMounted, ref, watch } from 'vue'
-import LinkButton from '@/features/shared/LinkButton.vue'
-import { buildingRoutes } from '../routes'
-import { ArrowRightIcon, PlusIcon, TrashIcon } from '@heroicons/vue/24/solid'
-import IconButton from '@/features/shared/IconButton.vue'
-import { usePermissions } from '@/composables/usePermissions'
-import { Permission } from '@/features/auth/constants/permissions'
-import { useVisibleColumns } from '@/composables/useVisibleColumns'
-import { defineFilters, type FilterValues } from '@/features/filters/types'
-import Filters from '@/features/filters/components/Filters.vue'
-import { watchDebounced } from '@vueuse/core'
-import { useBuildingsList } from '../composables/useBuildingsList'
-import { usePager } from '@/features/pager/composables/usePager'
-import Pager from '@/features/pager/components/Pager.vue'
-import apiClient from '@/api/client'
-import { useApiCall } from '@/composables/useApiCall'
-import { useToastsStore } from '@/features/toasts/stores/useToastsStore'
-import Overlay from '@/features/modal/components/Overlay.vue'
-import Modal from '@/features/modal/components/Modal.vue'
+import { ref, watch } from "vue";
+import { z } from "zod";
+import { ArrowRightIcon, PlusIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import apiClient from "@/api/client";
+import { apiErrorMessage } from "@/api/errors";
+import { pageParam, textParam, useListQuery } from "@/composables/useListQuery";
+import { usePagedList } from "@/composables/usePagedList";
+import { usePermissions } from "@/composables/usePermissions";
+import { useVisibleColumns } from "@/composables/useVisibleColumns";
+import { Permission } from "@/features/auth/constants/permissions";
+import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
+import { defineFilters } from "@/features/filters/types";
+import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
+import Modal from "@/features/modal/components/Modal.vue";
+import PagerBlock from "@/features/pager/components/PagerBlock.vue";
+import Badge from "@/features/shared/Badge.vue";
+import Container from "@/features/shared/Container.vue";
+import ErrorText from "@/features/shared/ErrorText.vue";
+import IconButton from "@/features/shared/IconButton.vue";
+import LinkButton from "@/features/shared/LinkButton.vue";
+import DataTable from "@/features/table/components/DataTable.vue";
+import { buildingRoutes } from "../routes";
+import { formatAddress } from "../utils/formatAddres";
 
-const { hasPermission } = usePermissions()
+const PAGE_SIZE = 25;
 
-const { call } = useApiCall()
+const { hasPermission } = usePermissions();
 
 const columns = useVisibleColumns(() => [
-  { key: 'link', width: 65, align: 'center', visible: hasPermission(Permission.BuildingView) },
-  { key: 'identifier', label: 'Identifier', width: 150, align: 'left' },
-  { key: 'name', label: 'Name' },
-  { key: 'location', label: 'Location', width: 350 },
-  { key: 'floors', label: 'Floors', width: 100, align: 'center' },
-  { key: 'delete', width: 65, align: 'center', visible: hasPermission(Permission.BuildingDelete) },
-])
+    { key: "link", width: 65, align: "center", visible: hasPermission(Permission.BuildingView) },
+    { key: "identifier", label: "Identifier", width: 150, align: "left" },
+    { key: "name", label: "Name" },
+    { key: "location", label: "Location", width: 350 },
+    { key: "floors", label: "Floors", width: 100, align: "center" },
+    {
+        key: "delete",
+        width: 65,
+        align: "center",
+        visible: hasPermission(Permission.BuildingDelete),
+    },
+]);
 
-const filters = defineFilters([{ type: 'text', key: 'Name', placeholder: 'Building name' }])
-const values = ref<FilterValues<typeof filters>>({})
-const { pager } = usePager(25)
+const filters = defineFilters([{ key: "name", type: "text", placeholder: "Building name" }]);
 
-const { fetchBuildings, isLoading, pagedBuildings } = useBuildingsList()
-onMounted(() => fetchBuildings(values.value, pager.value))
+const { query, setFilter, clampPage } = useListQuery(
+    z.object({ page: pageParam, name: textParam }),
+);
 
-async function deleteBuilding(buildingId: string) {
-  isModalOpen.value = true
-  return
+const { data, isLoading, error } = usePagedList(
+    (q, signal) =>
+        apiClient.getBuildings({
+            queries: { Name: q.name.trim() || undefined, Page: q.page, PageSize: PAGE_SIZE },
+            signal,
+        }),
+    query,
+);
 
-  const response = await call(() =>
-    apiClient.deleteBuildingsBuildingId(undefined, { params: { buildingId } }),
-  )
-  const toastsStore = useToastsStore()
+watch(data, (page) => {
+    if (page) void clampPage(page.totalPages);
+});
 
-  // TODO: Dodać modal
-  if (response.success) {
-    refetchBuildings()
-    toastsStore.pushSuccess({ title: 'Success', message: 'Building deleted successfully' })
-  } else {
-    toastsStore.pushApiError({ title: 'Failed to delete building', error: response.error })
-  }
+const pendingDeleteId = ref<string | null>(null);
+const isModalOpen = ref(false);
+
+function deleteBuilding(buildingId: string): void {
+    pendingDeleteId.value = buildingId;
+    isModalOpen.value = true;
 }
-
-async function refetchBuildings() {
-  await fetchBuildings(values.value, pager.value)
-}
-watchDebounced(
-  values,
-  () => {
-    pager.value.page = 1
-    refetchBuildings()
-  },
-  { debounce: 300, deep: true },
-)
-
-watch(pager, () => {
-  refetchBuildings()
-})
-
-const isModalOpen = ref(false)
 </script>
 
 <template>
-  <AsideNavbarLayout>
-    <Modal :is-open="isModalOpen" @close="isModalOpen = false" />
-    <Container class="@container px-0! py-0!">
-      <div
-        class="border-border flex flex-col flex-wrap items-center justify-between gap-2 border-b p-4 @md:flex-row"
-      >
-        <div class="flex shrink-0 flex-col items-center gap-2 @sm:flex-row">
-          <LinkButton
-            v-if="hasPermission(Permission.BuildingAdd)"
-            :to="{ name: buildingRoutes.add.name }"
-            class="w-full rounded! py-1.5! sm:max-w-45"
-          >
-            <PlusIcon />
-            Add Building
-          </LinkButton>
-          <Filters :filters v-model="values" class="w-full shrink-0 @sm:w-auto" />
-        </div>
-        <Pager :current-page="pagedBuildings.page" :total-pages="pagedBuildings.totalPages" />
-      </div>
+    <AsideNavbarLayout>
+        <Modal :is-open="isModalOpen" @close="isModalOpen = false" />
+        <Container class="@container px-0! py-0!">
+            <div
+                class="border-border flex flex-col flex-wrap items-center justify-between gap-2 border-b p-4 @md:flex-row"
+            >
+                <div class="flex shrink-0 flex-col items-center gap-2 @sm:flex-row">
+                    <LinkButton
+                        v-if="hasPermission(Permission.BuildingAdd)"
+                        :to="{ name: buildingRoutes.add.name }"
+                        class="w-full rounded! py-1.5! sm:max-w-45"
+                    >
+                        <PlusIcon />
+                        Add Building
+                    </LinkButton>
+                    <FiltersPanel
+                        :filters
+                        :values="query"
+                        class="w-full shrink-0 @sm:w-auto"
+                        @change="setFilter"
+                    />
+                </div>
+                <PagerBlock :current="query.page" :total="data?.totalPages ?? 1" />
+            </div>
 
-      <DataTable
-        v-if="pagedBuildings.value"
-        :columns
-        :items="pagedBuildings.value"
-        row-key="id"
-        :is-loading="isLoading"
-        :pager="pager"
-      >
-        <template #cell-link="{ row }">
-          <LinkButton
-            class="flex! items-center justify-center px-4! py-0!"
-            :to="{ name: buildingRoutes.view.name, params: { buildingId: row.id } }"
-          >
-            <ArrowRightIcon />
-          </LinkButton>
-        </template>
+            <ErrorText v-if="error" :error="apiErrorMessage(error)" class="mt-4" />
 
-        <template #cell-identifier="{ row }">
-          <Badge v-if="row.identifier">
-            {{ row.identifier }}
-          </Badge>
-        </template>
+            <DataTable
+                :columns
+                :items="data?.items ?? []"
+                row-key="id"
+                :is-loading="isLoading"
+                :skeleton-rows="PAGE_SIZE"
+            >
+                <template #cell-link="{ row }">
+                    <LinkButton
+                        class="flex! items-center justify-center px-4! py-0!"
+                        :to="{ name: buildingRoutes.view.name, params: { buildingId: row.id } }"
+                    >
+                        <ArrowRightIcon />
+                    </LinkButton>
+                </template>
 
-        <template #cell-name="{ row }">
-          {{ row.name }}
-        </template>
+                <template #cell-identifier="{ row }">
+                    <Badge v-if="row.identifier">
+                        {{ row.identifier }}
+                    </Badge>
+                </template>
 
-        <template #cell-location="{ row }">
-          {{ formatAddress(row) }}
-        </template>
+                <template #cell-name="{ row }">
+                    {{ row.name }}
+                </template>
 
-        <template #cell-floors="{ row }">
-          {{ row.floorsCount }}
-        </template>
+                <template #cell-location="{ row }">
+                    {{ formatAddress(row) }}
+                </template>
 
-        <template #cell-delete="{ row }">
-          <IconButton type="danger">
-            <TrashIcon class="size-4" @click="() => deleteBuilding(row.id)" />
-          </IconButton>
-        </template>
-      </DataTable>
-    </Container>
-  </AsideNavbarLayout>
+                <template #cell-floors="{ row }">
+                    {{ row.floorsCount }}
+                </template>
+
+                <template #cell-delete="{ row }">
+                    <IconButton type="danger" @click="deleteBuilding(row.id)">
+                        <TrashIcon class="size-4" />
+                    </IconButton>
+                </template>
+            </DataTable>
+        </Container>
+    </AsideNavbarLayout>
 </template>
