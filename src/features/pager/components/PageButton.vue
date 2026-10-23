@@ -12,21 +12,18 @@ const {
     page: number;
     disabled?: boolean;
     isActive?: boolean;
-    /** Nazwa dla czytników ekranu, gdy treścią jest symbol (np. "<"). */
     label?: string;
 }>();
 
 defineSlots<{ default?(): unknown }>();
 
 const route = useRoute();
-// Strona 1 to wartość domyślna — nie trzymamy jej w URL.
 const to = computed(() => ({
     query: { ...route.query, page: page > 1 ? String(page) : undefined },
 }));
 </script>
 
 <template>
-    <!-- Wyłączony przycisk to nie link: inaczej Tab + Enter i tak by nawigował. -->
     <span
         v-if="disabled"
         aria-disabled="true"
@@ -44,7 +41,7 @@ const to = computed(() => ({
         :to
         class="min-w-8 justify-center rounded! px-2! py-0! select-none"
     >
-        <span :aria-hidden="label ? 'true' : undefined"
+        <span class="text-inherit"
             ><slot>{{ page }}</slot></span
         >
         <span v-if="label" class="sr-only">{{ label }}</span>

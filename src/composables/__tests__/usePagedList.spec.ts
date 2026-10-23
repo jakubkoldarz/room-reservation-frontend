@@ -21,7 +21,6 @@ function page(items: string[], pageNumber = 1): Page<string> {
     };
 }
 
-/** Promise, który rozwiązujemy ręcznie — pozwala ustawić kolejność odpowiedzi. */
 function deferred<T>() {
     let resolve: (value: T) => void = () => {};
     let reject: (reason: unknown) => void = () => {};

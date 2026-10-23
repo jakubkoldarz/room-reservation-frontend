@@ -16,7 +16,6 @@ function httpError(status: number, data: unknown): AxiosError {
     });
 }
 
-// Odpowiedzi skopiowane z prawdziwego backendu (localhost:5000).
 describe("toApiError", () => {
     it("400 z błędami pól → validation z kluczami w camelCase", () => {
         const error = toApiError(
