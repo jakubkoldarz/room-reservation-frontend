@@ -53,6 +53,8 @@ const onSubmit = handleSubmit(async (values) => {
             <h2 class="mb-4 text-center text-xl">Sign in to RoomReservation</h2>
             <ErrorText :error="error" />
             <BaseInput
+                floating-label
+                has-icon
                 v-model="email"
                 type="email"
                 v-bind="emailAttrs"
@@ -64,6 +66,8 @@ const onSubmit = handleSubmit(async (values) => {
                 </template>
             </BaseInput>
             <BaseInput
+                floating-label
+                has-icon
                 v-model="password"
                 v-bind="passwordAttrs"
                 label="Password"

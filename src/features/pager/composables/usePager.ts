@@ -7,13 +7,12 @@ function toPositiveInt(value: unknown, fallback: number) {
     return Number.isInteger(n) && n > 0 ? n : fallback;
 }
 
-export function usePager(defaultPageSize: number) {
+export function usePager(defaultPageSize = 25) {
     const route = useRoute();
-    const page = computed(() => route.query.page ?? 1);
     const pager = computed<Pager>(() => ({
-        page: toPositiveInt(page.value, 1),
+        page: toPositiveInt(route.query?.page, 1),
         pageSize: defaultPageSize,
     }));
 
-    return { page, pager };
+    return pager;
 }

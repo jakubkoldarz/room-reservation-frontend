@@ -1,16 +1,10 @@
 <script setup lang="ts">
 import PageButton from "./PageButton.vue";
 
-const props = withDefaults(
-    defineProps<{
-        totalPages: number;
-        currentPage: number;
-    }>(),
-    {
-        totalPages: 1,
-        currentPage: 1,
-    },
-);
+const { totalPages = 1, currentPage = 1 } = defineProps<{
+    totalPages: number;
+    currentPage: number;
+}>();
 </script>
 
 <template>
@@ -22,18 +16,29 @@ const props = withDefaults(
         </template>
 
         <template v-else-if="totalPages <= 5">
-            <PageButton v-for="i in totalPages" :page="i" :is-active="i === currentPage" />
+            <PageButton
+                :key="`page-btn-${i}`"
+                v-for="i in totalPages"
+                :page="i"
+                :is-active="i === currentPage"
+            />
         </template>
 
         <template v-else>
             <template v-if="currentPage <= 3">
-                <PageButton v-for="i in 4" :page="i" :is-active="i === currentPage" />
+                <PageButton
+                    :key="`page-btn-${i}`"
+                    v-for="i in 4"
+                    :page="i"
+                    :is-active="i === currentPage"
+                />
                 <PageButton :page="totalPages" :is-active="currentPage === totalPages" />
             </template>
 
             <template v-else-if="currentPage >= totalPages - 2">
                 <PageButton :page="1" :is-active="currentPage === 1" />
                 <PageButton
+                    :key="`page-btn-${i}`"
                     v-for="i in 4"
                     :page="totalPages - 4 + i"
                     :is-active="currentPage === totalPages - 4 + i"

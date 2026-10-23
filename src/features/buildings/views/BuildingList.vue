@@ -12,20 +12,18 @@ import IconButton from "@/features/shared/IconButton.vue";
 import { usePermissions } from "@/composables/usePermissions";
 import { Permission } from "@/features/auth/constants/permissions";
 import { useVisibleColumns } from "@/composables/useVisibleColumns";
-import { defineFilters, type FilterValues } from "@/features/filters/types";
-import Filters from "@/features/filters/components/Filters.vue";
-import { watchDebounced } from "@vueuse/core";
-import { useBuildingsList } from "../composables/useBuildingsList";
-import { usePager } from "@/features/pager/composables/usePager";
-import Pager from "@/features/pager/components/Pager.vue";
-import apiClient from "@/api/client";
 import { useApiCall } from "@/composables/useApiCall";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
-import Overlay from "@/features/modal/components/Overlay.vue";
 import Modal from "@/features/modal/components/Modal.vue";
+import { useList } from "@/composables/useList";
+import type { Building } from "../types";
+import { useFilters } from "@/features/filters/composables/useFilters";
+import apiClient from "@/api/client";
+import PagerBlock from "@/features/pager/components/PagerBlock.vue";
+import { usePager } from "@/features/pager/composables/usePager";
+import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
 
 const { hasPermission } = usePermissions();
-
 const { call } = useApiCall();
 
 const columns = useVisibleColumns(() => [
@@ -42,47 +40,40 @@ const columns = useVisibleColumns(() => [
     },
 ]);
 
-const filters = defineFilters([{ type: "text", key: "Name", placeholder: "Building name" }]);
-const values = ref<FilterValues<typeof filters>>({});
-const { pager } = usePager(25);
+const { filters, values } = useFilters([
+    { key: "Name", type: "text", placeholder: "Building name" },
+]);
+const pager = usePager(2);
 
-const { fetchBuildings, isLoading, pagedBuildings } = useBuildingsList();
-onMounted(() => fetchBuildings(values.value, pager.value));
+const {
+    fetch: fetchBuildings,
+    isLoading,
+    page: pagedBuildings,
+} = useList<Building>(() =>
+    apiClient.getBuildings({
+        queries: { ...values.value, Page: pager.value.page, PageSize: pager.value.pageSize },
+    }),
+);
+onMounted(() => fetchBuildings());
+watch(() => pager.value.page, fetchBuildings);
+watch(values, fetchBuildings);
 
 async function deleteBuilding(buildingId: string) {
     isModalOpen.value = true;
-    return;
 
-    const response = await call(() =>
-        apiClient.deleteBuildingsBuildingId(undefined, { params: { buildingId } }),
-    );
-    const toastsStore = useToastsStore();
+    // const response = await call(() =>
+    //     apiClient.deleteBuildingsBuildingId(undefined, { params: { buildingId } }),
+    // );
+    // const toastsStore = useToastsStore();
 
-    // TODO: Dodać modal
-    if (response.success) {
-        refetchBuildings();
-        toastsStore.pushSuccess({ title: "Success", message: "Building deleted successfully" });
-    } else {
-        toastsStore.pushApiError({ title: "Failed to delete building", error: response.error });
-    }
+    // // TODO: Dodać modal
+    // if (response.success) {
+    //     fetchBuildings();
+    //     toastsStore.pushSuccess({ title: "Success", message: "Building deleted successfully" });
+    // } else {
+    //     toastsStore.pushApiError({ title: "Failed to delete building", error: response.error });
+    // }
 }
-
-async function refetchBuildings() {
-    await fetchBuildings(values.value, pager.value);
-}
-watchDebounced(
-    values,
-    () => {
-        pager.value.page = 1;
-        refetchBuildings();
-    },
-    { debounce: 300, deep: true },
-);
-
-watch(pager, () => {
-    refetchBuildings();
-});
-
 const isModalOpen = ref(false);
 </script>
 
@@ -102,18 +93,18 @@ const isModalOpen = ref(false);
                         <PlusIcon />
                         Add Building
                     </LinkButton>
-                    <Filters :filters v-model="values" class="w-full shrink-0 @sm:w-auto" />
+                    <FiltersPanel :filters v-model="values" class="w-full shrink-0 @sm:w-auto" />
                 </div>
-                <Pager
-                    :current-page="pagedBuildings.page"
-                    :total-pages="pagedBuildings.totalPages"
+                <PagerBlock
+                    :current-page="pagedBuildings?.page ?? 1"
+                    :total-pages="pagedBuildings?.totalPages ?? 1"
                 />
             </div>
 
             <DataTable
-                v-if="pagedBuildings.value"
+                v-if="pagedBuildings?.items"
                 :columns
-                :items="pagedBuildings.value"
+                :items="pagedBuildings?.items"
                 row-key="id"
                 :is-loading="isLoading"
                 :pager="pager"
