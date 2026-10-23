@@ -1,38 +1,60 @@
-import apiClient from "@/api/client";
-import { useApiCall } from "@/composables/useApiCall";
 import { defineStore } from "pinia";
+import { ref, shallowRef } from "vue";
+import apiClient from "@/api/client";
+import { apiCall } from "@/api/apiCall";
+import type { ApiError } from "@/api/errors";
 import type { Building } from "../types";
 
-export const useBuildingsStore = defineStore("buildings", {
-    state: () => ({
-        buildings: [] as Building[],
-        queryParam: "",
-        totalCount: 0 as undefined | number,
-        isLoaded: false,
-        isLoading: false,
-    }),
+const ASIDE_PAGE_SIZE = 4;
 
-    actions: {
-        async ensureLoaded() {
-            if (this.isLoaded || this.isLoading) return;
-            await this.fetchBuildings();
-        },
+export const useBuildingsStore = defineStore("buildings", () => {
+    const buildings = shallowRef<readonly Building[]>([]);
+    const totalCount = ref(0);
+    const queryParam = ref("");
+    const isLoading = ref(false);
+    const isLoaded = ref(false);
+    const error = shallowRef<ApiError | null>(null);
+    let inFlight: AbortController | null = null;
 
-        async fetchBuildings() {
-            this.isLoading = true;
-            const { call } = useApiCall();
-            const result = await call(() =>
-                apiClient.getBuildings({ queries: { Name: this.queryParam, PageSize: 4 } }),
-            );
-            if (result.success && result.data?.value) {
-                this.buildings = result.data.value;
+    async function fetchBuildings(): Promise<void> {
+        inFlight?.abort();
+        const controller = new AbortController();
+        inFlight = controller;
+        isLoading.value = true;
 
-                if (!this.isLoaded) {
-                    this.totalCount = result.data.totalCount;
-                }
-                this.isLoaded = true;
-            }
-            this.isLoading = false;
-        },
-    },
+        const result = await apiCall(() =>
+            apiClient.getBuildings({
+                queries: { Name: queryParam.value.trim() || undefined, PageSize: ASIDE_PAGE_SIZE },
+                signal: controller.signal,
+            }),
+        );
+        if (inFlight !== controller) return;
+
+        inFlight = null;
+        isLoading.value = false;
+        if (result.ok) {
+            buildings.value = result.data.items;
+            totalCount.value = result.data.totalCount;
+            isLoaded.value = true;
+            error.value = null;
+        } else {
+            error.value = result.error;
+        }
+    }
+
+    async function ensureLoaded(): Promise<void> {
+        if (isLoaded.value || inFlight) return;
+        await fetchBuildings();
+    }
+
+    return {
+        buildings,
+        totalCount,
+        queryParam,
+        isLoading,
+        isLoaded,
+        error,
+        fetchBuildings,
+        ensureLoaded,
+    };
 });

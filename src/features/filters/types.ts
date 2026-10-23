@@ -1,13 +1,13 @@
-export type FilterBase = {
-    key: string;
+export type FilterBase<K extends string = string> = {
+    key: K;
     placeholder: string;
 };
 
-export type Filter = FilterBase &
+export type Filter<K extends string = string> = FilterBase<K> &
     (
         | {
               type: "select";
-              values: FilterSelectValues[];
+              values: readonly FilterSelectValues[];
           }
         | {
               type: "text";
@@ -19,8 +19,8 @@ export type FilterSelectValues = {
     label: string;
 };
 
-export type FilterValues<T extends readonly Filter[]> = Partial<Record<T[number]["key"], string>>;
+export type FilterValues<K extends string> = Partial<Record<K, string>>;
 
-export function defineFilters<const T extends readonly Filter[]>(filters: T) {
+export function defineFilters<const T extends readonly Filter[]>(filters: T): T {
     return filters;
 }

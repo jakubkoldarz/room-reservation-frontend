@@ -1,30 +1,31 @@
 <script setup lang="ts">
-import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
-import DataTable from "@/features/table/components/DataTable.vue";
-import Badge from "@/features/shared/Badge.vue";
-import { formatAddress } from "../utils/formatAddres";
-import Container from "@/features/shared/Container.vue";
-import { onMounted, ref, watch } from "vue";
-import LinkButton from "@/features/shared/LinkButton.vue";
-import { buildingRoutes } from "../routes";
+import { ref, watch } from "vue";
+import { z } from "zod";
 import { ArrowRightIcon, PlusIcon, TrashIcon } from "@heroicons/vue/24/solid";
-import IconButton from "@/features/shared/IconButton.vue";
-import { usePermissions } from "@/composables/usePermissions";
-import { Permission } from "@/features/auth/constants/permissions";
-import { useVisibleColumns } from "@/composables/useVisibleColumns";
-import { useApiCall } from "@/composables/useApiCall";
-import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
-import Modal from "@/features/modal/components/Modal.vue";
-import { useList } from "@/composables/useList";
-import type { Building } from "../types";
-import { useFilters } from "@/features/filters/composables/useFilters";
 import apiClient from "@/api/client";
-import PagerBlock from "@/features/pager/components/PagerBlock.vue";
-import { usePager } from "@/features/pager/composables/usePager";
+import { apiErrorMessage } from "@/api/errors";
+import { pageParam, textParam, useListQuery } from "@/composables/useListQuery";
+import { usePagedList } from "@/composables/usePagedList";
+import { usePermissions } from "@/composables/usePermissions";
+import { useVisibleColumns } from "@/composables/useVisibleColumns";
+import { Permission } from "@/features/auth/constants/permissions";
 import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
+import { defineFilters } from "@/features/filters/types";
+import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
+import Modal from "@/features/modal/components/Modal.vue";
+import PagerBlock from "@/features/pager/components/PagerBlock.vue";
+import Badge from "@/features/shared/Badge.vue";
+import Container from "@/features/shared/Container.vue";
+import ErrorText from "@/features/shared/ErrorText.vue";
+import IconButton from "@/features/shared/IconButton.vue";
+import LinkButton from "@/features/shared/LinkButton.vue";
+import DataTable from "@/features/table/components/DataTable.vue";
+import { buildingRoutes } from "../routes";
+import { formatAddress } from "../utils/formatAddres";
+
+const PAGE_SIZE = 25;
 
 const { hasPermission } = usePermissions();
-const { call } = useApiCall();
 
 const columns = useVisibleColumns(() => [
     { key: "link", width: 65, align: "center", visible: hasPermission(Permission.BuildingView) },
@@ -40,41 +41,32 @@ const columns = useVisibleColumns(() => [
     },
 ]);
 
-const { filters, values } = useFilters([
-    { key: "Name", type: "text", placeholder: "Building name" },
-]);
-const pager = usePager(2);
+const filters = defineFilters([{ key: "name", type: "text", placeholder: "Building name" }]);
 
-const {
-    fetch: fetchBuildings,
-    isLoading,
-    page: pagedBuildings,
-} = useList<Building>(() =>
-    apiClient.getBuildings({
-        queries: { ...values.value, Page: pager.value.page, PageSize: pager.value.pageSize },
-    }),
+const { query, setFilter, clampPage } = useListQuery(
+    z.object({ page: pageParam, name: textParam }),
 );
-onMounted(() => fetchBuildings());
-watch(() => pager.value.page, fetchBuildings);
-watch(values, fetchBuildings);
 
-async function deleteBuilding(buildingId: string) {
-    isModalOpen.value = true;
+const { data, isLoading, error } = usePagedList(
+    (q, signal) =>
+        apiClient.getBuildings({
+            queries: { Name: q.name.trim() || undefined, Page: q.page, PageSize: PAGE_SIZE },
+            signal,
+        }),
+    query,
+);
 
-    // const response = await call(() =>
-    //     apiClient.deleteBuildingsBuildingId(undefined, { params: { buildingId } }),
-    // );
-    // const toastsStore = useToastsStore();
+watch(data, (page) => {
+    if (page) void clampPage(page.totalPages);
+});
 
-    // // TODO: Dodać modal
-    // if (response.success) {
-    //     fetchBuildings();
-    //     toastsStore.pushSuccess({ title: "Success", message: "Building deleted successfully" });
-    // } else {
-    //     toastsStore.pushApiError({ title: "Failed to delete building", error: response.error });
-    // }
-}
+const pendingDeleteId = ref<string | null>(null);
 const isModalOpen = ref(false);
+
+function deleteBuilding(buildingId: string): void {
+    pendingDeleteId.value = buildingId;
+    isModalOpen.value = true;
+}
 </script>
 
 <template>
@@ -93,21 +85,24 @@ const isModalOpen = ref(false);
                         <PlusIcon />
                         Add Building
                     </LinkButton>
-                    <FiltersPanel :filters v-model="values" class="w-full shrink-0 @sm:w-auto" />
+                    <FiltersPanel
+                        :filters
+                        :values="query"
+                        class="w-full shrink-0 @sm:w-auto"
+                        @change="setFilter"
+                    />
                 </div>
-                <PagerBlock
-                    :current-page="pagedBuildings?.page ?? 1"
-                    :total-pages="pagedBuildings?.totalPages ?? 1"
-                />
+                <PagerBlock :current="query.page" :total="data?.totalPages ?? 1" />
             </div>
 
+            <ErrorText v-if="error" :error="apiErrorMessage(error)" class="mt-4" />
+
             <DataTable
-                v-if="pagedBuildings?.items"
                 :columns
-                :items="pagedBuildings?.items"
+                :items="data?.items ?? []"
                 row-key="id"
                 :is-loading="isLoading"
-                :pager="pager"
+                :skeleton-rows="PAGE_SIZE"
             >
                 <template #cell-link="{ row }">
                     <LinkButton
@@ -137,8 +132,8 @@ const isModalOpen = ref(false);
                 </template>
 
                 <template #cell-delete="{ row }">
-                    <IconButton type="danger">
-                        <TrashIcon class="size-4" @click="() => deleteBuilding(row.id)" />
+                    <IconButton type="danger" @click="deleteBuilding(row.id)">
+                        <TrashIcon class="size-4" />
                     </IconButton>
                 </template>
             </DataTable>

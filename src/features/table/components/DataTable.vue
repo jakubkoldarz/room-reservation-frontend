@@ -1,25 +1,27 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
 import { InboxIcon } from "@heroicons/vue/24/solid";
-import type { Column, Pager } from "../types";
+import type { Column } from "../types";
 import Skeleton from "@/features/shared/Skeleton.vue";
 
-const props = withDefaults(
+withDefaults(
     defineProps<{
         columns: Column[];
-        items: T[];
+        items: readonly T[];
         rowKey: keyof T & string;
         isLoading?: boolean;
-        pager?: Pager;
+        /** Liczba wierszy szkieletu podczas ładowania (zwykle rozmiar strony). */
+        skeletonRows?: number;
     }>(),
     {
         columns: () => [],
         items: () => [],
         isLoading: false,
+        skeletonRows: 5,
     },
 );
 
 defineSlots<{
-    [K in `cell-${string}`]: (props: { row: T }) => any;
+    [K in `cell-${string}`]: (props: { row: T }) => unknown;
 }>();
 
 const alignClasses = {
@@ -71,7 +73,7 @@ function alignClass(align?: Column["align"]) {
                 </template>
 
                 <template v-else-if="isLoading">
-                    <tr v-for="i in props.pager?.pageSize ?? 5" :key="i">
+                    <tr v-for="i in skeletonRows" :key="i">
                         <td :colspan="columns.length" class="p-2 px-6">
                             <Skeleton class="w-full" />
                         </td>

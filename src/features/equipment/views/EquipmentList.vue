@@ -1,29 +1,40 @@
 <script setup lang="ts">
-import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
-import DataTable from "@/features/table/components/DataTable.vue";
-import Container from "@/features/shared/Container.vue";
-import { onMounted, ref, watch } from "vue";
-import LinkButton from "@/features/shared/LinkButton.vue";
-import { ArrowRightIcon, PlusIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import { ref, watch, type Component } from "vue";
+import { z } from "zod";
 import * as SolidIcons from "@heroicons/vue/24/solid";
-import IconButton from "@/features/shared/IconButton.vue";
-import { usePermissions } from "@/composables/usePermissions";
-import { Permission } from "@/features/auth/constants/permissions";
-import { useVisibleColumns } from "@/composables/useVisibleColumns";
-import { defineFilters, type FilterValues } from "@/features/filters/types";
-import Filters from "@/features/filters/components/Filters.vue";
-import { watchDebounced } from "@vueuse/core";
-import { usePager } from "@/features/pager/composables/usePager";
-import Pager from "@/features/pager/components/Pager.vue";
+import {
+    ArrowRightIcon,
+    PlusIcon,
+    QuestionMarkCircleIcon,
+    TrashIcon,
+} from "@heroicons/vue/24/solid";
 import apiClient from "@/api/client";
-import { useApiCall } from "@/composables/useApiCall";
-import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
+import { apiErrorMessage } from "@/api/errors";
+import { pageParam, textParam, useListQuery } from "@/composables/useListQuery";
+import { usePagedList } from "@/composables/usePagedList";
+import { usePermissions } from "@/composables/usePermissions";
+import { useVisibleColumns } from "@/composables/useVisibleColumns";
+import { Permission } from "@/features/auth/constants/permissions";
+import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
+import { defineFilters } from "@/features/filters/types";
+import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import Modal from "@/features/modal/components/Modal.vue";
-import { useEquipmentList } from "../composables/useEquipmentList";
+import PagerBlock from "@/features/pager/components/PagerBlock.vue";
+import Container from "@/features/shared/Container.vue";
+import ErrorText from "@/features/shared/ErrorText.vue";
+import IconButton from "@/features/shared/IconButton.vue";
+import LinkButton from "@/features/shared/LinkButton.vue";
+import DataTable from "@/features/table/components/DataTable.vue";
 import { equipmentRoutes } from "../routes";
 
+const PAGE_SIZE = 25;
+
+const icons: ReadonlyMap<string, Component> = new Map(Object.entries(SolidIcons));
+function iconFor(name: string): Component {
+    return icons.get(name) ?? QuestionMarkCircleIcon;
+}
+
 const { hasPermission } = usePermissions();
-const { call } = useApiCall();
 
 const columns = useVisibleColumns(() => [
     { key: "link", width: 65, align: "center", visible: hasPermission(Permission.EquipmentView) },
@@ -37,46 +48,33 @@ const columns = useVisibleColumns(() => [
     },
 ]);
 
-const filters = defineFilters([{ type: "text", key: "Name", placeholder: "Equipment" }]);
-const values = ref<FilterValues<typeof filters>>({});
-const { pager } = usePager(25);
+const filters = defineFilters([{ key: "name", type: "text", placeholder: "Equipment" }]);
 
-const { fetchEquipment, isLoading, pagedEquipment } = useEquipmentList();
-onMounted(() => fetchEquipment(values.value, pager.value));
-
-async function deleteEquipment(equipmentId: string) {
-    isModalOpen.value = true;
-    return;
-
-    // const response = await call(() => apiClient.deleteBuildingsBuildingId(undefined, { params: { buildingId } }));
-    // const toastsStore = useToastsStore();
-
-    // // TODO: Dodać modal
-    // if (response.success) {
-    //     refetchBuildings();
-    //     toastsStore.pushSuccess({ title: "Success", message: "Building deleted successfully" });
-    // } else {
-    //     toastsStore.pushApiError({ title: "Failed to delete building", error: response.error });
-    // }
-}
-
-async function refetchEquipment() {
-    await fetchEquipment(values.value, pager.value);
-}
-watchDebounced(
-    values,
-    () => {
-        pager.value.page = 1;
-        refetchEquipment();
-    },
-    { debounce: 300, deep: true },
+const { query, setFilter, clampPage } = useListQuery(
+    z.object({ page: pageParam, name: textParam }),
 );
 
-watch(pager, () => {
-    refetchEquipment();
+const { data, isLoading, error } = usePagedList(
+    (q, signal) =>
+        apiClient.getEquipment({
+            queries: { Name: q.name.trim() || undefined, Page: q.page, PageSize: PAGE_SIZE },
+            signal,
+        }),
+    query,
+);
+
+watch(data, (page) => {
+    if (page) void clampPage(page.totalPages);
 });
 
+// TODO (moduł 5): useConfirm → apiCall(delete) → toast → reload() z usePagedList
+const pendingDeleteId = ref<string | null>(null);
 const isModalOpen = ref(false);
+
+function deleteEquipment(equipmentId: string): void {
+    pendingDeleteId.value = equipmentId;
+    isModalOpen.value = true;
+}
 </script>
 
 <template>
@@ -95,21 +93,24 @@ const isModalOpen = ref(false);
                         <PlusIcon />
                         Add Equipment
                     </LinkButton>
-                    <Filters :filters v-model="values" class="w-full shrink-0 @sm:w-auto" />
+                    <FiltersPanel
+                        :filters
+                        :values="query"
+                        class="w-full shrink-0 @sm:w-auto"
+                        @change="setFilter"
+                    />
                 </div>
-                <Pager
-                    :current-page="pagedEquipment.page"
-                    :total-pages="pagedEquipment.totalPages"
-                />
+                <PagerBlock :current="query.page" :total="data?.totalPages ?? 1" />
             </div>
 
+            <ErrorText v-if="error" :error="apiErrorMessage(error)" class="mt-4" />
+
             <DataTable
-                v-if="pagedEquipment.value"
                 :columns
-                :items="pagedEquipment.value"
+                :items="data?.items ?? []"
                 row-key="id"
                 :is-loading="isLoading"
-                :pager="pager"
+                :skeleton-rows="PAGE_SIZE"
             >
                 <template #cell-link="{ row }">
                     <LinkButton
@@ -123,7 +124,7 @@ const isModalOpen = ref(false);
                 <template #cell-icon="{ row }">
                     <div class="flex items-center justify-center">
                         <component
-                            :is="SolidIcons[row.icon]"
+                            :is="iconFor(row.icon)"
                             class="text-text/65 border-text/20 bg-text/5 size-5 rounded-md border p-0.5"
                         />
                     </div>
