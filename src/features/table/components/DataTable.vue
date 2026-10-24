@@ -1,28 +1,30 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
+import { computed } from "vue";
 import { InboxIcon } from "@heroicons/vue/24/solid";
-import type { Column } from "../types";
 import Skeleton from "@/features/shared/Skeleton.vue";
+import type { Column } from "../types";
 
-withDefaults(
-    defineProps<{
-        columns: Column[];
-        items: readonly T[];
-        rowKey: keyof T & string;
-        isLoading?: boolean;
-        /** Liczba wierszy szkieletu podczas ładowania (zwykle rozmiar strony). */
-        skeletonRows?: number;
-    }>(),
-    {
-        columns: () => [],
-        items: () => [],
-        isLoading: false,
-        skeletonRows: 5,
-    },
-);
+const {
+    columns,
+    items,
+    rowKey,
+    isLoading = false,
+    skeletonRows = 5,
+} = defineProps<{
+    columns: readonly Column[];
+    items: readonly T[];
+    rowKey: keyof T & string;
+    isLoading?: boolean;
+    skeletonRows?: number;
+}>();
 
 defineSlots<{
     [K in `cell-${string}`]: (props: { row: T }) => unknown;
 }>();
+
+const showRows = computed(() => !isLoading && items.length > 0);
+const dataColumns = computed(() => columns.filter((col) => col.label));
+const actionColumns = computed(() => columns.filter((col) => !col.label));
 
 const alignClasses = {
     left: "text-left",
@@ -35,31 +37,31 @@ function alignClass(align?: Column["align"]) {
 </script>
 
 <template>
-    <div class="overflow-x-auto">
-        <table class="w-full table-fixed">
-            <colgroup>
-                <col
-                    v-for="col in columns"
-                    :key="col.key"
-                    :style="col.width ? `width: ${col.width}px` : 'min-width: 200px'"
-                />
-            </colgroup>
-
-            <thead>
-                <tr class="border-border bg-background border-b">
-                    <th
+    <div class="@container">
+        <div class="hidden overflow-x-auto @3xl:block">
+            <table class="w-full table-fixed">
+                <colgroup>
+                    <col
                         v-for="col in columns"
                         :key="col.key"
-                        class="px-4 py-2 text-sm font-medium"
-                        :class="alignClass(col.align)"
-                    >
-                        {{ col.label }}
-                    </th>
-                </tr>
-            </thead>
+                        :style="col.width ? `width: ${col.width}px` : 'min-width: 200px'"
+                    />
+                </colgroup>
 
-            <tbody class="divide-border divide-y">
-                <template v-if="items.length > 0 && !isLoading">
+                <thead>
+                    <tr class="border-border bg-background border-b">
+                        <th
+                            v-for="col in columns"
+                            :key="col.key"
+                            class="px-4 py-2 text-sm font-medium"
+                            :class="alignClass(col.align)"
+                        >
+                            {{ col.label }}
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody v-if="showRows" class="divide-border divide-y">
                     <tr v-for="item in items" :key="item[rowKey]">
                         <td
                             v-for="col in columns"
@@ -70,25 +72,38 @@ function alignClass(align?: Column["align"]) {
                             <slot :name="`cell-${col.key}`" :row="item" />
                         </td>
                     </tr>
-                </template>
+                </tbody>
+            </table>
+        </div>
 
-                <template v-else-if="isLoading">
-                    <tr v-for="i in skeletonRows" :key="i">
-                        <td :colspan="columns.length" class="p-2 px-6">
-                            <Skeleton class="w-full" />
-                        </td>
-                    </tr>
-                </template>
+        <ul v-if="showRows" class="divide-border divide-y @3xl:hidden">
+            <li v-for="item in items" :key="item[rowKey]" class="flex flex-col gap-2 p-4">
+                <div
+                    v-for="col in dataColumns"
+                    :key="col.key"
+                    class="flex items-start justify-between gap-4 text-sm"
+                >
+                    <span class="text-text-muted shrink-0">{{ col.label }}</span>
+                    <div class="min-w-0 text-right wrap-break-word">
+                        <slot :name="`cell-${col.key}`" :row="item" />
+                    </div>
+                </div>
 
-                <tr v-else>
-                    <td :colspan="columns.length" class="w-full px-4 py-12">
-                        <div class="flex flex-col items-center justify-center gap-2">
-                            <InboxIcon class="text-text-muted size-24 opacity-25" />
-                            <span class="text-text-muted text-sm">No data available</span>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                <div v-if="actionColumns.length > 0" class="flex justify-end gap-2 pt-1">
+                    <template v-for="col in actionColumns" :key="col.key">
+                        <slot :name="`cell-${col.key}`" :row="item" />
+                    </template>
+                </div>
+            </li>
+        </ul>
+
+        <div v-if="isLoading" class="flex flex-col gap-4 p-4">
+            <Skeleton v-for="i in skeletonRows" :key="i" class="w-full" />
+        </div>
+
+        <div v-else-if="items.length === 0" class="flex flex-col items-center gap-2 px-4 py-12">
+            <InboxIcon class="text-text-muted size-24 opacity-25" />
+            <span class="text-text-muted text-sm">No data available</span>
+        </div>
     </div>
 </template>

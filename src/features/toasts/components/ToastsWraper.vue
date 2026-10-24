@@ -1,19 +1,27 @@
 <script setup lang="ts">
 import { useToastsStore } from "../stores/useToastsStore";
-import Toast from "./Toast.vue";
+import ToastItem from "./ToastItem.vue";
 
 const toastsStore = useToastsStore();
 </script>
 
 <template>
-    <div class="pointer-events-none fixed top-4 right-4 z-1500 flex w-full max-w-sm flex-col">
-        <TransitionGroup name="toasts" tag="ul" class="relative flex w-full flex-col gap-2">
+    <!-- Telefon: na całą szerokość z marginesem 1rem. Od sm: w prawym górnym rogu, max 24rem. -->
+    <div
+        class="pointer-events-none fixed inset-x-4 top-4 z-1500 flex flex-col sm:left-auto sm:w-full sm:max-w-sm"
+    >
+        <TransitionGroup
+            name="toasts"
+            tag="ul"
+            aria-live="polite"
+            class="relative flex w-full flex-col gap-2"
+        >
             <li
                 v-for="toast in toastsStore.toasts"
                 :key="toast.id"
                 class="pointer-events-auto w-full"
             >
-                <Toast :toast="toast" />
+                <ToastItem :toast="toast" />
             </li>
         </TransitionGroup>
     </div>
