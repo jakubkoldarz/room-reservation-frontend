@@ -5,8 +5,6 @@ import Container from "@/features/shared/Container.vue";
 import OutlineButton from "@/features/shared/OutlineButton.vue";
 import { CheckIcon, XMarkIcon } from "@heroicons/vue/24/solid";
 
-const props = defineProps<{}>();
-
 const emit = defineEmits<{
     cancel: [];
     save: [];

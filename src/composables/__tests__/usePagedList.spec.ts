@@ -10,10 +10,10 @@ interface Query {
     name: string;
 }
 
-function page(items: string[], pageNumber = 1): Page<string> {
+function page(items: string[]): Page<string> {
     return {
         items,
-        page: pageNumber,
+        page: 1,
         pageSize: 10,
         totalCount: items.length,
         totalPages: 1,
@@ -21,22 +21,18 @@ function page(items: string[], pageNumber = 1): Page<string> {
     };
 }
 
+/** Promise, który rozwiązujemy ręcznie — pozwala ustawić kolejność odpowiedzi. */
 function deferred<T>() {
     let resolve: (value: T) => void = () => {};
-    let reject: (reason: unknown) => void = () => {};
-    const promise = new Promise<T>((res, rej) => {
-        resolve = res;
-        reject = rej;
-    });
-    return { promise, resolve, reject };
+    const promise = new Promise<T>((res) => (resolve = res));
+    return { promise, resolve };
 }
 
-function setup(fetchPage: (q: Query, signal: AbortSignal) => Promise<Page<string>>) {
+function setup(fetchPage: (q: Query) => Promise<Page<string>>) {
     const query = shallowRef<Query>({ page: 1, name: "" });
-    const scope = effectScope();
-    const list = scope.run(() => usePagedList(fetchPage, query));
+    const list = effectScope().run(() => usePagedList(fetchPage, query));
     if (!list) throw new Error("composable did not run");
-    return { query, list, scope };
+    return { query, list };
 }
 
 describe("usePagedList", () => {
@@ -53,30 +49,26 @@ describe("usePagedList", () => {
         expect(list.error.value).toBeNull();
     });
 
-    it("spóźniona odpowiedź nie nadpisuje nowszej, a stare żądanie jest anulowane", async () => {
+    it("spóźniona odpowiedź na stare zapytanie nie nadpisuje nowszej", async () => {
         const slow = deferred<Page<string>>();
         const fast = deferred<Page<string>>();
-        const signals: AbortSignal[] = [];
         const responses = [slow.promise, fast.promise];
-        const { query, list } = setup((_q, signal) => {
-            signals.push(signal);
-            return responses[signals.length - 1] ?? Promise.reject(new Error("unexpected call"));
-        });
+        let calls = 0;
+        const { query, list } = setup(() => responses[calls++] ?? Promise.reject(new Error("x")));
 
         query.value = { page: 2, name: "" };
         await nextTick();
-        expect(signals[0]?.aborted).toBe(true);
 
-        fast.resolve(page(["new"], 2));
+        fast.resolve(page(["new"]));
         await flushPromises();
-        slow.resolve(page(["old"], 1));
-        await flushPromises();
-
-        expect(list.data.value?.items).toEqual(["new"]);
         expect(list.isLoading.value).toBe(false);
+
+        slow.resolve(page(["old"]));
+        await flushPromises();
+        expect(list.data.value?.items).toEqual(["new"]);
     });
 
-    it("isLoading zostaje true, dopóki trwa OSTATNIE żądanie", async () => {
+    it("isLoading zostaje true, dopóki trwa OSTATNIE zapytanie", async () => {
         const first = deferred<Page<string>>();
         const second = deferred<Page<string>>();
         const responses = [first.promise, second.promise];
@@ -131,24 +123,6 @@ describe("usePagedList", () => {
         await flushPromises();
 
         await list.reload();
-        expect(fetchPage).toHaveBeenLastCalledWith(
-            { page: 1, name: "hall" },
-            expect.any(AbortSignal),
-        );
-    });
-
-    it("zamknięcie scope anuluje żądanie w toku i nie ustawia błędu", async () => {
-        const pending = deferred<Page<string>>();
-        let signal: AbortSignal | undefined;
-        const { list, scope } = setup((_q, s) => {
-            signal = s;
-            return pending.promise;
-        });
-
-        scope.stop();
-        expect(signal?.aborted).toBe(true);
-        pending.reject(new Error("aborted"));
-        await flushPromises();
-        expect(list.error.value).toBeNull();
+        expect(fetchPage).toHaveBeenLastCalledWith({ page: 1, name: "hall" });
     });
 });

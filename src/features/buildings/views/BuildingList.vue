@@ -48,16 +48,15 @@ const { query, setFilter, clampPage } = useListQuery(
 );
 
 const { data, isLoading, error } = usePagedList(
-    (q, signal) =>
+    (q) =>
         apiClient.getBuildings({
             queries: { Name: q.name.trim() || undefined, Page: q.page, PageSize: PAGE_SIZE },
-            signal,
         }),
     query,
 );
 
 watch(data, (page) => {
-    if (page) void clampPage(page.totalPages);
+    if (page) clampPage(page.totalPages);
 });
 
 const pendingDeleteId = ref<string | null>(null);

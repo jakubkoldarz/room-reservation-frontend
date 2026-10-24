@@ -1,13 +1,7 @@
 <script setup lang="ts">
-import { ref, watch, type Component } from "vue";
+import { ref, watch } from "vue";
 import { z } from "zod";
-import * as SolidIcons from "@heroicons/vue/24/solid";
-import {
-    ArrowRightIcon,
-    PlusIcon,
-    QuestionMarkCircleIcon,
-    TrashIcon,
-} from "@heroicons/vue/24/solid";
+import { ArrowRightIcon, PlusIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import apiClient from "@/api/client";
 import { apiErrorMessage } from "@/api/errors";
 import { pageParam, textParam, useListQuery } from "@/composables/useListQuery";
@@ -25,14 +19,10 @@ import ErrorText from "@/features/shared/ErrorText.vue";
 import IconButton from "@/features/shared/IconButton.vue";
 import LinkButton from "@/features/shared/LinkButton.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
+import { iconFor } from "../icons";
 import { equipmentRoutes } from "../routes";
 
 const PAGE_SIZE = 25;
-
-const icons: ReadonlyMap<string, Component> = new Map(Object.entries(SolidIcons));
-function iconFor(name: string): Component {
-    return icons.get(name) ?? QuestionMarkCircleIcon;
-}
 
 const { hasPermission } = usePermissions();
 
@@ -55,10 +45,9 @@ const { query, setFilter, clampPage } = useListQuery(
 );
 
 const { data, isLoading, error } = usePagedList(
-    (q, signal) =>
+    (q) =>
         apiClient.getEquipment({
             queries: { Name: q.name.trim() || undefined, Page: q.page, PageSize: PAGE_SIZE },
-            signal,
         }),
     query,
 );
@@ -115,7 +104,7 @@ function deleteEquipment(equipmentId: string): void {
                 <template #cell-link="{ row }">
                     <LinkButton
                         class="flex! items-center justify-center px-4! py-0!"
-                        :to="{ name: equipmentRoutes.view.name, params: { equipmentId: row.id } }"
+                        :to="{ name: equipmentRoutes.edit.name, params: { equipmentId: row.id } }"
                     >
                         <ArrowRightIcon />
                     </LinkButton>

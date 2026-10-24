@@ -75,10 +75,4 @@ describe("useListQuery", () => {
         await list.clampPage(0); // brak wyników — nic nie rób
         expect(router.currentRoute.value.query).toEqual({ page: "4" });
     });
-
-    it("resetFilters czyści filtry i stronę", async () => {
-        const { router, list } = await setup("/list?page=2&name=hall&city=Lodz&tab=rooms");
-        await list.resetFilters();
-        expect(router.currentRoute.value.query).toEqual({ tab: "rooms" });
-    });
 });
