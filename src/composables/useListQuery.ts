@@ -2,7 +2,6 @@ import { computed, type ComputedRef } from "vue";
 import { useRoute, useRouter, type LocationQueryRaw } from "vue-router";
 import { z } from "zod";
 
-// ?x=1&x=2 daje tablicę — bierzemy pierwszą wartość. Śmieci zamieniamy na domyślną (.catch).
 const firstValue = (v: unknown) => (Array.isArray(v) ? v[0] : v);
 export const pageParam = z.preprocess(firstValue, z.coerce.number().int().min(1)).catch(1);
 export const textParam = z.preprocess(firstValue, z.string()).catch("");
@@ -35,7 +34,7 @@ export function useListQuery<Q extends { page: number }>(
     }
 
     async function setFilter<K extends FilterKey<Q>>(key: K, value: Q[K]): Promise<void> {
-        await navigate({ ...query.value, [key]: value, page: 1 }); // nowy filtr = od pierwszej strony
+        await navigate({ ...query.value, [key]: value, page: 1 });
     }
 
     async function setPage(page: number): Promise<void> {

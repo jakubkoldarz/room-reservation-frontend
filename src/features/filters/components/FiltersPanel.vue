@@ -11,9 +11,7 @@ const {
     debounce = 300,
 } = defineProps<{
     filters: readonly Filter<K>[];
-    /** Bieżące wartości (zwykle `query` z useListQuery) — tylko do odczytu. */
     values: FilterValues<K>;
-    /** Opóźnienie dla pól tekstowych w ms. */
     debounce?: number;
 }>();
 
@@ -21,10 +19,7 @@ const emit = defineEmits<{
     change: [key: K, value: string];
 }>();
 
-// Lokalny szkic: pole musi reagować od razu, a `change` wysyłamy dopiero po przerwie w pisaniu.
 const draft: ShallowRef<FilterValues<K>> = shallowRef({ ...values });
-// Wartości, które sami wysłaliśmy — ich powrót z URL nie może nadpisać tego, co użytkownik
-// zdążył dopisać w trakcie nawigacji.
 const sent = new Map<K, string>();
 
 watch(
@@ -38,7 +33,7 @@ watch(
                 sent.delete(filter.key);
                 continue;
             }
-            updated[filter.key] = value; // zmiana z zewnątrz, np. przycisk „wstecz”
+            updated[filter.key] = value;
         }
         draft.value = updated;
     },

@@ -4,23 +4,17 @@ import { z } from "zod";
 import { assertNever } from "@/utils/assertNever";
 
 export type ApiError =
-    /** Żądanie anulowane przez nas (AbortController) — to nie jest błąd do pokazania. */
     | { kind: "canceled" }
-    /** Brak odpowiedzi: serwer nie działa, brak sieci, CORS, timeout. */
     | { kind: "network" }
     | {
           kind: "validation";
-          /** Klucze w camelCase, jak w DTO: `email`, `availabilities[0].startTime`. */
           fieldErrors: Readonly<Record<string, readonly string[]>>;
-          /** Błędy niezwiązane z polem formularza, np. niepoprawny JSON. */
           formErrors: readonly string[];
       }
     | { kind: "http"; status: number; title: string | null; detail: string | null }
-    /** Odpowiedź przyszła, ale nie pasuje do schematu z `generated.ts`. */
     | { kind: "contract"; message: string }
     | { kind: "unknown"; message: string };
 
-// Backend zwraca błędy jako ProblemDetails (RFC 9457).
 const ProblemDetailsSchema = z.object({
     title: z.string().nullish(),
     detail: z.string().nullish(),
@@ -35,7 +29,6 @@ function lowerFirst(segment: string): string {
     return segment.charAt(0).toLowerCase() + segment.slice(1);
 }
 
-/** "Availabilities[0].StartTime" → "availabilities[0].startTime" */
 function toFieldPath(key: string): string {
     return key.split(".").map(lowerFirst).join(".");
 }

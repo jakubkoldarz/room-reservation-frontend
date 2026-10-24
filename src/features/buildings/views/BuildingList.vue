@@ -89,7 +89,7 @@ async function deleteBuilding(building: Building): Promise<void> {
 
     toasts.pushSuccess({ title: "Deleted", message: `Building "${building.name}" was deleted` });
     await reload();
-    void buildingsStore.fetchBuildings(); // odśwież też listę w panelu bocznym
+    buildingsStore.fetchBuildings(); // odśwież też listę w panelu bocznym
 }
 </script>
 

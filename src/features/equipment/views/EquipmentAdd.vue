@@ -20,7 +20,7 @@ function goToList() {
 }
 
 async function handleSave(): Promise<void> {
-    if (isSaving.value) return; // podwójne kliknięcie nie tworzy dwóch rekordów
+    if (isSaving.value) return;
     const values = await form.value?.submit();
     if (!values) return;
 

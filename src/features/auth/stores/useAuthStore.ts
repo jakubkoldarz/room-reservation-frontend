@@ -1,11 +1,11 @@
 import apiClient from "@/api/client";
 import { useApiCall } from "@/composables/useApiCall";
-import type { UserDetails } from "@/types/dtos";
+import type { UserDetails } from "@/features/users/types";
 import { defineStore } from "pinia";
 
 function isTokenExpired(token: string): boolean {
     const payload = JSON.parse(atob(token.split(".")[1]));
-    const CLOCK_SKEW_MS = 5 * 60 * 1000; // zgodnie z ClockSkew backendu
+    const CLOCK_SKEW_MS = 5 * 60 * 1000;
     return payload.exp * 1000 < Date.now() - CLOCK_SKEW_MS;
 }
 

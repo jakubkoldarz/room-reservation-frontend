@@ -11,7 +11,6 @@ export interface UsePagedListReturn<T> {
     reload(): Promise<void>;
 }
 
-/** Pobiera stronę od razu i za każdym razem, gdy zmieni się `query`. */
 export function usePagedList<T, Q>(
     fetchPage: (query: Q) => Promise<Page<T>>,
     query: MaybeRefOrGetter<Q>,
@@ -26,7 +25,6 @@ export function usePagedList<T, Q>(
         isLoading.value = true;
 
         const result = await apiCall(() => fetchPage(toValue(query)));
-        // W międzyczasie wysłano nowsze zapytanie — ta odpowiedź jest już nieaktualna.
         if (requestId !== lastRequestId) return;
 
         isLoading.value = false;
@@ -38,7 +36,6 @@ export function usePagedList<T, Q>(
         }
     }
 
-    // URL daje nowy obiekt przy każdej nawigacji, więc porównujemy treść, nie referencję.
     watch(() => JSON.stringify(toValue(query)), load, { immediate: true });
 
     return { data, isLoading, error, reload: load };

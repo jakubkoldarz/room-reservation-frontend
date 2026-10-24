@@ -72,7 +72,7 @@ describe("useListQuery", () => {
         await list.clampPage(10);
         expect(list.query.value.page).toBe(4);
 
-        await list.clampPage(0); // brak wyników — nic nie rób
+        await list.clampPage(0);
         expect(router.currentRoute.value.query).toEqual({ page: "4" });
     });
 });

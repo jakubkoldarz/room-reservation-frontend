@@ -8,7 +8,7 @@ describe("ikony sprzętu", () => {
         expect(isEquipmentIconName("TvIcon")).toBe(true);
         expect(isEquipmentIconName("RocketLaunchIcon")).toBe(true);
         expect(isEquipmentIconName("NotAnIcon")).toBe(false);
-        expect(isEquipmentIconName("toString")).toBe(false); // nie łapie pól z prototypu
+        expect(isEquipmentIconName("toString")).toBe(false);
     });
 
     it("wyszukuje bez względu na wielkość liter, spacje i myślniki", () => {

@@ -3,12 +3,10 @@ import { useId, useTemplateRef, watch } from "vue";
 import OutlineButton from "@/features/shared/OutlineButton.vue";
 import { useConfirmDialogState } from "../composables/useConfirm";
 
-// Wstaw ten komponent raz, w App.vue. Otwiera się przez useConfirm().
 const { pending, answer } = useConfirmDialogState();
 const dialog = useTemplateRef("dialog");
 const titleId = useId();
 
-// Natywny <dialog> daje za darmo: tło, blokadę strony, Esc i pułapkę fokusu.
 watch(pending, (current) => {
     if (current && !dialog.value?.open) dialog.value?.showModal();
     if (!current && dialog.value?.open) dialog.value.close();
@@ -16,7 +14,6 @@ watch(pending, (current) => {
 </script>
 
 <template>
-    <!-- @close łapie Esc; @click.self łapie kliknięcie w tło poza okienkiem. -->
     <dialog
         ref="dialog"
         :aria-labelledby="titleId"
@@ -28,8 +25,6 @@ watch(pending, (current) => {
             <h2 :id="titleId" class="text-lg font-semibold">{{ pending.options.title }}</h2>
             <p class="text-text-muted text-sm">{{ pending.options.message }}</p>
 
-            <!-- „Anuluj” jest pierwszy w DOM, więc dostaje fokus po otwarciu — bezpieczny wybór
-                 przy usuwaniu. Na telefonie przyciski są jeden pod drugim. -->
             <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <OutlineButton class="justify-center py-2 sm:py-1" @click="answer(false)">
                     {{ pending.options.cancelText ?? "Cancel" }}
