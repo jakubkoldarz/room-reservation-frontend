@@ -5,10 +5,10 @@ import type { Building } from "../types";
 import { ref } from "vue";
 import EditInfo from "../components/EditInfo.vue";
 import { useRouter } from "vue-router";
+import { useBuildingDestination } from "../composables/useBuildingDestination";
 import { apiCall } from "@/api/apiCall.ts";
 import { apiErrorMessage } from "@/api/errors.ts";
 import apiClient from "@/api/client.ts";
-import { buildingRoutes } from "../routes.ts";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore.ts";
 import AvailabilitiesEdit from "@/features/availabilities/components/AvailabilitiesEdit.vue";
 import type { Availability } from "@/features/availabilities/types.ts";
@@ -19,6 +19,7 @@ const availabilities = ref<Availability[]>([]);
 
 const isSaving = ref(false);
 const router = useRouter();
+const destinationFor = useBuildingDestination();
 const editRef = ref<InstanceType<typeof EditInfo> | null>(null);
 
 async function handleSave() {
@@ -35,7 +36,7 @@ async function handleSave() {
     isSaving.value = false;
 
     if (response.ok) {
-        router.push({ name: buildingRoutes.view.name, params: { buildingId: response.data.id } });
+        router.push(destinationFor(response.data.id));
         toastsStore.pushSuccess({ title: "Success", message: "Building created successfully" });
         return;
     }

@@ -57,6 +57,7 @@ import {
     formatCapacity,
     formatFloor,
 } from "../utils/formatRoom";
+import { isConflict } from "../utils/conflicts";
 import { timeRangeError, toRoomQueries } from "../utils/roomQueries";
 
 const PAGE_SIZE = 25;
@@ -168,9 +169,25 @@ async function deleteRoom(room: BasicRoom): Promise<void> {
     });
     if (!confirmed) return;
 
-    const result = await apiCall(() =>
-        apiClient.deleteRoomsRoomId(undefined, { params: { roomId: room.id } }),
-    );
+    const remove = (force: boolean) =>
+        apiCall(() =>
+            apiClient.deleteRoomsRoomId(undefined, {
+                params: { roomId: room.id },
+                queries: { force },
+            }),
+        );
+
+    let result = await remove(false);
+    if (!result.ok && isConflict(result.error)) {
+        const forced = await confirm({
+            title: "Delete room anyway?",
+            message: `${apiErrorMessage(result.error)} Deleting anyway may affect existing reservations.`,
+            confirmText: "Delete anyway",
+            danger: true,
+        });
+        if (!forced) return;
+        result = await remove(true);
+    }
     if (!result.ok) {
         toasts.pushError({
             title: "Failed to delete room",
@@ -243,7 +260,14 @@ async function deleteRoom(room: BasicRoom): Promise<void> {
                 :skeleton-rows="PAGE_SIZE"
             >
                 <template #cell-room="{ row }">
-                    <span class="text-text block truncate font-medium">
+                    <TextLink
+                        v-if="hasPermission(Permission.RoomEdit)"
+                        :to="{ name: roomRoutes.edit.name, params: { roomId: row.roomInfo.id } }"
+                        class="block truncate"
+                    >
+                        {{ row.roomInfo.identifier }}
+                    </TextLink>
+                    <span v-else class="text-text block truncate font-medium">
                         {{ row.roomInfo.identifier }}
                     </span>
                     <OpenStatusLabel :availabilities="row.availabilities" :now />

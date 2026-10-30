@@ -10,7 +10,7 @@ export const buildingRoutes = {
     },
     add: {
         path: "/buildings/new",
-        name: "building.add",
+        name: "buildings.add",
         component: () => import("@/features/buildings/views/BuildingAdd.vue"),
         meta: { requiresAuth: true, requiredPermission: Permission.BuildingAdd },
     },
@@ -22,7 +22,7 @@ export const buildingRoutes = {
     },
     edit: {
         path: "/buildings/:buildingId/edit",
-        name: "building.edit",
+        name: "buildings.edit",
         component: () => import("@/features/buildings/views/BuildingEdit.vue"),
         meta: { requiresAuth: true, requiredPermission: Permission.BuildingEdit },
     },

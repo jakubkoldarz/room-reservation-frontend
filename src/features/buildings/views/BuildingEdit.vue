@@ -9,7 +9,7 @@ import FormHeader from "@/features/shared/FormHeader.vue";
 import EditInfo from "../components/EditInfo.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore.ts";
 import router from "@/router/index.ts";
-import { buildingRoutes } from "../routes.ts";
+import { useBuildingDestination } from "../composables/useBuildingDestination";
 import { useBuildingsStore } from "../stores/useBuildingsStore.ts";
 import NumberCircle from "../components/NumberCircle.vue";
 import type { Availability } from "@/features/availabilities/types.ts";
@@ -20,6 +20,7 @@ const editRef = ref<InstanceType<typeof EditInfo>>();
 const availabilitiesModel = ref<Availability[]>([]);
 
 const buildingsStore = useBuildingsStore();
+const destinationFor = useBuildingDestination();
 const route = useRoute();
 const buildingId = computed(() => route.params.buildingId as string);
 const building = ref<BuildingDetails | null>();
@@ -79,7 +80,7 @@ async function handleSave() {
 }
 
 function gotoBuildingView() {
-    router.push({ name: buildingRoutes.view.name, params: { buildingId: buildingId.value } });
+    router.push(destinationFor(buildingId.value));
 }
 </script>
 

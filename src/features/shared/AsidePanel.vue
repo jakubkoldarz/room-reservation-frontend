@@ -20,18 +20,22 @@ const roomsStore = useRoomsStore();
 const route = useRoute();
 
 const buildingItems = computed(() => {
+    const canView = hasPermission(Permission.BuildingView);
     return buildingsStore.buildings?.map((b) => ({
         name: b.name,
         id: b.id,
-        to: { name: buildingRoutes.view.name, params: { buildingId: b.id } },
+        to: canView ? { name: buildingRoutes.view.name, params: { buildingId: b.id } } : undefined,
     }));
 });
 
 const roomItems = computed(() => {
+    const canEdit = hasPermission(Permission.RoomEdit);
     return roomsStore.rooms.map(({ roomInfo }) => ({
         name: roomInfo.identifier,
         id: roomInfo.id,
-        to: { name: roomRoutes.list.name, query: { identifier: roomInfo.identifier } },
+        to: canEdit
+            ? { name: roomRoutes.edit.name, params: { roomId: roomInfo.id } }
+            : { name: roomRoutes.list.name, query: { identifier: roomInfo.identifier } },
     }));
 });
 
@@ -110,11 +114,14 @@ watchDebounced(
                     <HomeIcon />
                     Dashboard
                 </LinkButton>
-                <LinkButton :to="equipmentRoutes.list">
+                <LinkButton
+                    v-if="hasPermission(Permission.EquipmentList)"
+                    :to="equipmentRoutes.list"
+                >
                     <RectangleGroupIcon />
                     Equipment
                 </LinkButton>
-                <LinkButton :to="equipmentRoutes.list">
+                <LinkButton v-if="hasPermission(Permission.EventList)" :to="equipmentRoutes.list">
                     <StarIcon />
                     Events
                 </LinkButton>

@@ -14,4 +14,10 @@ export const roomRoutes = {
         component: () => import("@/features/rooms/views/RoomAdd.vue"),
         meta: { requiresAuth: true, requiredPermission: Permission.RoomAdd },
     },
+    edit: {
+        path: "/rooms/:roomId/edit",
+        name: "rooms.edit",
+        component: () => import("@/features/rooms/views/RoomEdit.vue"),
+        meta: { requiresAuth: true, requiredPermission: Permission.RoomEdit },
+    },
 } as const satisfies Record<string, RouteRecordRaw>;

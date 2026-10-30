@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/zod";
+import { useClipboard } from "@vueuse/core";
 import { useForm } from "vee-validate";
 import { computed, watch } from "vue";
 import NumberCircle from "@/features/buildings/components/NumberCircle.vue";
@@ -7,20 +8,28 @@ import type { Building } from "@/features/buildings/types";
 import BaseInput from "@/features/shared/BaseInput.vue";
 import ComboBox from "@/features/shared/ComboBox.vue";
 import Container from "@/features/shared/Container.vue";
+import Skeleton from "@/features/shared/Skeleton.vue";
 import SlidingCheckbox from "@/features/shared/SlidingCheckbox.vue";
 import { RoomFormSchema } from "../schemas";
-import type { RoomForm } from "../types";
+import type { RoomDetails, RoomForm } from "../types";
 
-const { buildings, defaultBuildingId } = defineProps<{
+const {
+    buildings,
+    defaultBuildingId,
+    room = null,
+    isLoading = false,
+} = defineProps<{
     buildings: readonly Building[];
     defaultBuildingId?: string;
+    room?: RoomDetails | null;
+    isLoading?: boolean;
 }>();
 
 const emit = defineEmits<{
     buildingChange: [buildingId: string];
 }>();
 
-const { handleSubmit, errors, defineField, setErrors, setFieldValue } = useForm({
+const { handleSubmit, errors, defineField, resetForm, setErrors, setFieldValue } = useForm({
     validationSchema: toTypedSchema(RoomFormSchema),
     initialValues: { requiresApproval: false, buildingId: defaultBuildingId },
 });
@@ -30,13 +39,42 @@ const [floor, floorAttrs] = defineField("floor");
 const [capacity, capacityAttrs] = defineField("capacity");
 const [requiresApproval] = defineField("requiresApproval");
 
+const availableBuildings = computed(() => {
+    const current = room?.buildingInfo;
+    if (!current || buildings.some((building) => building.id === current.id)) return buildings;
+    return [current, ...buildings];
+});
+
 const buildingOptions = computed(() =>
-    buildings.map((building) => ({ value: building.id, label: building.name })),
+    availableBuildings.value.map((building) => ({ value: building.id, label: building.name })),
 );
 
 const selectedBuilding = computed(() =>
-    buildings.find((building) => building.id === buildingId.value),
+    availableBuildings.value.find((building) => building.id === buildingId.value),
 );
+
+watch(
+    () => room,
+    (next) => {
+        if (!next) return;
+        resetForm({
+            values: {
+                identifier: next.roomInfo.identifier,
+                buildingId: next.buildingInfo.id,
+                floor: next.roomInfo.floor,
+                capacity: next.roomInfo.capacity,
+                requiresApproval: next.roomInfo.requiresApproval,
+            },
+        });
+    },
+    { immediate: true },
+);
+
+const { copy, copied, isSupported } = useClipboard({ copiedDuring: 2000 });
+const idLabel = computed(() => (copied.value ? "Copied!" : "System Identifier (id / UUID)"));
+function copyId(): void {
+    if (isSupported.value && room) void copy(room.roomInfo.id);
+}
 
 watch(
     () => buildingId.value,
@@ -79,7 +117,20 @@ defineExpose({ submit, showServerErrors });
             <hr class="border-border my-2" />
         </div>
 
-        <div class="grid grid-cols-1 gap-4 @lg:grid-cols-2 @xl:grid-cols-3">
+        <div v-if="isLoading" class="grid grid-cols-1 gap-4 @lg:grid-cols-2 @xl:grid-cols-3">
+            <Skeleton v-for="n in 6" :key="n" class="h-9 w-full rounded-lg" />
+        </div>
+
+        <div v-else class="grid grid-cols-1 gap-4 @lg:grid-cols-2 @xl:grid-cols-3">
+            <BaseInput
+                v-if="room"
+                class="bg-text-muted/10 text-text/60 cursor-pointer rounded-lg px-4 py-2 font-mono text-sm"
+                readonly
+                :label="idLabel"
+                :model-value="room.roomInfo.id"
+                @focus="copyId"
+            />
+
             <BaseInput
                 v-bind="identifierAttrs"
                 v-model="identifier"
