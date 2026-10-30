@@ -21,7 +21,6 @@ function page(items: string[]): Page<string> {
     };
 }
 
-/** Promise, który rozwiązujemy ręcznie — pozwala ustawić kolejność odpowiedzi. */
 function deferred<T>() {
     let resolve: (value: T) => void = () => {};
     const promise = new Promise<T>((res) => (resolve = res));

@@ -4,7 +4,6 @@ import type { ApiError } from "@/api/errors";
 import type { Page } from "@/api/types";
 
 export interface UsePagedListReturn<T> {
-    /** Ostatnia udana strona — zostaje widoczna podczas ładowania i po błędzie. */
     data: Readonly<ShallowRef<Page<T> | null>>;
     isLoading: Readonly<ShallowRef<boolean>>;
     error: Readonly<ShallowRef<ApiError | null>>;

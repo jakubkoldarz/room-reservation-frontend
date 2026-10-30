@@ -84,7 +84,6 @@ watch(
             <div :class="[currentTheme.iconClass, 'flex shrink-0 items-center justify-center']">
                 <component :is="currentTheme.icon" class="size-5" />
             </div>
-            <!-- min-w-0 + break-words: długi komunikat (np. URL) zawija się zamiast rozpychać toast -->
             <div class="flex min-w-0 grow flex-col">
                 <p v-if="toast.title" class="text-sm font-semibold">{{ toast.title }}</p>
                 <p class="text-sm break-words">{{ toast.message }}</p>

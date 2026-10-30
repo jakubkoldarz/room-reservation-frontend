@@ -11,7 +11,6 @@ import type { Equipment, EquipmentForm } from "../types";
 import IconPicker from "./IconPicker.vue";
 
 const { equipment = null, isNew = false } = defineProps<{
-    /** Edytowany sprzęt; przy dodawaniu brak. */
     equipment?: Equipment | null;
     isNew?: boolean;
 }>();

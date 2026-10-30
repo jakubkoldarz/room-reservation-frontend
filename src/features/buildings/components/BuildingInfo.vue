@@ -34,7 +34,6 @@ function gotoEdit() {
 <template>
     <Container class="flex w-full flex-col justify-start">
         <template v-if="isLoading">
-            <!-- Skeleton -->
             <div class="flex w-full animate-pulse flex-col gap-1">
                 <Skeleton class="w-full" />
                 <Skeleton class="mt-4 w-full" />

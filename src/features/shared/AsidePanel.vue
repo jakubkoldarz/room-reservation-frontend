@@ -60,7 +60,6 @@ watchDebounced(
 
 <template>
     <aside class="shrink-0 md:block">
-        <!-- backdrop -->
         <div
             @click="emit('forceClose')"
             :class="[
@@ -70,7 +69,6 @@ watchDebounced(
             ]"
         ></div>
 
-        <!-- aside panel -->
         <div
             :class="[
                 isMobileAsideOpen ? 'fixed translate-x-0' : 'hidden -translate-x-full',

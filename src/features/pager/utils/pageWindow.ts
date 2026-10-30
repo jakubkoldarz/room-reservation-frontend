@@ -4,12 +4,6 @@ function toPageNumber(value: number): number {
     return Number.isFinite(value) ? Math.max(1, Math.floor(value)) : 1;
 }
 
-/**
- * Numery stron do pokazania w pagerze: pierwsza, ostatnia i `siblings` sąsiadów bieżącej.
- * Dziura na jedną stronę jest wypełniana tą stroną, większa — przerwą („…”).
- *
- * pageWindow(5, 10) → 1 … 4 [5] 6 … 10
- */
 export function pageWindow(current: number, total: number, siblings = 1): PageItem[] {
     const last = toPageNumber(total);
     const active = Math.min(toPageNumber(current), last);

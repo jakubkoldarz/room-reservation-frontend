@@ -6,7 +6,6 @@ const toastsStore = useToastsStore();
 </script>
 
 <template>
-    <!-- Telefon: na całą szerokość z marginesem 1rem. Od sm: w prawym górnym rogu, max 24rem. -->
     <div
         class="pointer-events-none fixed inset-x-4 top-4 z-1500 flex flex-col sm:left-auto sm:w-full sm:max-w-sm"
     >
