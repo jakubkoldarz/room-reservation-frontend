@@ -11,6 +11,7 @@ type FilterKey<Q> = Exclude<keyof Q & string, "page">;
 export interface UseListQueryReturn<Q extends { page: number }> {
     query: ComputedRef<Q>;
     setFilter<K extends FilterKey<Q>>(key: K, value: Q[K]): Promise<void>;
+    setFilters(values: Partial<Pick<Q, FilterKey<Q>>>): Promise<void>;
     setPage(page: number): Promise<void>;
     clampPage(totalPages: number): Promise<void>;
 }
@@ -37,6 +38,10 @@ export function useListQuery<Q extends { page: number }>(
         await navigate({ ...query.value, [key]: value, page: 1 });
     }
 
+    async function setFilters(values: Partial<Pick<Q, FilterKey<Q>>>): Promise<void> {
+        await navigate({ ...query.value, ...values, page: 1 });
+    }
+
     async function setPage(page: number): Promise<void> {
         await navigate({ ...query.value, page });
     }
@@ -45,5 +50,5 @@ export function useListQuery<Q extends { page: number }>(
         if (totalPages > 0 && query.value.page > totalPages) await setPage(totalPages);
     }
 
-    return { query, setFilter, setPage, clampPage };
+    return { query, setFilter, setFilters, setPage, clampPage };
 }

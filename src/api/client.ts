@@ -5,6 +5,7 @@ import { HttpStatusCode, type AxiosError, type AxiosRequestConfig } from "axios"
 const apiClient = createApiClient(import.meta.env.VITE_API_BASE_URL);
 
 apiClient.axios.defaults.withCredentials = true;
+apiClient.axios.defaults.paramsSerializer = { indexes: null };
 
 apiClient.axios.interceptors.request.use((request) => {
     const authStore = useAuthStore();

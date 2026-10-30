@@ -1,7 +1,20 @@
 import { z } from "zod";
 import { schemas } from "@/api/generated";
+import { pageParam, textParam } from "@/composables/useListQuery";
 
 export const MAX_ROOM_EQUIPMENT = 5;
+
+export const RoomListQuerySchema = z.object({
+    page: pageParam,
+    identifier: textParam,
+    building: textParam,
+    floor: textParam,
+    capacity: textParam,
+    equipment: textParam,
+    day: textParam,
+    from: textParam,
+    to: textParam,
+});
 
 export const RoomFormSchema = schemas.RoomRequestDto.omit({
     equipmentIds: true,

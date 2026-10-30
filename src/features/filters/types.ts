@@ -10,11 +10,11 @@ export type FilterBase<K extends string = string> = {
 export type Filter<K extends string = string> = FilterBase<K> &
     (
         | {
-              type: "select";
+              type: "select" | "multiselect";
               values: readonly SelectOption[];
           }
         | {
-              type: "text";
+              type: "text" | "number" | "time";
           }
     );
 

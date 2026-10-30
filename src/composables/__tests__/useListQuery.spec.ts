@@ -52,6 +52,16 @@ describe("useListQuery", () => {
         expect(list.query.value).toEqual({ page: 1, name: "hall", city: "" });
     });
 
+    it("setFilters zmienia kilka filtrów jedną nawigacją i resetuje stronę", async () => {
+        const { router, list } = await setup("/list?page=3&name=hall&city=lodz");
+        let navigations = 0;
+        router.afterEach(() => navigations++);
+        await list.setFilters({ name: "", city: "" });
+        expect(navigations).toBe(1);
+        expect(router.currentRoute.value.query).toEqual({});
+        expect(list.query.value).toEqual({ page: 1, name: "", city: "" });
+    });
+
     it("wartości domyślne nie trafiają do URL", async () => {
         const { router, list } = await setup("/list?name=hall&page=2");
         await list.setFilter("name", "");

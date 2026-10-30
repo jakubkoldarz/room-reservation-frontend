@@ -1,16 +1,28 @@
 <script setup lang="ts">
-import { computed, watch } from "vue";
-import { z } from "zod";
-import { BuildingOfficeIcon, PlusIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import { computed, ref, watch } from "vue";
+import {
+    AdjustmentsHorizontalIcon,
+    BuildingOfficeIcon,
+    CalendarDaysIcon,
+    ChevronDownIcon,
+    ClockIcon,
+    PlusIcon,
+    RectangleGroupIcon,
+    Square3Stack3DIcon,
+    TrashIcon,
+    UsersIcon,
+} from "@heroicons/vue/24/solid";
 import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
-import { pageParam, textParam, useListQuery } from "@/composables/useListQuery";
+import { useDate } from "@/composables/useDate";
+import { useListQuery } from "@/composables/useListQuery";
 import { usePagedList } from "@/composables/usePagedList";
 import { usePermissions } from "@/composables/usePermissions";
 import { useVisibleColumns } from "@/composables/useVisibleColumns";
 import { Permission } from "@/features/auth/constants/permissions";
 import { useAllBuildings } from "@/features/buildings/composables/useAllBuildings";
+import { useAllEquipment } from "@/features/equipment/composables/useAllEquipment";
 import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
 import { defineFilters, type Filter } from "@/features/filters/types";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
@@ -24,8 +36,10 @@ import LinkButton from "@/features/shared/LinkButton.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { roomRoutes } from "../routes";
+import { RoomListQuerySchema } from "../schemas";
 import { useRoomsStore } from "../stores/useRoomsStore";
 import type { BasicRoom } from "../types";
+import { timeRangeError, toRoomQueries } from "../utils/roomQueries";
 
 const PAGE_SIZE = 25;
 
@@ -45,6 +59,11 @@ const columns = useVisibleColumns(() => [
 ]);
 
 const { buildings } = useAllBuildings();
+const { equipment } = useAllEquipment();
+const { dayNames } = useDate();
+
+const MONDAY_FIRST = [1, 2, 3, 4, 5, 6, 0];
+const dayOptions = MONDAY_FIRST.map((day) => ({ value: String(day), label: dayNames[day] }));
 
 const filters = computed(() =>
     defineFilters([
@@ -63,22 +82,47 @@ const filters = computed(() =>
     ]),
 );
 
-const uuidParam = z.preprocess((v) => (Array.isArray(v) ? v[0] : v), z.string().uuid()).catch("");
-
-const { query, setFilter, clampPage } = useListQuery(
-    z.object({ page: pageParam, identifier: textParam, building: uuidParam }),
+const moreFilters = computed(() =>
+    defineFilters([
+        { key: "floor", type: "number", placeholder: "Floor", icon: Square3Stack3DIcon },
+        { key: "capacity", type: "number", placeholder: "Min. capacity", icon: UsersIcon },
+        ...(hasPermission(Permission.EquipmentList)
+            ? [
+                  {
+                      key: "equipment",
+                      type: "multiselect",
+                      placeholder: "Has all equipment",
+                      icon: RectangleGroupIcon,
+                      values: equipment.value.map((e) => ({ value: e.id, label: e.name })),
+                  } satisfies Filter<"equipment">,
+              ]
+            : []),
+        {
+            key: "day",
+            type: "select",
+            placeholder: "Open on",
+            icon: CalendarDaysIcon,
+            values: dayOptions,
+        },
+        { key: "from", type: "time", placeholder: "Open from", icon: ClockIcon },
+        { key: "to", type: "time", placeholder: "Open until", icon: ClockIcon },
+    ]),
 );
 
+const { query, setFilter, setFilters, clampPage } = useListQuery(RoomListQuerySchema);
+
+const activeMoreFilters = computed(
+    () => moreFilters.value.filter((filter) => query.value[filter.key] !== "").length,
+);
+const showMoreFilters = ref(activeMoreFilters.value > 0);
+const timeError = computed(() => timeRangeError(query.value));
+
+function clearMoreFilters(): Promise<void> {
+    return setFilters({ floor: "", capacity: "", equipment: "", day: "", from: "", to: "" });
+}
+
 const { data, isLoading, error, reload } = usePagedList(
-    (q) =>
-        apiClient.getRooms({
-            queries: {
-                Identifier: q.identifier.trim() || undefined,
-                BuildingId: q.building || undefined,
-                Page: q.page,
-                PageSize: PAGE_SIZE,
-            },
-        }),
+    (q) => apiClient.getRooms({ queries: toRoomQueries(q, PAGE_SIZE) }),
     query,
 );
 
@@ -144,8 +188,59 @@ async function deleteRoom(room: BasicRoom): Promise<void> {
                         class="w-full shrink-0 @sm:w-auto"
                         @change="setFilter"
                     />
+                    <button
+                        type="button"
+                        aria-controls="room-more-filters"
+                        :aria-expanded="showMoreFilters"
+                        class="focus-visible:ring-primary flex w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded border px-3 py-1.5 text-sm transition-colors outline-none focus-visible:ring-2 @sm:w-auto"
+                        :class="
+                            showMoreFilters || activeMoreFilters > 0
+                                ? 'border-primary/30 bg-primary/10 text-primary'
+                                : 'border-border text-text-muted hover:border-primary/30 hover:text-primary'
+                        "
+                        @click="showMoreFilters = !showMoreFilters"
+                    >
+                        <AdjustmentsHorizontalIcon class="size-4" />
+                        More filters
+                        <span
+                            v-if="activeMoreFilters > 0"
+                            class="bg-primary text-surface rounded-full px-1.5 text-xs font-bold"
+                        >
+                            {{ activeMoreFilters }}
+                        </span>
+                        <ChevronDownIcon
+                            class="size-4 transition-transform"
+                            :class="{ 'rotate-180': showMoreFilters }"
+                        />
+                    </button>
                 </div>
                 <PagerBlock :current="query.page" :total="data?.totalPages ?? 1" />
+            </div>
+
+            <div
+                v-show="showMoreFilters"
+                id="room-more-filters"
+                class="border-border bg-background/50 flex flex-col gap-3 border-b p-4"
+            >
+                <FiltersPanel
+                    layout="grid"
+                    :filters="moreFilters"
+                    :values="query"
+                    @change="setFilter"
+                />
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p class="text-text-muted text-xs" :class="{ 'text-warning-text!': timeError }">
+                        {{ timeError ?? "Opening hours show rooms open for the whole time range." }}
+                    </p>
+                    <button
+                        type="button"
+                        class="text-primary cursor-pointer text-sm font-medium hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:no-underline"
+                        :disabled="activeMoreFilters === 0"
+                        @click="clearMoreFilters"
+                    >
+                        Clear filters
+                    </button>
+                </div>
             </div>
 
             <ErrorText v-if="error" :error="apiErrorMessage(error)" class="mt-4" />
