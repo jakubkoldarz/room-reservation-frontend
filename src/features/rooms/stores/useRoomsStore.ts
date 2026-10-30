@@ -3,12 +3,12 @@ import { ref, shallowRef } from "vue";
 import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
 import type { ApiError } from "@/api/errors";
-import type { BasicRoom } from "../types";
+import type { RoomListItem } from "../types";
 
 const ASIDE_PAGE_SIZE = 4;
 
 export const useRoomsStore = defineStore("rooms", () => {
-    const rooms = shallowRef<readonly BasicRoom[]>([]);
+    const rooms = shallowRef<readonly RoomListItem[]>([]);
     const totalCount = ref(0);
     const queryParam = ref("");
     const isLoading = ref(false);

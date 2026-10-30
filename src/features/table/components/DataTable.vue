@@ -13,10 +13,14 @@ const {
 } = defineProps<{
     columns: readonly Column[];
     items: readonly T[];
-    rowKey: keyof T & string;
+    rowKey: (keyof T & string) | ((item: T) => string);
     isLoading?: boolean;
     skeletonRows?: number;
 }>();
+
+function keyOf(item: T): string {
+    return typeof rowKey === "function" ? rowKey(item) : String(item[rowKey]);
+}
 
 defineSlots<{
     [K in `cell-${string}`]: (props: { row: T }) => unknown;
@@ -62,7 +66,11 @@ function alignClass(align?: Column["align"]) {
                 </thead>
 
                 <tbody v-if="showRows" class="divide-border divide-y">
-                    <tr v-for="item in items" :key="item[rowKey]">
+                    <tr
+                        v-for="item in items"
+                        :key="keyOf(item)"
+                        class="hover:bg-background transition-colors"
+                    >
                         <td
                             v-for="col in columns"
                             :key="col.key"
@@ -77,7 +85,7 @@ function alignClass(align?: Column["align"]) {
         </div>
 
         <ul v-if="showRows" class="divide-border divide-y @3xl:hidden">
-            <li v-for="item in items" :key="item[rowKey]" class="flex flex-col gap-2 p-4">
+            <li v-for="item in items" :key="keyOf(item)" class="flex flex-col gap-2 p-4">
                 <div
                     v-for="col in dataColumns"
                     :key="col.key"

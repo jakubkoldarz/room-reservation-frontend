@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { watch } from "vue";
 import { z } from "zod";
-import { ArrowRightIcon, PlusIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import { PlusIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
@@ -19,6 +19,7 @@ import Container from "@/features/shared/Container.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import IconButton from "@/features/shared/IconButton.vue";
 import LinkButton from "@/features/shared/LinkButton.vue";
+import TextLink from "@/features/shared/TextLink.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { iconFor } from "../icons";
@@ -30,8 +31,6 @@ const PAGE_SIZE = 25;
 const { hasPermission } = usePermissions();
 
 const columns = useVisibleColumns(() => [
-    { key: "link", width: 65, align: "center", visible: hasPermission(Permission.EquipmentView) },
-    { key: "icon", label: "Icon", width: 75, align: "center" },
     { key: "name", label: "Equipment", align: "left" },
     {
         key: "delete",
@@ -123,26 +122,24 @@ async function deleteEquipment(equipment: Equipment): Promise<void> {
                 :is-loading="isLoading"
                 :skeleton-rows="PAGE_SIZE"
             >
-                <template #cell-link="{ row }">
-                    <LinkButton
-                        class="flex! items-center justify-center px-4! py-0!"
-                        :to="{ name: equipmentRoutes.edit.name, params: { equipmentId: row.id } }"
-                    >
-                        <ArrowRightIcon />
-                    </LinkButton>
-                </template>
-
-                <template #cell-icon="{ row }">
-                    <div class="flex items-center justify-center">
+                <template #cell-name="{ row }">
+                    <span class="inline-flex max-w-full items-center gap-3 align-middle">
                         <component
                             :is="iconFor(row.icon)"
-                            class="text-text/65 border-text/20 bg-text/5 size-5 rounded-md border p-0.5"
+                            class="text-text/65 border-text/20 bg-text/5 size-6 shrink-0 rounded-md border p-1"
                         />
-                    </div>
-                </template>
-
-                <template #cell-name="{ row }">
-                    {{ row.name }}
+                        <TextLink
+                            v-if="hasPermission(Permission.EquipmentEdit)"
+                            :to="{
+                                name: equipmentRoutes.edit.name,
+                                params: { equipmentId: row.id },
+                            }"
+                            class="truncate"
+                        >
+                            {{ row.name }}
+                        </TextLink>
+                        <span v-else class="text-text truncate font-medium">{{ row.name }}</span>
+                    </span>
                 </template>
 
                 <template #cell-delete="{ row }">

@@ -28,10 +28,10 @@ const buildingItems = computed(() => {
 });
 
 const roomItems = computed(() => {
-    return roomsStore.rooms.map((r) => ({
-        name: r.identifier,
-        id: r.id,
-        to: { name: roomRoutes.list.name, query: { identifier: r.identifier } },
+    return roomsStore.rooms.map(({ roomInfo }) => ({
+        name: roomInfo.identifier,
+        id: roomInfo.id,
+        to: { name: roomRoutes.list.name, query: { identifier: roomInfo.identifier } },
     }));
 });
 

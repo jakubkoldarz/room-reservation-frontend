@@ -3,7 +3,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { flushPromises } from "@vue/test-utils";
 import { AxiosError } from "axios";
 import type { Page } from "@/api/types";
-import type { BasicRoom } from "../types";
+import type { RoomListItem } from "../types";
 import { useRoomsStore } from "../stores/useRoomsStore";
 
 const getRooms = vi.fn();
@@ -11,17 +11,29 @@ vi.mock("@/api/client", () => ({
     default: { getRooms: (...args: unknown[]) => getRooms(...args) },
 }));
 
-function room(identifier: string): BasicRoom {
+function room(identifier: string): RoomListItem {
     return {
-        id: crypto.randomUUID(),
-        identifier,
-        requiresApproval: false,
-        capacity: 20,
-        floor: 1,
+        roomInfo: {
+            id: crypto.randomUUID(),
+            identifier,
+            requiresApproval: false,
+            capacity: 20,
+            floor: 1,
+        },
+        buildingInfo: {
+            id: crypto.randomUUID(),
+            name: "Main",
+            street: "Main 1",
+            city: "Lodz",
+            postalCode: "90-001",
+            floorsCount: 3,
+        },
+        equipment: [],
+        availabilities: [],
     };
 }
 
-function page(identifiers: string[], totalCount = identifiers.length): Page<BasicRoom> {
+function page(identifiers: string[], totalCount = identifiers.length): Page<RoomListItem> {
     return {
         items: identifiers.map(room),
         totalCount,
@@ -44,7 +56,7 @@ describe("useRoomsStore", () => {
 
         await store.fetchRooms();
 
-        expect(store.rooms.map((r) => r.identifier)).toEqual(["A1", "B2"]);
+        expect(store.rooms.map((r) => r.roomInfo.identifier)).toEqual(["A1", "B2"]);
         expect(store.totalCount).toBe(12);
         expect(store.isLoaded).toBe(true);
         expect(store.isLoading).toBe(false);
@@ -77,7 +89,7 @@ describe("useRoomsStore", () => {
     });
 
     it("spóźniona odpowiedź starego wyszukiwania nie nadpisuje nowszej", async () => {
-        let resolveOld: (value: Page<BasicRoom>) => void = () => {};
+        let resolveOld: (value: Page<RoomListItem>) => void = () => {};
         getRooms
             .mockReturnValueOnce(new Promise((resolve) => (resolveOld = resolve)))
             .mockResolvedValueOnce(page(["New"]));
@@ -89,7 +101,7 @@ describe("useRoomsStore", () => {
         await first;
         await flushPromises();
 
-        expect(store.rooms.map((r) => r.identifier)).toEqual(["New"]);
+        expect(store.rooms.map((r) => r.roomInfo.identifier)).toEqual(["New"]);
     });
 
     it("błąd zostawia poprzednie pokoje i ustawia error", async () => {
@@ -101,7 +113,7 @@ describe("useRoomsStore", () => {
         await store.fetchRooms();
         await store.fetchRooms();
 
-        expect(store.rooms.map((r) => r.identifier)).toEqual(["A1"]);
+        expect(store.rooms.map((r) => r.roomInfo.identifier)).toEqual(["A1"]);
         expect(store.error).toEqual({ kind: "network" });
         expect(store.isLoading).toBe(false);
     });
