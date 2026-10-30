@@ -108,7 +108,7 @@ features/<feature>/
 └── types.ts
 ```
 
-Current features include `auth`, `dashboard`, `buildings`, `equipment` and `availabilities`. There are also reusable UI modules: `table`, `pager`, `filters`, `modal`, `toasts`, `layouts` and `shared` (buttons, inputs, badges, navbar, ...).
+Current features include `auth`, `dashboard`, `buildings`, `equipment`, `rooms` and `availabilities`. There are also reusable UI modules: `table`, `pager`, `filters`, `modal`, `toasts`, `layouts` and `shared` (buttons, inputs, badges, navbar, ...).
 
 ### Adding a new feature
 

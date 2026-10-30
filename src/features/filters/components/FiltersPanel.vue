@@ -3,6 +3,7 @@ import { shallowRef, watch, type ShallowRef } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { MagnifyingGlassIcon } from "@heroicons/vue/24/solid";
 import BaseInput from "@/features/shared/BaseInput.vue";
+import ComboBox from "@/features/shared/ComboBox.vue";
 import type { Filter, FilterValues } from "../types";
 
 const {
@@ -60,16 +61,15 @@ function onText(key: K, value: string | number | null | undefined): void {
     void flushText();
 }
 
-function onSelect(key: K, event: Event): void {
-    if (!(event.target instanceof HTMLSelectElement)) return;
-    draft.value = { ...draft.value, [key]: event.target.value };
-    send(key, event.target.value);
+function onSelect(key: K, value: string): void {
+    draft.value = { ...draft.value, [key]: value };
+    send(key, value);
 }
 </script>
 
 <template>
-    <div class="flex w-full flex-wrap gap-2">
-        <div v-for="filter in filters" :key="filter.key" class="flex w-full flex-col gap-2">
+    <div class="flex w-full flex-col gap-2 @sm:w-auto @sm:flex-row">
+        <div v-for="filter in filters" :key="filter.key" class="w-full @sm:w-56">
             <BaseInput
                 v-if="filter.type === 'text'"
                 type="text"
@@ -79,21 +79,19 @@ function onSelect(key: K, event: Event): void {
                 :model-value="draft[filter.key] ?? ''"
                 @update:model-value="(value) => onText(filter.key, value)"
             >
-                <template #icon> <MagnifyingGlassIcon /> </template>
+                <template #icon> <component :is="filter.icon ?? MagnifyingGlassIcon" /> </template>
             </BaseInput>
 
-            <select
+            <ComboBox
                 v-else-if="filter.type === 'select'"
-                :aria-label="filter.placeholder"
-                :value="draft[filter.key] ?? ''"
-                class="text-text border-border bg-surface focus-visible:ring-primary w-full rounded border px-2 py-1 outline-none focus-visible:ring-2"
-                @change="(event) => onSelect(filter.key, event)"
+                :label="filter.placeholder"
+                :options="filter.values"
+                has-icon
+                :model-value="draft[filter.key] ?? ''"
+                @update:model-value="(value) => onSelect(filter.key, value)"
             >
-                <option value="">{{ filter.placeholder }}</option>
-                <option v-for="option in filter.values" :key="option.value" :value="option.value">
-                    {{ option.label }}
-                </option>
-            </select>
+                <template #icon> <component :is="filter.icon ?? MagnifyingGlassIcon" /> </template>
+            </ComboBox>
         </div>
     </div>
 </template>

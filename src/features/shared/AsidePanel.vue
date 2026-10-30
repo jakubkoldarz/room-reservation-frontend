@@ -11,9 +11,12 @@ import { computed, onMounted, watch } from "vue";
 import { watchDebounced } from "@vueuse/core";
 import { buildingRoutes } from "../buildings/routes.ts";
 import { equipmentRoutes } from "../equipment/routes.ts";
+import { roomRoutes } from "../rooms/routes.ts";
+import { useRoomsStore } from "../rooms/stores/useRoomsStore.ts";
 
 const { hasPermission } = usePermissions();
 const buildingsStore = useBuildingsStore();
+const roomsStore = useRoomsStore();
 const route = useRoute();
 
 const buildingItems = computed(() => {
@@ -21,6 +24,14 @@ const buildingItems = computed(() => {
         name: b.name,
         id: b.id,
         to: { name: buildingRoutes.view.name, params: { buildingId: b.id } },
+    }));
+});
+
+const roomItems = computed(() => {
+    return roomsStore.rooms.map((r) => ({
+        name: r.identifier,
+        id: r.id,
+        to: { name: roomRoutes.list.name, query: { identifier: r.identifier } },
     }));
 });
 
@@ -41,10 +52,17 @@ onMounted(() => {
     if (hasPermission(Permission.BuildingList)) {
         buildingsStore.ensureLoaded();
     }
+    if (hasPermission(Permission.RoomList)) {
+        roomsStore.ensureLoaded();
+    }
 });
 
 async function refetchBuildings() {
     await buildingsStore.fetchBuildings();
+}
+
+async function refetchRooms() {
+    await roomsStore.fetchRooms();
 }
 
 watchDebounced(
@@ -52,6 +70,16 @@ watchDebounced(
     () => {
         if (hasPermission(Permission.BuildingList)) {
             refetchBuildings();
+        }
+    },
+    { debounce: 300 },
+);
+
+watchDebounced(
+    () => roomsStore.queryParam,
+    () => {
+        if (hasPermission(Permission.RoomList)) {
+            refetchRooms();
         }
     },
     { debounce: 300 },
@@ -104,11 +132,17 @@ watchDebounced(
                     @searchbar-focus="refetchBuildings"
                 />
                 <AsideList
+                    v-model="roomsStore.queryParam"
+                    v-if="hasPermission(Permission.RoomList)"
                     class="mt-4"
                     title="Rooms"
-                    :is-loading="true"
-                    :total-count="14"
-                    v-if="hasPermission(Permission.RoomList)"
+                    :to="roomRoutes.list"
+                    :items="roomItems"
+                    :display-count="4"
+                    :is-loading="roomsStore.isLoading"
+                    :total-count="roomsStore.totalCount"
+                    searchbar-placeholder="Search rooms..."
+                    @searchbar-focus="refetchRooms"
                 />
             </div>
         </div>

@@ -4,6 +4,7 @@ import { useAuthStore } from "@/features/auth/stores/useAuthStore";
 import { buildingRoutes } from "@/features/buildings/routes";
 import { dashboardRoutes } from "@/features/dashboard/routes";
 import { equipmentRoutes } from "@/features/equipment/routes";
+import { roomRoutes } from "@/features/rooms/routes";
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 
 const routes: RouteRecordRaw[] = [
@@ -17,6 +18,7 @@ const routes: RouteRecordRaw[] = [
     ...Object.values(dashboardRoutes),
     ...Object.values(buildingRoutes),
     ...Object.values(equipmentRoutes),
+    ...Object.values(roomRoutes),
 ];
 
 const router = createRouter({
