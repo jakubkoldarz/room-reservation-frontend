@@ -14,6 +14,12 @@ export const roomRoutes = {
         component: () => import("@/features/rooms/views/RoomAdd.vue"),
         meta: { requiresAuth: true, requiredPermission: Permission.RoomAdd },
     },
+    view: {
+        path: "/rooms/:roomId",
+        name: "rooms.view",
+        component: () => import("@/features/rooms/views/RoomView.vue"),
+        meta: { requiresAuth: true, requiredPermission: Permission.RoomView },
+    },
     edit: {
         path: "/rooms/:roomId/edit",
         name: "rooms.edit",

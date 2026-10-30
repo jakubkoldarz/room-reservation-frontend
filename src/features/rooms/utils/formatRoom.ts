@@ -12,8 +12,12 @@ export function approvalShortLabel(requiresApproval: boolean): string {
     return requiresApproval ? "Requires approval" : "Instant booking";
 }
 
-export function approvalLabel(requiresApproval: boolean): string {
+export function approvalDescription(requiresApproval: boolean): string {
     return requiresApproval
-        ? "Requires approval: reservations must be approved first"
-        : "Instant booking: reservations are confirmed immediately";
+        ? "reservations must be approved first"
+        : "reservations are confirmed immediately";
+}
+
+export function approvalLabel(requiresApproval: boolean): string {
+    return `${approvalShortLabel(requiresApproval)}: ${approvalDescription(requiresApproval)}`;
 }

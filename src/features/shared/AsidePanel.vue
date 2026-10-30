@@ -13,10 +13,12 @@ import { buildingRoutes } from "../buildings/routes.ts";
 import { equipmentRoutes } from "../equipment/routes.ts";
 import { roomRoutes } from "../rooms/routes.ts";
 import { useRoomsStore } from "../rooms/stores/useRoomsStore.ts";
+import { useRoomDestination } from "../rooms/composables/useRoomDestination.ts";
 
 const { hasPermission } = usePermissions();
 const buildingsStore = useBuildingsStore();
 const roomsStore = useRoomsStore();
+const { roomLink } = useRoomDestination();
 const route = useRoute();
 
 const buildingItems = computed(() => {
@@ -29,13 +31,13 @@ const buildingItems = computed(() => {
 });
 
 const roomItems = computed(() => {
-    const canEdit = hasPermission(Permission.RoomEdit);
     return roomsStore.rooms.map(({ roomInfo }) => ({
         name: roomInfo.identifier,
         id: roomInfo.id,
-        to: canEdit
-            ? { name: roomRoutes.edit.name, params: { roomId: roomInfo.id } }
-            : { name: roomRoutes.list.name, query: { identifier: roomInfo.identifier } },
+        to: roomLink(roomInfo.id) ?? {
+            name: roomRoutes.list.name,
+            query: { identifier: roomInfo.identifier },
+        },
     }));
 });
 

@@ -12,6 +12,7 @@ import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import FormHeader from "@/features/shared/FormHeader.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import EditRoom from "../components/EditRoom.vue";
+import { useRoomDestination } from "../composables/useRoomDestination";
 import EquipmentPicker from "../components/EquipmentPicker.vue";
 import RoomAvailabilitiesEdit from "../components/RoomAvailabilitiesEdit.vue";
 import { roomRoutes } from "../routes";
@@ -21,6 +22,7 @@ const route = useRoute();
 const router = useRouter();
 const toasts = useToastsStore();
 const roomsStore = useRoomsStore();
+const { afterSave } = useRoomDestination();
 const form = useTemplateRef("form");
 
 const { buildings } = useAllBuildings();
@@ -63,7 +65,7 @@ async function handleSave(): Promise<void> {
             message: `Room "${result.data.identifier}" created`,
         });
         roomsStore.fetchRooms();
-        await goToList();
+        await router.push(afterSave(result.data.id));
         return;
     }
     if (result.error.kind === "validation") {

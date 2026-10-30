@@ -14,6 +14,7 @@ import ErrorText from "@/features/shared/ErrorText.vue";
 import FormHeader from "@/features/shared/FormHeader.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import EditRoom from "../components/EditRoom.vue";
+import { useRoomDestination } from "../composables/useRoomDestination";
 import EquipmentPicker from "../components/EquipmentPicker.vue";
 import RoomAvailabilitiesEdit from "../components/RoomAvailabilitiesEdit.vue";
 import { roomRoutes } from "../routes";
@@ -26,6 +27,7 @@ const router = useRouter();
 const toasts = useToastsStore();
 const confirm = useConfirm();
 const roomsStore = useRoomsStore();
+const { afterSave } = useRoomDestination();
 const form = useTemplateRef("form");
 
 const { buildings } = useAllBuildings();
@@ -79,8 +81,8 @@ async function load(id: string | null): Promise<void> {
 
 watch(roomId, load, { immediate: true });
 
-function goToList() {
-    return router.push({ name: roomRoutes.list.name });
+function goBack() {
+    return router.push(roomId.value ? afterSave(roomId.value) : { name: roomRoutes.list.name });
 }
 
 function update(id: string, values: RoomForm, force: boolean) {
@@ -124,7 +126,7 @@ async function handleSave(): Promise<void> {
             message: `Room "${result.data.identifier}" updated`,
         });
         roomsStore.fetchRooms();
-        await goToList();
+        await goBack();
         return;
     }
     if (result.error.kind === "validation") {
@@ -148,7 +150,7 @@ async function handleSave(): Promise<void> {
                     :title="room?.details.roomInfo.identifier"
                     :is-loading
                     :is-saving
-                    @cancel="goToList"
+                    @cancel="goBack"
                     @save="handleSave"
                 />
                 <EditRoom

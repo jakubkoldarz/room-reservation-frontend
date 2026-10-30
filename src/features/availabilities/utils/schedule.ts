@@ -9,7 +9,7 @@ export function formatHm(time: string): string {
     return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
 }
 
-function toMinutes(time: string): number {
+export function toMinutes(time: string): number {
     const [hours = "0", minutes = "0"] = time.split(":");
     return Number(hours) * 60 + Number(minutes);
 }
@@ -23,7 +23,7 @@ export function slotsForDay(
         .sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
 }
 
-function formatHours(availabilities: readonly Availability[], dayOfWeek: number): string {
+export function formatHours(availabilities: readonly Availability[], dayOfWeek: number): string {
     return slotsForDay(availabilities, dayOfWeek)
         .map((slot) => `${formatHm(slot.startTime)}–${formatHm(slot.endTime)}`)
         .join(", ");

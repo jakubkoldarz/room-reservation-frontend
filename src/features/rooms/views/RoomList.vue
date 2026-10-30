@@ -47,6 +47,7 @@ import TextLink from "@/features/shared/TextLink.vue";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
+import { useRoomDestination } from "../composables/useRoomDestination";
 import { roomRoutes } from "../routes";
 import { RoomListQuerySchema } from "../schemas";
 import { useRoomsStore } from "../stores/useRoomsStore";
@@ -159,6 +160,7 @@ const addRoomRoute = computed(() => ({
 const toasts = useToastsStore();
 const confirm = useConfirm();
 const roomsStore = useRoomsStore();
+const { roomLink } = useRoomDestination();
 
 async function deleteRoom(room: BasicRoom): Promise<void> {
     const confirmed = await confirm({
@@ -261,8 +263,8 @@ async function deleteRoom(room: BasicRoom): Promise<void> {
             >
                 <template #cell-room="{ row }">
                     <TextLink
-                        v-if="hasPermission(Permission.RoomEdit)"
-                        :to="{ name: roomRoutes.edit.name, params: { roomId: row.roomInfo.id } }"
+                        v-if="roomLink(row.roomInfo.id)"
+                        :to="roomLink(row.roomInfo.id)!"
                         class="block truncate"
                     >
                         {{ row.roomInfo.identifier }}
