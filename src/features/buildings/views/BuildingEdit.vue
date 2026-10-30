@@ -5,7 +5,7 @@ import apiClient from "@/api/client";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import EditHeader from "../components/EditHeader.vue";
+import FormHeader from "@/features/shared/FormHeader.vue";
 import EditInfo from "../components/EditInfo.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore.ts";
 import router from "@/router/index.ts";
@@ -86,8 +86,10 @@ function gotoBuildingView() {
 <template>
     <AsideNavbarLayout>
         <div class="flex flex-col gap-4 pb-20">
-            <EditHeader
-                :name="building?.buildingInfo.name"
+            <FormHeader
+                mode="edit"
+                :is-saving
+                :title="building?.buildingInfo.name"
                 :is-loading="isLoading"
                 @save="handleSave"
                 @cancel="gotoBuildingView"

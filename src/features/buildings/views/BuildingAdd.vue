@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
-import CreateHeader from "../components/CreateHeader.vue";
+import FormHeader from "@/features/shared/FormHeader.vue";
 import type { Building } from "../types";
 import { ref } from "vue";
 import EditInfo from "../components/EditInfo.vue";
@@ -52,7 +52,7 @@ async function handleSave() {
 <template>
     <AsideNavbarLayout>
         <div class="flex flex-col gap-4 pb-20">
-            <CreateHeader @save="handleSave" @cancel="router.back()" />
+            <FormHeader mode="create" :is-saving @save="handleSave" @cancel="router.back()" />
             <EditInfo ref="editRef" :building="building" is-new />
             <AvailabilitiesEdit v-model="availabilities">
                 <div class="flex items-center gap-2">

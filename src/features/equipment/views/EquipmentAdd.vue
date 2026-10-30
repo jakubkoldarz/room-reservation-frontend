@@ -4,7 +4,7 @@ import { useRouter } from "vue-router";
 import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
-import CreateHeader from "@/features/buildings/components/CreateHeader.vue";
+import FormHeader from "@/features/shared/FormHeader.vue";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import EditEquipment from "../components/EditEquipment.vue";
@@ -47,7 +47,7 @@ async function handleSave(): Promise<void> {
 <template>
     <AsideNavbarLayout>
         <div class="flex flex-col gap-4 pb-20">
-            <CreateHeader @cancel="goToList" @save="handleSave" />
+            <FormHeader mode="create" :is-saving @cancel="goToList" @save="handleSave" />
             <EditEquipment ref="form" is-new>
                 Set details of the equipment. Please fill in all required fields. Equipment is used
                 as a part of the room description.

@@ -5,7 +5,7 @@ import { z } from "zod";
 import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
-import EditHeader from "@/features/buildings/components/EditHeader.vue";
+import FormHeader from "@/features/shared/FormHeader.vue";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
@@ -85,8 +85,10 @@ async function handleSave(): Promise<void> {
         <div class="flex flex-col gap-4 pb-20">
             <ErrorText v-if="loadError" :error="loadError" />
             <template v-else>
-                <EditHeader
-                    :name="equipment?.name"
+                <FormHeader
+                    mode="edit"
+                    :is-saving
+                    :title="equipment?.name"
                     :is-loading="isLoading"
                     @save="handleSave"
                     @cancel="goToList"

@@ -86,6 +86,7 @@ function onSelect(key: K, value: string): void {
                 v-else-if="filter.type === 'select'"
                 :label="filter.placeholder"
                 :options="filter.values"
+                floating-label
                 has-icon
                 :model-value="draft[filter.key] ?? ''"
                 @update:model-value="(value) => onSelect(filter.key, value)"

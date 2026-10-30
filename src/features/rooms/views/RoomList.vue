@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, shallowRef, watch } from "vue";
+import { computed, watch } from "vue";
 import { z } from "zod";
-import { BuildingOfficeIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import { BuildingOfficeIcon, PlusIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
@@ -10,7 +10,7 @@ import { usePagedList } from "@/composables/usePagedList";
 import { usePermissions } from "@/composables/usePermissions";
 import { useVisibleColumns } from "@/composables/useVisibleColumns";
 import { Permission } from "@/features/auth/constants/permissions";
-import type { Building } from "@/features/buildings/types";
+import { useAllBuildings } from "@/features/buildings/composables/useAllBuildings";
 import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
 import { defineFilters, type Filter } from "@/features/filters/types";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
@@ -20,13 +20,14 @@ import Badge from "@/features/shared/Badge.vue";
 import Container from "@/features/shared/Container.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import IconButton from "@/features/shared/IconButton.vue";
+import LinkButton from "@/features/shared/LinkButton.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
+import { roomRoutes } from "../routes";
 import { useRoomsStore } from "../stores/useRoomsStore";
 import type { BasicRoom } from "../types";
 
 const PAGE_SIZE = 25;
-const BUILDINGS_PAGE_SIZE = 100;
 
 const { hasPermission } = usePermissions();
 
@@ -43,7 +44,7 @@ const columns = useVisibleColumns(() => [
     },
 ]);
 
-const buildings = shallowRef<readonly Building[]>([]);
+const { buildings } = useAllBuildings();
 
 const filters = computed(() =>
     defineFilters([
@@ -85,21 +86,12 @@ watch(data, (page) => {
     if (page) void clampPage(page.totalPages);
 });
 
+const addRoomRoute = computed(() => ({
+    name: roomRoutes.add.name,
+    query: query.value.building ? { buildingId: query.value.building } : {},
+}));
+
 const toasts = useToastsStore();
-
-onMounted(async () => {
-    if (!hasPermission(Permission.BuildingList)) return;
-    const result = await apiCall(() =>
-        apiClient.getBuildings({ queries: { PageSize: BUILDINGS_PAGE_SIZE } }),
-    );
-    if (result.ok) buildings.value = result.data.items;
-    else
-        toasts.pushError({
-            title: "Failed to load buildings",
-            message: apiErrorMessage(result.error),
-        });
-});
-
 const confirm = useConfirm();
 const roomsStore = useRoomsStore();
 
@@ -138,6 +130,14 @@ async function deleteRoom(room: BasicRoom): Promise<void> {
                 <div
                     class="flex w-full shrink-0 flex-col items-center gap-2 @sm:w-auto @sm:flex-row"
                 >
+                    <LinkButton
+                        v-if="hasPermission(Permission.RoomAdd)"
+                        :to="addRoomRoute"
+                        class="w-full rounded! py-1.5! sm:max-w-45"
+                    >
+                        <PlusIcon />
+                        Add Room
+                    </LinkButton>
                     <FiltersPanel
                         :filters
                         :values="query"

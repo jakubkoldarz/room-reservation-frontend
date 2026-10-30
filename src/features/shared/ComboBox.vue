@@ -3,6 +3,8 @@ import { computed, nextTick, ref, useId, useTemplateRef, watch } from "vue";
 import { ChevronDownIcon, XMarkIcon } from "@heroicons/vue/24/solid";
 import type { SelectOption } from "./types";
 
+defineOptions({ inheritAttrs: false });
+
 defineSlots<{
     icon?(): unknown;
 }>();
@@ -10,14 +12,20 @@ defineSlots<{
 const {
     options,
     label,
+    floatingLabel = false,
+    placeholder,
     errorMessage,
     hasIcon = false,
+    isRequired = false,
     noResultsText = "No results",
 } = defineProps<{
     options: readonly SelectOption[];
     label?: string;
+    floatingLabel?: boolean;
+    placeholder?: string;
     errorMessage?: string;
     hasIcon?: boolean;
+    isRequired?: boolean;
     noResultsText?: string;
 }>();
 
@@ -128,6 +136,10 @@ function onEscape(): void {
 
 <template>
     <div class="group flex flex-col gap-1">
+        <label v-if="!floatingLabel && label" :for="inputId" class="text-sm font-semibold">
+            <span>{{ label }}</span>
+            <span v-if="isRequired" class="text-danger"> * </span>
+        </label>
         <div class="relative">
             <div
                 v-if="hasIcon"
@@ -138,12 +150,13 @@ function onEscape(): void {
             <input
                 :id="inputId"
                 ref="input"
+                v-bind="$attrs"
                 :value="text"
                 type="text"
                 role="combobox"
                 autocomplete="off"
                 spellcheck="false"
-                placeholder=" "
+                :placeholder="placeholder ?? ' '"
                 aria-autocomplete="list"
                 :aria-expanded="isOpen"
                 :aria-controls="listboxId"
@@ -165,7 +178,7 @@ function onEscape(): void {
             />
 
             <label
-                v-if="label"
+                v-if="floatingLabel && label"
                 :for="inputId"
                 class="text-text-muted bg-surface pointer-events-none absolute top-0 -translate-y-1/2 px-1 text-xs font-medium transition-all peer-placeholder-shown:top-1/2 peer-placeholder-shown:px-0 peer-placeholder-shown:text-sm"
                 :class="hasIcon ? 'left-7 peer-placeholder-shown:left-8' : 'left-2'"
