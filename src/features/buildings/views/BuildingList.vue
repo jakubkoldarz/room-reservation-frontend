@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import { watch } from "vue";
 import { z } from "zod";
-import { MapPinIcon, PlusIcon, Square3Stack3DIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import {
+    EnvelopeIcon,
+    HashtagIcon,
+    MapIcon,
+    MapPinIcon,
+    PlusIcon,
+    Square3Stack3DIcon,
+    TrashIcon,
+} from "@heroicons/vue/24/solid";
 import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
@@ -11,6 +19,9 @@ import { usePermissions } from "@/composables/usePermissions";
 import { useVisibleColumns } from "@/composables/useVisibleColumns";
 import { Permission } from "@/features/auth/constants/permissions";
 import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
+import MoreFiltersButton from "@/features/filters/components/MoreFiltersButton.vue";
+import MoreFiltersPanel from "@/features/filters/components/MoreFiltersPanel.vue";
+import { useMoreFilters } from "@/features/filters/composables/useMoreFilters";
 import { defineFilters } from "@/features/filters/types";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { useConfirm } from "@/features/modal/composables/useConfirm";
@@ -43,16 +54,43 @@ const columns = useVisibleColumns(() => [
     },
 ]);
 
-const filters = defineFilters([{ key: "name", type: "text", placeholder: "Building name" }]);
+const filters = defineFilters([
+    { key: "name", type: "text", placeholder: "Building name" },
+    { key: "city", type: "text", placeholder: "City", icon: MapIcon },
+]);
 
-const { query, setFilter, clampPage } = useListQuery(
-    z.object({ page: pageParam, name: textParam }),
+const moreFilters = defineFilters([
+    { key: "identifier", type: "text", placeholder: "Identifier", icon: HashtagIcon },
+    { key: "street", type: "text", placeholder: "Street", icon: MapPinIcon },
+    { key: "postalCode", type: "text", placeholder: "Postal code", icon: EnvelopeIcon },
+]);
+
+const { query, setFilter, setFilters, clampPage } = useListQuery(
+    z.object({
+        page: pageParam,
+        name: textParam,
+        city: textParam,
+        identifier: textParam,
+        street: textParam,
+        postalCode: textParam,
+    }),
 );
+
+const moreFiltersState = useMoreFilters(moreFilters, query, setFilters);
+const { activeCount: activeMoreFilters, isOpen: showMoreFilters } = moreFiltersState;
 
 const { data, isLoading, error, reload } = usePagedList(
     (q) =>
         apiClient.getBuildings({
-            queries: { Name: q.name.trim() || undefined, Page: q.page, PageSize: PAGE_SIZE },
+            queries: {
+                Name: q.name.trim() || undefined,
+                City: q.city.trim() || undefined,
+                Identifier: q.identifier.trim() || undefined,
+                Street: q.street.trim() || undefined,
+                PostalCode: q.postalCode.trim() || undefined,
+                Page: q.page,
+                PageSize: PAGE_SIZE,
+            },
         }),
     query,
 );
@@ -114,9 +152,24 @@ async function deleteBuilding(building: Building): Promise<void> {
                         class="w-full shrink-0 @sm:w-auto"
                         @change="setFilter"
                     />
+                    <MoreFiltersButton
+                        v-model="showMoreFilters"
+                        controls="building-more-filters"
+                        :active-count="activeMoreFilters"
+                    />
                 </div>
                 <PagerBlock :current="query.page" :total="data?.totalPages ?? 1" />
             </div>
+
+            <MoreFiltersPanel
+                v-show="showMoreFilters"
+                id="building-more-filters"
+                :filters="moreFilters"
+                :values="query"
+                :active-count="activeMoreFilters"
+                @change="setFilter"
+                @clear="moreFiltersState.clear"
+            />
 
             <ErrorText v-if="error" :error="apiErrorMessage(error)" class="mt-4" />
 

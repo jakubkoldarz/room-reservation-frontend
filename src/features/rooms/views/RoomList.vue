@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, watch } from "vue";
 import { useIntervalFn, useNow } from "@vueuse/core";
 import {
-    AdjustmentsHorizontalIcon,
     BuildingOfficeIcon,
     CalendarDaysIcon,
-    ChevronDownIcon,
     ClockIcon,
     PlusIcon,
     RectangleGroupIcon,
@@ -34,6 +32,9 @@ import { buildingRoutes } from "@/features/buildings/routes";
 import { useAllEquipment } from "@/features/equipment/composables/useAllEquipment";
 import { iconFor } from "@/features/equipment/icons";
 import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
+import MoreFiltersButton from "@/features/filters/components/MoreFiltersButton.vue";
+import MoreFiltersPanel from "@/features/filters/components/MoreFiltersPanel.vue";
+import { useMoreFilters } from "@/features/filters/composables/useMoreFilters";
 import { defineFilters, type Filter } from "@/features/filters/types";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { useConfirm } from "@/features/modal/composables/useConfirm";
@@ -129,15 +130,9 @@ const moreFilters = computed(() =>
 
 const { query, setFilter, setFilters, clampPage } = useListQuery(RoomListQuerySchema);
 
-const activeMoreFilters = computed(
-    () => moreFilters.value.filter((filter) => query.value[filter.key] !== "").length,
-);
-const showMoreFilters = ref(activeMoreFilters.value > 0);
+const moreFiltersState = useMoreFilters(moreFilters, query, setFilters);
+const { activeCount: activeMoreFilters, isOpen: showMoreFilters } = moreFiltersState;
 const timeError = computed(() => timeRangeError(query.value));
-
-function clearMoreFilters(): Promise<void> {
-    return setFilters({ floor: "", capacity: "", equipment: "", day: "", from: "", to: "" });
-}
 
 const { data, isLoading, error, reload } = usePagedList(
     (q) => apiClient.getRooms({ queries: toRoomQueries(q, PAGE_SIZE) }),
@@ -213,60 +208,30 @@ async function deleteRoom(room: BasicRoom): Promise<void> {
                         class="w-full shrink-0 @sm:w-auto"
                         @change="setFilter"
                     />
-                    <button
-                        type="button"
-                        aria-controls="room-more-filters"
-                        :aria-expanded="showMoreFilters"
-                        class="focus-visible:ring-primary flex w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded border px-3 py-1.5 text-sm transition-colors outline-none focus-visible:ring-2 @sm:w-auto"
-                        :class="
-                            showMoreFilters || activeMoreFilters > 0
-                                ? 'border-primary/30 bg-primary/10 text-primary'
-                                : 'border-border text-text-muted hover:border-primary/30 hover:text-primary'
-                        "
-                        @click="showMoreFilters = !showMoreFilters"
-                    >
-                        <AdjustmentsHorizontalIcon class="size-4" />
-                        More filters
-                        <span
-                            v-if="activeMoreFilters > 0"
-                            class="bg-primary text-surface rounded-full px-1.5 text-xs font-bold"
-                        >
-                            {{ activeMoreFilters }}
-                        </span>
-                        <ChevronDownIcon
-                            class="size-4 transition-transform"
-                            :class="{ 'rotate-180': showMoreFilters }"
-                        />
-                    </button>
+                    <MoreFiltersButton
+                        v-model="showMoreFilters"
+                        controls="room-more-filters"
+                        :active-count="activeMoreFilters"
+                    />
                 </div>
                 <PagerBlock :current="query.page" :total="data?.totalPages ?? 1" />
             </div>
 
-            <div
+            <MoreFiltersPanel
                 v-show="showMoreFilters"
                 id="room-more-filters"
-                class="border-border bg-background/50 flex flex-col gap-3 border-b p-4"
+                :filters="moreFilters"
+                :values="query"
+                :active-count="activeMoreFilters"
+                @change="setFilter"
+                @clear="moreFiltersState.clear"
             >
-                <FiltersPanel
-                    layout="grid"
-                    :filters="moreFilters"
-                    :values="query"
-                    @change="setFilter"
-                />
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <p class="text-text-muted text-xs" :class="{ 'text-warning-text!': timeError }">
+                <template #hint>
+                    <span :class="{ 'text-warning-text': timeError }">
                         {{ timeError ?? "Opening hours show rooms open for the whole time range." }}
-                    </p>
-                    <button
-                        type="button"
-                        class="text-primary cursor-pointer text-sm font-medium hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:no-underline"
-                        :disabled="activeMoreFilters === 0"
-                        @click="clearMoreFilters"
-                    >
-                        Clear filters
-                    </button>
-                </div>
-            </div>
+                    </span>
+                </template>
+            </MoreFiltersPanel>
 
             <ErrorText v-if="error" :error="apiErrorMessage(error)" class="mt-4" />
 

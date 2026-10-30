@@ -39,7 +39,7 @@ export function summarizeWeek(availabilities: readonly Availability[]): string {
 
     for (const dayOfWeek of DAYS_MONDAY_FIRST) {
         const hours = formatHours(availabilities, dayOfWeek);
-        const current = groups.at(-1);
+        const current = groups[groups.length - 1];
         if (hours && hours === previousHours && current) current.last = dayOfWeek;
         else if (hours) groups.push({ first: dayOfWeek, last: dayOfWeek, hours });
         previousHours = hours;
