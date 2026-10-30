@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Availability } from "@/types/availabilities";
+import type { Availability } from "../types";
 import Container from "@/features/shared/Container.vue";
 import { useAvailabilityRow } from "../composables/useAvailabilityRow";
 import SlidingCheckbox from "@/features/shared/SlidingCheckbox.vue";

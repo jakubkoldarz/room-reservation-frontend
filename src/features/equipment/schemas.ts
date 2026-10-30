@@ -11,5 +11,3 @@ export const EquipmentFormSchema = schemas.EquipmentRequestDto.extend({
         .max(50, "Name can have at most 50 characters"),
     icon: z.string().refine(isEquipmentIconName, "Pick an icon"),
 });
-
-export type EquipmentForm = z.infer<typeof EquipmentFormSchema>;

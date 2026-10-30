@@ -1,9 +1,8 @@
 import type { Component } from "vue";
 import * as SolidIcons from "@heroicons/vue/24/solid";
+import type { EquipmentIconName } from "./types";
 
 export const EQUIPMENT_ICONS = SolidIcons;
-
-export type EquipmentIconName = keyof typeof EQUIPMENT_ICONS;
 
 export function isEquipmentIconName(name: string): name is EquipmentIconName {
     return Object.prototype.hasOwnProperty.call(EQUIPMENT_ICONS, name);

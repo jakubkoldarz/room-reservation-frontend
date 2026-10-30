@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { apiCall } from "@/api/apiCall";
+import { apiErrorMessage } from "@/api/errors";
 import apiClient from "@/api/client";
-import { useApiCall } from "@/composables/useApiCall";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
@@ -12,21 +13,30 @@ import { buildingRoutes } from "../routes.ts";
 import AvailabilitiesTable from "@/features/availabilities/components/AvailabilitiesTable.vue";
 import { formatAddress } from "../utils/formatAddres.ts";
 import type { BuildingDetails } from "../types.ts";
+import { useToastsStore } from "@/features/toasts/stores/useToastsStore.ts";
 
 const route = useRoute();
 const buildingId = computed(() => route.params.buildingId as string);
 const building = ref<BuildingDetails | null>();
-const { call, isLoading } = useApiCall();
+const isLoading = ref(false);
 const { hasPermission } = usePermissions();
+const toasts = useToastsStore();
 
 watch(() => buildingId.value, fetchBuilding, { immediate: true });
 async function fetchBuilding() {
-    const response = await call(() =>
+    isLoading.value = true;
+    const response = await apiCall(() =>
         apiClient.getBuildingsBuildingId({ params: { buildingId: buildingId.value } }),
     );
-    if (response.success) {
+    isLoading.value = false;
+
+    if (response.ok) {
         building.value = response.data;
     } else {
+        toasts.pushError({
+            title: "Failed to load building",
+            message: apiErrorMessage(response.error),
+        });
         router.push({ name: buildingRoutes.list.name });
     }
 }

@@ -53,13 +53,20 @@ This runs [openapi-zod-client](https://github.com/astahmer/openapi-zod-client) a
 -   adds `Authorization: Bearer <jwt>` from the auth store to each request
 -   on a `401`, calls `/auth/refresh` once and retries the original request
 
-Wrap API calls in the `useApiCall` composable (`src/composables/useApiCall.ts`). It returns an `ApiResult<T>` (`{ success, data }` or `{ success, error }`) and exposes `isLoading` and `error` refs:
+Wrap API calls in `apiCall` (`src/api/apiCall.ts`). It never throws and returns an `ApiResult<T>`: `{ ok: true, data }` or `{ ok: false, error }`. The caller manages its own loading state.
+
+`error` is an `ApiError` (`src/api/errors.ts`), a union tagged by `kind`: `canceled`, `network`, `validation`, `http`, `contract` (the response didn't match the schema) or `unknown`. Use `apiErrorMessage(error)` to get a user-facing message. For `validation` errors, `error.fieldErrors` holds messages keyed by camelCase field path, ready to show next to the form fields:
 
 ```ts
-const { call, isLoading } = useApiCall();
-const result = await call(() => apiClient.getEquipment());
-if (result.success) {
+isSaving.value = true;
+const result = await apiCall(() => apiClient.postEquipment(values));
+isSaving.value = false;
+
+if (result.ok) {
     /* result.data */
+} else {
+    if (result.error.kind === "validation") form.value?.showServerErrors(result.error.fieldErrors);
+    toasts.pushError({ title: "Failed to save", message: apiErrorMessage(result.error) });
 }
 ```
 
@@ -81,11 +88,10 @@ Routes declare their access rules in `meta` (typed in `src/router/meta.ts`):
 
 ```
 src/
-├── api/             # Generated API client + configured axios instance
-├── composables/     # App-wide composables (useApiCall, usePermissions, useDate, ...)
+├── api/             # Generated API client, configured axios instance, apiCall + ApiError
+├── composables/     # App-wide composables (usePagedList, useListQuery, usePermissions, useDate, ...)
 ├── features/        # Feature modules (see below)
 ├── router/          # Router setup, global guards, RouteMeta typings
-├── types/           # Shared types (DTOs, API results/errors, ...)
 ├── main.ts          # App bootstrap (Pinia, auth init, router)
 └── style.css        # Tailwind entry point and global styles
 ```
@@ -113,6 +119,7 @@ Current features include `auth`, `dashboard`, `buildings`, `equipment` and `avai
 
 ## Conventions
 
+-   Put a feature's exported types in its `types.ts`. Only API infrastructure types (`src/api/`) and composable return types live next to their implementation.
 -   Import from `src` using the `@/` alias, for example `@/features/shared/BaseButton.vue`.
 -   Load route components lazily with `() => import(...)`.
 -   Validate forms with `vee-validate` and `zod` (`@vee-validate/zod`).

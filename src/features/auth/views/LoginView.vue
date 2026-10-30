@@ -9,11 +9,12 @@ import { useForm } from "vee-validate";
 import { useAuthStore } from "../stores/useAuthStore";
 import { ref } from "vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
-import { useApiCall } from "@/composables/useApiCall";
+import { apiCall } from "@/api/apiCall";
+import { apiErrorMessage } from "@/api/errors";
 import apiClient from "@/api/client";
 import router from "@/router";
 
-const { call, isLoading } = useApiCall();
+const isLoading = ref(false);
 const authStore = useAuthStore();
 
 const { handleSubmit, errors, defineField } = useForm({
@@ -26,10 +27,14 @@ const [password, passwordAttrs] = defineField("password");
 const error = ref<string | undefined>();
 
 const onSubmit = handleSubmit(async (values) => {
-    const response = await call(() => apiClient.postAuthlogin(values));
-    if (!response.success) {
-        error.value = response.error?.message ?? "Unknown error occured";
+    isLoading.value = true;
+    const response = await apiCall(() => apiClient.postAuthlogin(values));
+    isLoading.value = false;
+
+    if (!response.ok) {
+        error.value = apiErrorMessage(response.error);
     } else {
+        error.value = undefined;
         const { requires2FA, jwtToken, verificationId } = response.data;
         if (jwtToken) {
             authStore.login(jwtToken);

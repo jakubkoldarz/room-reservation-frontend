@@ -31,7 +31,7 @@ function copyBuildingId() {
     }, 2000);
 }
 
-const { handleSubmit, errors, defineField, resetForm } = useForm({
+const { handleSubmit, errors, defineField, resetForm, setErrors } = useForm({
     validationSchema: toTypedSchema(schemas.BuildingRequestDto.omit({ availabilities: true })),
 });
 
@@ -39,8 +39,20 @@ const submit = handleSubmit((values) => {
     return values;
 });
 
+function showServerErrors(fieldErrors: Readonly<Record<string, readonly string[]>>): void {
+    setErrors({
+        name: fieldErrors.name?.[0],
+        identifier: fieldErrors.identifier?.[0],
+        street: fieldErrors.street?.[0],
+        city: fieldErrors.city?.[0],
+        postalCode: fieldErrors.postalCode?.[0],
+        floorsCount: fieldErrors.floorsCount?.[0],
+    });
+}
+
 defineExpose({
     submit,
+    showServerErrors,
 });
 
 watch(

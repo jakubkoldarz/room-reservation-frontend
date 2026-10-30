@@ -6,8 +6,8 @@ import { computed, watch } from "vue";
 import NumberCircle from "@/features/buildings/components/NumberCircle.vue";
 import BaseInput from "@/features/shared/BaseInput.vue";
 import Container from "@/features/shared/Container.vue";
-import { EquipmentFormSchema, type EquipmentForm } from "../schemas";
-import type { Equipment } from "../types";
+import { EquipmentFormSchema } from "../schemas";
+import type { Equipment, EquipmentForm } from "../types";
 import IconPicker from "./IconPicker.vue";
 
 const { equipment = null, isNew = false } = defineProps<{

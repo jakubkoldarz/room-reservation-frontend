@@ -3,7 +3,8 @@ import BaseButton from "@/features/shared/BaseButton.vue";
 import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
 import SegmentedInput from "../components/SegmentedInput.vue";
-import { useApiCall } from "@/composables/useApiCall.ts";
+import { apiCall } from "@/api/apiCall.ts";
+import { apiErrorMessage } from "@/api/errors.ts";
 import apiClient from "@/api/client.ts";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import router from "@/router/index.ts";
@@ -12,17 +13,26 @@ const { params } = useRoute();
 const verificationId = computed(() => params.verificationId as string);
 
 const verificationCode = ref<string>("");
-const { call, isLoading, error } = useApiCall();
+const isLoading = ref(false);
+const error = ref<string | undefined>();
 const authStore = useAuthStore();
 
 async function onSubmit() {
-    const response = await call(() =>
+    isLoading.value = true;
+    const response = await apiCall(() =>
         apiClient.postAuthlogin2fa({
             verificationCode: verificationCode.value,
             verificationId: verificationId.value,
         }),
     );
-    if (response.success && response.data.jwtToken) {
+    isLoading.value = false;
+
+    if (!response.ok) {
+        error.value = apiErrorMessage(response.error);
+        return;
+    }
+    error.value = undefined;
+    if (response.data.jwtToken) {
         authStore.login(response.data.jwtToken);
         router.push({ name: "index" });
     }
@@ -35,7 +45,7 @@ async function onSubmit() {
             class="bg-surface flex w-full max-w-100 flex-col items-center gap-2 rounded p-8 shadow"
         >
             <h2 class="text-center">Enter your verification code</h2>
-            <ErrorText :error="error?.message" />
+            <ErrorText :error="error" />
             <div class="my-2 flex gap-1">
                 <SegmentedInput v-model="verificationCode" :segments="6" />
             </div>

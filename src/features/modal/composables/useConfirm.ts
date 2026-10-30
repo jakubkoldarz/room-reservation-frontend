@@ -1,12 +1,5 @@
 import { readonly, shallowRef } from "vue";
-
-export interface ConfirmOptions {
-    title: string;
-    message: string;
-    confirmText?: string;
-    cancelText?: string;
-    danger?: boolean;
-}
+import type { ConfirmOptions } from "../types";
 
 interface PendingConfirm {
     options: ConfirmOptions;

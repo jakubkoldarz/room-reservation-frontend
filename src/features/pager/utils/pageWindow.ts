@@ -1,5 +1,4 @@
-export type PageItem =
-    { kind: "page"; page: number; active: boolean } | { kind: "gap"; key: "gap-start" | "gap-end" };
+import type { PageItem } from "../types";
 
 function toPageNumber(value: number): number {
     return Number.isFinite(value) ? Math.max(1, Math.floor(value)) : 1;

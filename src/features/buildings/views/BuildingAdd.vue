@@ -5,36 +5,47 @@ import type { Building } from "../types";
 import { ref } from "vue";
 import EditInfo from "../components/EditInfo.vue";
 import { useRouter } from "vue-router";
-import { useApiCall } from "@/composables/useApiCall.ts";
+import { apiCall } from "@/api/apiCall.ts";
+import { apiErrorMessage } from "@/api/errors.ts";
 import apiClient from "@/api/client.ts";
 import { buildingRoutes } from "../routes.ts";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore.ts";
 import AvailabilitiesEdit from "@/features/availabilities/components/AvailabilitiesEdit.vue";
-import type { Availability } from "@/types/availabilities.ts";
+import type { Availability } from "@/features/availabilities/types.ts";
 import NumberCircle from "../components/NumberCircle.vue";
 
 const building = ref<Building>();
 const availabilities = ref<Availability[]>([]);
 
-const { call } = useApiCall();
+const isSaving = ref(false);
 const router = useRouter();
 const editRef = ref<InstanceType<typeof EditInfo> | null>(null);
 
 async function handleSave() {
+    if (isSaving.value) return;
     const values = await editRef.value?.submit();
     if (!values) return;
 
     const toastsStore = useToastsStore();
 
-    const response = await call(() =>
+    isSaving.value = true;
+    const response = await apiCall(() =>
         apiClient.postBuildings({ ...values, availabilities: availabilities.value }),
     );
-    if (response.success) {
+    isSaving.value = false;
+
+    if (response.ok) {
         router.push({ name: buildingRoutes.view.name, params: { buildingId: response.data.id } });
         toastsStore.pushSuccess({ title: "Success", message: "Building created successfully" });
-    } else {
-        toastsStore.pushApiError({ title: "Failed to create building", error: response.error });
+        return;
     }
+    if (response.error.kind === "validation") {
+        editRef.value?.showServerErrors(response.error.fieldErrors);
+    }
+    toastsStore.pushError({
+        title: "Failed to create building",
+        message: apiErrorMessage(response.error),
+    });
 }
 </script>
 

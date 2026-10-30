@@ -1,5 +1,5 @@
+import { apiCall } from "@/api/apiCall";
 import apiClient from "@/api/client";
-import { useApiCall } from "@/composables/useApiCall";
 import type { UserDetails } from "@/features/users/types";
 import { defineStore } from "pinia";
 
@@ -39,9 +39,8 @@ export const useAuthStore = defineStore("auth", {
         },
 
         async tryRefreshToken(): Promise<boolean> {
-            const { call } = useApiCall();
-            const result = await call(() => apiClient.postAuthrefresh(undefined));
-            if (result.success && result.data.jwtToken) {
+            const result = await apiCall(() => apiClient.postAuthrefresh(undefined));
+            if (result.ok && result.data.jwtToken) {
                 this.jwtToken = result.data.jwtToken;
                 return true;
             } else {
@@ -52,16 +51,15 @@ export const useAuthStore = defineStore("auth", {
         async init() {
             if (!this.jwtToken) return this.logout();
 
-            const { call } = useApiCall();
-            const response = await call(() => apiClient.getAuthme());
+            const response = await apiCall(() => apiClient.getAuthme());
 
-            if (response.success) return this.setUser(response.data);
+            if (response.ok) return this.setUser(response.data);
 
             const refreshed = await this.tryRefreshToken();
             if (!refreshed) return this.logout();
 
-            const retryResponse = await call(() => apiClient.getAuthme());
-            if (retryResponse.success) return this.setUser(retryResponse.data);
+            const retryResponse = await apiCall(() => apiClient.getAuthme());
+            if (retryResponse.ok) return this.setUser(retryResponse.data);
 
             return this.logout();
         },
