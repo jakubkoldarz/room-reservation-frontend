@@ -64,14 +64,33 @@ describe("toApiError", () => {
             status: 401,
             title: "Unauthorized",
             detail: "Invalid credentials",
+            conflictingItems: [],
         });
         expect(apiErrorMessage(error)).toBe("Invalid credentials");
     });
 
     it("body, które nie jest ProblemDetails → http bez tytułu", () => {
         const error = toApiError(httpError(500, "<html>Internal Server Error</html>"));
-        expect(error).toEqual({ kind: "http", status: 500, title: null, detail: null });
+        expect(error).toEqual({
+            kind: "http",
+            status: 500,
+            title: null,
+            detail: null,
+            conflictingItems: [],
+        });
         expect(apiErrorMessage(error)).toBe("Request failed with status 500.");
+    });
+
+    it("409 z conflictingItems → http z listą konfliktów", () => {
+        const items = [{ reservationId: "r1" }];
+        const error = toApiError(
+            httpError(409, {
+                title: "Conflict",
+                detail: "Conflicting reservations found",
+                conflictingItems: items,
+            }),
+        );
+        expect(error).toMatchObject({ kind: "http", status: 409, conflictingItems: items });
     });
 
     it("brak odpowiedzi → network", () => {
@@ -104,7 +123,13 @@ describe("apiCall", () => {
         const result = await apiCall(() => Promise.reject(httpError(404, { title: "Not Found" })));
         expect(result).toEqual({
             ok: false,
-            error: { kind: "http", status: 404, title: "Not Found", detail: null },
+            error: {
+                kind: "http",
+                status: 404,
+                title: "Not Found",
+                detail: null,
+                conflictingItems: [],
+            },
         });
     });
 });

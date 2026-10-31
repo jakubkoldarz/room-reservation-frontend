@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import type { Availability } from "../types";
+import type { Availability, DayMessages } from "../types";
 import Container from "@/features/shared/Container.vue";
 import { useAvailabilityRow } from "../composables/useAvailabilityRow";
 import SlidingCheckbox from "@/features/shared/SlidingCheckbox.vue";
 import Skeleton from "@/features/shared/Skeleton.vue";
 import BaseInput from "@/features/shared/BaseInput.vue";
-const props = withDefaults(
-    defineProps<{
-        isLoading?: boolean;
-    }>(),
-    {
-        isLoading: false,
-    },
-);
+const {
+    isLoading = false,
+    errors = {},
+    hints = {},
+} = defineProps<{
+    isLoading?: boolean;
+    errors?: DayMessages;
+    hints?: DayMessages;
+}>();
 
 const availabilitiesModel = defineModel<Availability[]>({ default: () => [] });
 const { rows, setOpen, setTime } = useAvailabilityRow(
@@ -28,7 +29,7 @@ const { rows, setOpen, setTime } = useAvailabilityRow(
             <li
                 v-for="row in rows"
                 :key="row.day"
-                class="flex flex-col gap-2 py-3 @lg:flex-row @lg:items-center @lg:py-2"
+                class="flex flex-col gap-2 py-3 @lg:flex-row @lg:flex-wrap @lg:items-center @lg:py-2"
             >
                 <div class="flex items-center @lg:grow">
                     <span
@@ -80,6 +81,19 @@ const { rows, setOpen, setTime } = useAvailabilityRow(
                         />
                     </div>
                 </div>
+                <p
+                    v-if="row.isOpen && errors[row.dayOfWeek]"
+                    class="text-danger pl-4 text-xs @lg:basis-full"
+                    role="alert"
+                >
+                    {{ errors[row.dayOfWeek] }}
+                </p>
+                <p
+                    v-else-if="hints[row.dayOfWeek]"
+                    class="text-text-muted pl-4 text-xs @lg:basis-full"
+                >
+                    {{ hints[row.dayOfWeek] }}
+                </p>
             </li>
         </ul>
 

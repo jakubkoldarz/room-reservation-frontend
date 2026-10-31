@@ -1,7 +1,12 @@
 import type { schemas } from "@/api/generated";
 import type { z } from "zod";
 import type { ReservationState } from "@/features/reservations/types";
-import type { RoomFormSchema, RoomListQuerySchema } from "./schemas";
+import type {
+    ConflictingReservationSchema,
+    ConflictingRoomSchema,
+    RoomFormSchema,
+    RoomListQuerySchema,
+} from "./schemas";
 
 export type BasicRoom = z.infer<typeof schemas.BasicRoomResponseDto>;
 export type RoomListItem = z.infer<typeof schemas.RoomListItemResponseDto>;
@@ -10,6 +15,8 @@ export type RoomSummary = z.infer<typeof schemas.RoomDetailsResponseDto>;
 export type RoomRequest = z.input<typeof schemas.RoomRequestDto>;
 export type RoomForm = z.infer<typeof RoomFormSchema>;
 export type RoomListQuery = z.infer<typeof RoomListQuerySchema>;
+export type ConflictingReservation = z.infer<typeof ConflictingReservationSchema>;
+export type ConflictingRoom = z.infer<typeof ConflictingRoomSchema>;
 
 export type CalendarBlockKind = ReservationState | "event" | "closed";
 
@@ -30,6 +37,7 @@ export type CalendarAllDay = {
     id: string;
     title: string;
     isClosed: boolean;
+    hours: string | null;
 };
 
 export type CalendarDay = {

@@ -1,5 +1,10 @@
 import type { Availability } from "@/features/availabilities/types";
-import { formatHm, slotsForDay, toMinutes } from "@/features/availabilities/utils/schedule";
+import {
+    eventOn,
+    formatHm,
+    slotsForDate,
+    toMinutes,
+} from "@/features/availabilities/utils/schedule";
 import type { EventInfo } from "@/features/events/types";
 import type { Reservation } from "@/features/reservations/types";
 import {
@@ -7,6 +12,7 @@ import {
     getReservationState,
     reservationStateLabel,
 } from "@/features/reservations/utils/reservationState";
+import { toIsoDate } from "@/utils/isoDate";
 import type { CalendarAllDay, CalendarBlock, CalendarDay } from "../types";
 
 const DEFAULT_HOURS = { start: 8, end: 18 };
@@ -22,12 +28,6 @@ export function addDays(date: Date, days: number): Date {
     const result = new Date(date);
     result.setDate(result.getDate() + days);
     return result;
-}
-
-export function toIsoDate(date: Date): string {
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${date.getFullYear()}-${month}-${day}`;
 }
 
 export function parseIsoDate(value: unknown): Date | null {
@@ -90,6 +90,9 @@ export function hourRange(
 ): { start: number; end: number } {
     const minutes = [
         ...availabilities.flatMap((slot) => [toMinutes(slot.startTime), toMinutes(slot.endTime)]),
+        ...days.flatMap((day) =>
+            day.openIntervals.flatMap((interval) => [interval.start, interval.end]),
+        ),
         ...days.flatMap((day) => day.blocks.flatMap((block) => [block.start, block.end])),
     ];
     if (minutes.length === 0) return DEFAULT_HOURS;
@@ -119,19 +122,16 @@ function reservationBlock(reservation: Reservation, requiresApproval: boolean) {
     };
 }
 
-function eventBlock(event: EventInfo, startTime: string, endTime: string) {
-    const time = `${formatHm(startTime)}–${formatHm(endTime)}`;
-    const title = event.isClosed ? `Closed: ${event.name}` : event.name;
-    return {
-        id: event.id,
-        kind: event.isClosed ? ("closed" as const) : ("event" as const),
-        start: toMinutes(startTime),
-        end: toMinutes(endTime),
-        time,
-        title,
-        detail: "",
-        tooltip: `${time} · ${title}`,
-    };
+function eventOverride(event: EventInfo): CalendarAllDay {
+    const hours =
+        !event.isClosed && event.startTime && event.endTime
+            ? `${formatHm(event.startTime)}–${formatHm(event.endTime)}`
+            : null;
+    return { id: event.id, title: event.name, isClosed: event.isClosed || hours === null, hours };
+}
+
+export function overrideLabel(item: CalendarAllDay): string {
+    return item.isClosed ? `Closed: ${item.title}` : `${item.title} · special hours ${item.hours}`;
 }
 
 export function buildCalendarDays(options: {
@@ -147,32 +147,20 @@ export function buildCalendarDays(options: {
     return Array.from({ length: 7 }, (_, index) => {
         const date = addDays(options.weekStart, index);
         const iso = toIsoDate(date);
-        const eventsToday = options.events.filter(
-            (event) => event.startDate <= iso && iso <= event.endDate,
-        );
+        const event = eventOn(options.events, iso);
 
-        const allDay: CalendarAllDay[] = eventsToday
-            .filter((event) => !event.startTime || !event.endTime)
-            .map((event) => ({ id: event.id, title: event.name, isClosed: event.isClosed }));
-
-        const blocks: Omit<CalendarBlock, "lane" | "lanes">[] = [
-            ...options.reservations
-                .filter((reservation) => reservation.date === iso)
-                .map((reservation) => reservationBlock(reservation, options.requiresApproval)),
-            ...eventsToday
-                .filter((event) => event.startTime && event.endTime)
-                .map((event) => eventBlock(event, event.startTime ?? "", event.endTime ?? "")),
-        ];
+        const blocks: Omit<CalendarBlock, "lane" | "lanes">[] = options.reservations
+            .filter((reservation) => reservation.date === iso)
+            .map((reservation) => reservationBlock(reservation, options.requiresApproval));
 
         return {
             date,
             iso,
             isToday: iso === todayIso,
-            openIntervals: slotsForDay(options.availabilities, date.getDay()).map((slot) => ({
-                start: toMinutes(slot.startTime),
-                end: toMinutes(slot.endTime),
-            })),
-            allDay,
+            openIntervals: slotsForDate(options.availabilities, date, options.events).map(
+                (slot) => ({ start: toMinutes(slot.startTime), end: toMinutes(slot.endTime) }),
+            ),
+            allDay: event ? [eventOverride(event)] : [],
             blocks: layoutLanes(blocks),
         };
     });

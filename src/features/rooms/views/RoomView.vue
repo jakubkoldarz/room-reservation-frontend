@@ -18,8 +18,8 @@ import {
     hourRange,
     parseIsoDate,
     startOfWeek,
-    toIsoDate,
 } from "../utils/calendar";
+import { toIsoDate } from "@/utils/isoDate";
 
 const route = useRoute();
 const router = useRouter();

@@ -73,7 +73,7 @@ function goToEdit(): void {
         <template v-else>
             <div class="flex flex-col gap-1">
                 <h1 class="text-xl font-bold break-words">{{ info.identifier }}</h1>
-                <OpenStatusLabel :availabilities="room.availabilities" :now />
+                <OpenStatusLabel :availabilities="room.availabilities" :events="room.events" :now />
             </div>
 
             <div class="flex items-start gap-2 text-sm">
@@ -140,14 +140,18 @@ function goToEdit(): void {
 
             <section class="flex flex-col gap-2">
                 <h2 class="text-text-muted text-xs font-semibold uppercase">Opening hours</h2>
-                <ul class="flex flex-col gap-1 text-sm">
+                <ul class="-mx-2 flex flex-col gap-0.5 text-sm tabular-nums">
                     <li
                         v-for="row in openingHours"
                         :key="row.dayOfWeek"
-                        class="flex justify-between gap-2"
-                        :class="row.isToday ? 'text-primary font-semibold' : ''"
+                        class="flex justify-between gap-2 rounded px-2 py-0.5"
+                        :class="row.isToday ? 'bg-primary/10 text-primary font-semibold' : ''"
+                        :aria-current="row.isToday ? 'date' : undefined"
                     >
-                        <span>{{ row.day }}</span>
+                        <span>
+                            {{ row.day }}
+                            <span v-if="row.isToday" class="ml-1 text-xs font-normal">Today</span>
+                        </span>
                         <span v-if="row.hours">{{ row.hours }}</span>
                         <span v-else :class="{ 'text-text-muted': !row.isToday }">Closed</span>
                     </li>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Badge from "@/features/shared/Badge.vue";
 import type { CalendarDay } from "../types";
-import { minutesToHm } from "../utils/calendar";
+import { minutesToHm, overrideLabel } from "../utils/calendar";
 import { BLOCK_CLASSES, blockKindLabel } from "../utils/calendarStyles";
 
 const { days } = defineProps<{
@@ -43,7 +43,7 @@ function openingHours(day: CalendarDay): string {
                     class="rounded border-l-4 px-3 py-1.5 text-sm font-medium"
                     :class="item.isClosed ? BLOCK_CLASSES.closed : BLOCK_CLASSES.event"
                 >
-                    All day · {{ item.isClosed ? `Closed: ${item.title}` : item.title }}
+                    {{ overrideLabel(item) }}
                 </li>
                 <li
                     v-for="block in [...day.blocks].sort((a, b) => a.start - b.start)"

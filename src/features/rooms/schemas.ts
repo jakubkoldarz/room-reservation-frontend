@@ -4,6 +4,20 @@ import { pageParam, textParam } from "@/composables/useListQuery";
 
 export const MAX_ROOM_EQUIPMENT = 5;
 
+export const ConflictingReservationSchema = z.object({
+    reservationId: z.string(),
+    date: z.string(),
+    startTime: z.string(),
+    endTime: z.string(),
+    roomId: z.string(),
+    status: z.string(),
+});
+
+export const ConflictingRoomSchema = z.object({
+    roomId: z.string(),
+    identifier: z.string(),
+});
+
 export const RoomListQuerySchema = z.object({
     page: pageParam,
     identifier: textParam,

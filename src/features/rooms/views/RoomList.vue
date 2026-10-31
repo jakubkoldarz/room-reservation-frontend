@@ -26,7 +26,7 @@ import { useVisibleColumns } from "@/composables/useVisibleColumns";
 import { Permission } from "@/features/auth/constants/permissions";
 import OpenStatusLabel from "@/features/availabilities/components/OpenStatusLabel.vue";
 import WeekAvailability from "@/features/availabilities/components/WeekAvailability.vue";
-import { DAYS_MONDAY_FIRST, summarizeWeek } from "@/features/availabilities/utils/schedule";
+import { DAYS_MONDAY_FIRST, groupWeek } from "@/features/availabilities/utils/schedule";
 import { useAllBuildings } from "@/features/buildings/composables/useAllBuildings";
 import { buildingRoutes } from "@/features/buildings/routes";
 import { useAllEquipment } from "@/features/equipment/composables/useAllEquipment";
@@ -69,7 +69,7 @@ const columns = useVisibleColumns(() => [
     { key: "room", label: "Room", align: "left" },
     { key: "building", label: "Building", width: 240, align: "left" },
     { key: "capacity", label: "Capacity", width: 130, align: "left" },
-    { key: "equipment", label: "Equipment", width: 150, align: "left" },
+    { key: "equipment", label: "Equipment", width: 175, align: "left" },
     { key: "openDays", label: "Open days", width: 190, align: "left" },
     { key: "approval", label: "Booking", width: 90, align: "center" },
     {
@@ -183,7 +183,7 @@ async function deleteRoom(room: BasicRoom): Promise<void> {
     if (!result.ok && isConflict(result.error)) {
         const forced = await confirm({
             title: "Delete room anyway?",
-            message: `${apiErrorMessage(result.error)} Deleting anyway may affect existing reservations.`,
+            message: `"${room.identifier}" has upcoming reservations. Deleting it anyway will cancel them and notify their owners.`,
             confirmText: "Delete anyway",
             danger: true,
         });
@@ -329,7 +329,20 @@ async function deleteRoom(room: BasicRoom): Promise<void> {
                             :highlight-day="highlightDay"
                         />
                     </span>
-                    <span class="@3xl:hidden">{{ summarizeWeek(row.availabilities) }}</span>
+                    <dl
+                        v-if="groupWeek(row.availabilities).length > 0"
+                        class="inline-grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5 tabular-nums @3xl:hidden"
+                    >
+                        <template v-for="group in groupWeek(row.availabilities)" :key="group.key">
+                            <dt class="text-text-muted text-left">{{ group.days }}</dt>
+                            <dd class="flex flex-col">
+                                <span v-for="range in group.ranges" :key="range">{{ range }}</span>
+                            </dd>
+                        </template>
+                    </dl>
+                    <span v-else class="text-text-muted/70 text-xs @3xl:hidden">
+                        Closed all week
+                    </span>
                 </template>
 
                 <template #cell-approval="{ row }">

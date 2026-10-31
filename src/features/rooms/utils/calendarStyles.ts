@@ -14,8 +14,8 @@ export const LEGEND: { kind: CalendarBlockKind; label: string }[] = [
     { kind: "approved", label: "Confirmed" },
     { kind: "pending", label: "Waiting for approval" },
     { kind: "canceled", label: "Canceled / rejected" },
-    { kind: "event", label: "Event" },
-    { kind: "closed", label: "Closed" },
+    { kind: "event", label: "Special hours" },
+    { kind: "closed", label: "Closed (event)" },
 ];
 
 export function blockKindLabel(kind: CalendarBlockKind): string {

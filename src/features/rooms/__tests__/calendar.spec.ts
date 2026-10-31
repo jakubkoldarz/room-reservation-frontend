@@ -7,10 +7,11 @@ import {
     formatWeekRange,
     hourRange,
     layoutLanes,
+    overrideLabel,
     parseIsoDate,
     startOfWeek,
-    toIsoDate,
 } from "../utils/calendar";
+import { toIsoDate } from "@/utils/isoDate";
 
 const MONDAY = new Date(2026, 10, 2);
 const USER = { id: "6f1c2a3e-1b2c-4d5e-8f90-123456789abc", firstname: "Anna", lastname: "Nowak" };
@@ -135,7 +136,7 @@ describe("buildCalendarDays", () => {
         expect(days[0].blocks[0].tooltip).toContain("Confirmed");
     });
 
-    it("wydarzenie z godzinami to blok w każdym dniu zakresu, bez godzin to wpis całodniowy", () => {
+    it("wydarzenie z godzinami zastępuje godziny otwarcia w każdym dniu zakresu, nie jest blokiem", () => {
         const days = buildCalendarDays({
             ...base,
             events: [
@@ -148,12 +149,36 @@ describe("buildCalendarDays", () => {
                 }),
             ],
         });
-        expect(days[1].blocks[0]).toMatchObject({ kind: "event", time: "09:00–11:00" });
-        expect(days[2].blocks[0]).toMatchObject({ kind: "event" });
-        expect(days[3].blocks).toHaveLength(0);
-        expect(days[4].allDay).toEqual([
-            expect.objectContaining({ title: "Renovation", isClosed: true }),
+        expect(days[1].openIntervals).toEqual([{ start: 540, end: 660 }]);
+        expect(days[2].openIntervals).toEqual([{ start: 540, end: 660 }]);
+        expect(days[1].blocks).toHaveLength(0);
+        expect(days[1].allDay).toEqual([
+            expect.objectContaining({ title: "Open day", isClosed: false, hours: "09:00–11:00" }),
         ]);
+        expect(days[3].allDay).toHaveLength(0);
+        expect(days[4].openIntervals).toEqual([]);
+        expect(days[4].allDay).toEqual([
+            expect.objectContaining({ title: "Renovation", isClosed: true, hours: null }),
+        ]);
+    });
+
+    it("zamknięte wydarzenie w poniedziałek usuwa zwykłe godziny tego dnia", () => {
+        const days = buildCalendarDays({
+            ...base,
+            events: [event({ isClosed: true, startDate: "2026-11-02", endDate: "2026-11-02" })],
+        });
+        expect(days[0].openIntervals).toEqual([]);
+    });
+});
+
+describe("overrideLabel", () => {
+    it("opis wydarzenia zamkniętego i z godzinami specjalnymi", () => {
+        expect(overrideLabel({ id: "1", title: "Exams", isClosed: true, hours: null })).toBe(
+            "Closed: Exams",
+        );
+        expect(
+            overrideLabel({ id: "1", title: "Open day", isClosed: false, hours: "09:00–11:00" }),
+        ).toBe("Open day · special hours 09:00–11:00");
     });
 });
 

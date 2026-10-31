@@ -11,7 +11,13 @@ export type ApiError =
           fieldErrors: Readonly<Record<string, readonly string[]>>;
           formErrors: readonly string[];
       }
-    | { kind: "http"; status: number; title: string | null; detail: string | null }
+    | {
+          kind: "http";
+          status: number;
+          title: string | null;
+          detail: string | null;
+          conflictingItems: readonly unknown[];
+      }
     | { kind: "contract"; message: string }
     | { kind: "unknown"; message: string };
 
@@ -19,6 +25,7 @@ const ProblemDetailsSchema = z.object({
     title: z.string().nullish(),
     detail: z.string().nullish(),
     errors: z.record(z.array(z.string())).nullish(),
+    conflictingItems: z.array(z.unknown()).nullish(),
 });
 
 function isFormLevelKey(key: string): boolean {
@@ -55,7 +62,13 @@ export function toApiError(err: unknown): ApiError {
         return { kind: "validation", fieldErrors, formErrors };
     }
 
-    return { kind: "http", status, title: problem?.title ?? null, detail: problem?.detail ?? null };
+    return {
+        kind: "http",
+        status,
+        title: problem?.title ?? null,
+        detail: problem?.detail ?? null,
+        conflictingItems: problem?.conflictingItems ?? [],
+    };
 }
 
 export function apiErrorMessage(error: ApiError): string {

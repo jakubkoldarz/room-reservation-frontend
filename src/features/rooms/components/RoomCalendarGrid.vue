@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
 import type { CalendarBlock, CalendarDay } from "../types";
+import { overrideLabel } from "../utils/calendar";
 import { BLOCK_CLASSES, CLOSED_HOURS_BACKGROUND } from "../utils/calendarStyles";
 
 const { days, hours, now } = defineProps<{
@@ -62,7 +63,7 @@ function weekday(date: Date): string {
 
         <template v-if="hasAllDay">
             <div class="border-border text-text-muted border-b py-1 pr-2 text-right text-[10px]">
-                All day
+                Events
             </div>
             <div
                 v-for="day in days"
@@ -72,7 +73,7 @@ function weekday(date: Date): string {
                 <BaseTooltip
                     v-for="item in day.allDay"
                     :key="item.id"
-                    :text="item.isClosed ? `Closed: ${item.title}` : item.title"
+                    :text="overrideLabel(item)"
                     class="min-w-0 truncate rounded border-l-4 px-1.5 py-0.5 text-xs font-medium"
                     :class="item.isClosed ? BLOCK_CLASSES.closed : BLOCK_CLASSES.event"
                 >

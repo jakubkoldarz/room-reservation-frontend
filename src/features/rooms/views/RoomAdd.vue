@@ -12,6 +12,7 @@ import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import FormHeader from "@/features/shared/FormHeader.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import EditRoom from "../components/EditRoom.vue";
+import { useRoomAvailabilityRules } from "../composables/useRoomAvailabilityRules";
 import { useRoomDestination } from "../composables/useRoomDestination";
 import EquipmentPicker from "../components/EquipmentPicker.vue";
 import RoomAvailabilitiesEdit from "../components/RoomAvailabilitiesEdit.vue";
@@ -37,6 +38,9 @@ const selectedBuildingId = ref("");
 const equipmentIds = ref<string[]>([]);
 const equipmentError = ref<string>();
 const availabilities = ref<Availability[]>([]);
+const { building, isBuildingLoading, dayErrors, hints, emptyError, firstError } =
+    useRoomAvailabilityRules(availabilities, selectedBuildingId);
+const showAvailabilityErrors = ref(false);
 const isSaving = ref(false);
 
 function goToList() {
@@ -46,7 +50,12 @@ function goToList() {
 async function handleSave(): Promise<void> {
     if (isSaving.value) return;
     const values = await form.value?.submit();
+    showAvailabilityErrors.value = true;
     if (!values) return;
+    if (firstError.value) {
+        toasts.pushError({ title: "Invalid availabilities", message: firstError.value });
+        return;
+    }
 
     isSaving.value = true;
     equipmentError.value = undefined;
@@ -97,7 +106,14 @@ async function handleSave(): Promise<void> {
                 :is-loading="isEquipmentLoading"
                 :error="equipmentError"
             />
-            <RoomAvailabilitiesEdit v-model="availabilities" :building-id="selectedBuildingId">
+            <RoomAvailabilitiesEdit
+                v-model="availabilities"
+                :building
+                :is-building-loading
+                :day-errors
+                :hints
+                :error="showAvailabilityErrors ? emptyError : undefined"
+            >
                 Add the room's availabilities. Availabilities define the time slots when the room is
                 open for reservations.
             </RoomAvailabilitiesEdit>

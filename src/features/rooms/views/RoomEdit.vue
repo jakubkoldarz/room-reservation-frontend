@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { z } from "zod";
 import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
-import { apiErrorMessage, type ApiError } from "@/api/errors";
+import { apiErrorMessage } from "@/api/errors";
 import type { Availability } from "@/features/availabilities/types";
 import { useAllBuildings } from "@/features/buildings/composables/useAllBuildings";
 import { useAllEquipment } from "@/features/equipment/composables/useAllEquipment";
@@ -14,13 +14,14 @@ import ErrorText from "@/features/shared/ErrorText.vue";
 import FormHeader from "@/features/shared/FormHeader.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import EditRoom from "../components/EditRoom.vue";
+import { useRoomAvailabilityRules } from "../composables/useRoomAvailabilityRules";
 import { useRoomDestination } from "../composables/useRoomDestination";
 import EquipmentPicker from "../components/EquipmentPicker.vue";
 import RoomAvailabilitiesEdit from "../components/RoomAvailabilitiesEdit.vue";
 import { roomRoutes } from "../routes";
 import { useRoomsStore } from "../stores/useRoomsStore";
-import type { RoomForm, RoomSummary } from "../types";
-import { isConflict } from "../utils/conflicts";
+import type { ConflictingReservation, RoomForm, RoomSummary } from "../types";
+import { reservationConflicts, reservationsAffectedMessage } from "../utils/conflicts";
 
 const route = useRoute();
 const router = useRouter();
@@ -47,6 +48,9 @@ const selectedBuildingId = ref("");
 const equipmentIds = ref<string[]>([]);
 const equipmentError = ref<string>();
 const availabilities = ref<Availability[]>([]);
+const { building, isBuildingLoading, dayErrors, hints, emptyError, firstError } =
+    useRoomAvailabilityRules(availabilities, selectedBuildingId);
+const showAvailabilityErrors = ref(false);
 
 const equipment = computed(() => {
     const assigned = room.value?.details.equipment ?? [];
@@ -94,10 +98,10 @@ function update(id: string, values: RoomForm, force: boolean) {
     );
 }
 
-function confirmForce(error: ApiError): Promise<boolean> {
+function confirmForce(conflicts: readonly ConflictingReservation[]): Promise<boolean> {
     return confirm({
         title: "Save changes anyway?",
-        message: `${apiErrorMessage(error)} Saving anyway may affect existing reservations.`,
+        message: `The new opening hours do not cover some upcoming reservations. ${reservationsAffectedMessage(conflicts.length)}`,
         confirmText: "Save anyway",
         danger: true,
     });
@@ -107,14 +111,20 @@ async function handleSave(): Promise<void> {
     const id = roomId.value;
     if (!id || isSaving.value) return;
     const values = await form.value?.submit();
+    showAvailabilityErrors.value = true;
     if (!values) return;
+    if (firstError.value) {
+        toasts.pushError({ title: "Invalid availabilities", message: firstError.value });
+        return;
+    }
 
     isSaving.value = true;
     equipmentError.value = undefined;
     let result = await update(id, values, false);
-    if (!result.ok && isConflict(result.error)) {
+    const conflicts = result.ok ? [] : reservationConflicts(result.error);
+    if (conflicts.length > 0) {
         isSaving.value = false;
-        if (!(await confirmForce(result.error))) return;
+        if (!(await confirmForce(conflicts))) return;
         isSaving.value = true;
         result = await update(id, values, true);
     }
@@ -170,8 +180,12 @@ async function handleSave(): Promise<void> {
                 />
                 <RoomAvailabilitiesEdit
                     v-model="availabilities"
-                    :building-id="selectedBuildingId"
+                    :building
                     :is-loading
+                    :is-building-loading
+                    :day-errors
+                    :hints
+                    :error="showAvailabilityErrors ? emptyError : undefined"
                 >
                     Edit the room's availabilities. Availabilities define the time slots when the
                     room is open for reservations.

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { roomConflicts } from "@/features/rooms/utils/conflicts";
 import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
 import apiClient from "@/api/client";
@@ -73,9 +74,13 @@ async function handleSave() {
     if (response.error.kind === "validation") {
         editRef.value?.showServerErrors(response.error.fieldErrors);
     }
+    const rooms = roomConflicts(response.error).map((room) => room.identifier);
     toastsStore.pushError({
         title: "Failed to update building",
-        message: apiErrorMessage(response.error),
+        message:
+            rooms.length > 0
+                ? `These rooms would be open outside the new building hours: ${rooms.join(", ")}. Change their hours first.`
+                : apiErrorMessage(response.error),
     });
 }
 
