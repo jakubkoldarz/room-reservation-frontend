@@ -29,16 +29,17 @@ const error = ref<string | undefined>();
 const onSubmit = handleSubmit(async (values) => {
     isLoading.value = true;
     const response = await apiCall(() => apiClient.postAuthlogin(values));
-    isLoading.value = false;
 
     if (!response.ok) {
+        isLoading.value = false;
         error.value = apiErrorMessage(response.error);
     } else {
         error.value = undefined;
         const { requires2FA, jwtToken, verificationId } = response.data;
         if (jwtToken) {
-            authStore.login(jwtToken);
+            await authStore.login(jwtToken);
         }
+        isLoading.value = false;
 
         if (requires2FA) {
             router.push({ name: authRoutes.verification.name, params: { verificationId } });

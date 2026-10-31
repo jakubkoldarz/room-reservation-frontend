@@ -25,17 +25,18 @@ async function onSubmit() {
             verificationId: verificationId.value,
         }),
     );
-    isLoading.value = false;
 
     if (!response.ok) {
+        isLoading.value = false;
         error.value = apiErrorMessage(response.error);
         return;
     }
     error.value = undefined;
     if (response.data.jwtToken) {
-        authStore.login(response.data.jwtToken);
+        await authStore.login(response.data.jwtToken);
         router.push({ name: "index" });
     }
+    isLoading.value = false;
 }
 </script>
 

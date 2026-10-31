@@ -27,6 +27,7 @@ export const useAuthStore = defineStore("auth", {
     actions: {
         async login(jwtToken: string) {
             this.jwtToken = jwtToken;
+            await this.init();
         },
 
         async logout() {
