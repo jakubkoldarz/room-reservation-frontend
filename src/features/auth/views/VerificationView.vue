@@ -1,58 +1,102 @@
 <script setup lang="ts">
+import { computed, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { z } from "zod";
+import apiClient from "@/api/client";
+import { apiCall } from "@/api/apiCall";
 import BaseButton from "@/features/shared/BaseButton.vue";
-import { computed, ref } from "vue";
-import { useRoute } from "vue-router";
-import SegmentedInput from "../components/SegmentedInput.vue";
-import { apiCall } from "@/api/apiCall.ts";
-import { apiErrorMessage } from "@/api/errors.ts";
-import apiClient from "@/api/client.ts";
 import ErrorText from "@/features/shared/ErrorText.vue";
-import router from "@/router/index.ts";
-import { useAuthStore } from "../stores/useAuthStore.ts";
-const { params } = useRoute();
-const verificationId = computed(() => params.verificationId as string);
+import TextLink from "@/features/shared/TextLink.vue";
+import AuthLayout from "../components/AuthLayout.vue";
+import SegmentedInput from "../components/SegmentedInput.vue";
+import { authRoutes } from "../routes";
+import { VERIFICATION_CODE_LENGTH } from "../schemas";
+import { useAuthStore } from "../stores/useAuthStore";
+import { verificationCodeErrorMessage } from "../utils/authErrors";
+import { safeRedirect } from "../utils/onboarding";
 
-const verificationCode = ref<string>("");
-const isLoading = ref(false);
-const error = ref<string | undefined>();
+const route = useRoute();
+const router = useRouter();
 const authStore = useAuthStore();
 
-async function onSubmit() {
+const verificationId = computed(() => {
+    const parsed = z.string().uuid().safeParse(route.params.verificationId);
+    return parsed.success ? parsed.data : null;
+});
+const redirect = computed(() => safeRedirect(route.query.redirect));
+
+watch(
+    verificationId,
+    (id) => {
+        if (!id) void router.replace({ name: authRoutes.login.name });
+    },
+    { immediate: true },
+);
+
+const code = ref("");
+const isLoading = ref(false);
+const error = ref<string>();
+const codeInput = ref<InstanceType<typeof SegmentedInput>>();
+const isComplete = computed(() => code.value.length === VERIFICATION_CODE_LENGTH);
+
+async function verify(): Promise<void> {
+    if (!verificationId.value || !isComplete.value || isLoading.value) return;
+
     isLoading.value = true;
+    error.value = undefined;
     const response = await apiCall(() =>
         apiClient.postAuthlogin2fa({
-            verificationCode: verificationCode.value,
-            verificationId: verificationId.value,
+            verificationId: verificationId.value!,
+            verificationCode: code.value,
         }),
     );
 
     if (!response.ok) {
         isLoading.value = false;
-        error.value = apiErrorMessage(response.error);
+        error.value = verificationCodeErrorMessage(response.error);
+        code.value = "";
+        codeInput.value?.focus();
         return;
     }
-    error.value = undefined;
-    if (response.data.jwtToken) {
-        await authStore.login(response.data.jwtToken);
-        router.push({ name: "index" });
-    }
-    isLoading.value = false;
+
+    await authStore.login(response.data.jwtToken);
+    await router.push(redirect.value ?? { name: "index" });
 }
 </script>
 
 <template>
-    <section class="grid min-h-screen place-items-center">
-        <div
-            class="bg-surface flex w-full max-w-100 flex-col items-center gap-2 rounded p-8 shadow"
-        >
-            <h2 class="text-center">Enter your verification code</h2>
-            <ErrorText :error="error" />
-            <div class="my-2 flex gap-1">
-                <SegmentedInput v-model="verificationCode" :segments="6" />
-            </div>
-            <BaseButton :is-loading="isLoading" class="w-24 justify-center" @click="onSubmit"
-                >Verify</BaseButton
+    <AuthLayout title="Two-step verification">
+        <template #description>
+            We sent a {{ VERIFICATION_CODE_LENGTH }}-digit code to your email. Enter it below to
+            finish signing in. The code expires in 5 minutes.
+        </template>
+
+        <form class="flex flex-col gap-4" novalidate @submit.prevent="verify">
+            <ErrorText :error class="mb-0!" role="alert" />
+            <SegmentedInput
+                ref="codeInput"
+                v-model="code"
+                :segments="VERIFICATION_CODE_LENGTH"
+                :invalid="!!error"
+                :disabled="isLoading"
+                autofocus
+                @complete="verify"
+            />
+            <BaseButton
+                type="submit"
+                :is-loading="isLoading"
+                :disabled="!isComplete"
+                class="mt-2 justify-center py-2"
             >
-        </div>
-    </section>
+                Verify
+            </BaseButton>
+        </form>
+
+        <template #footer>
+            Didn't get the code?
+            <TextLink :to="{ name: authRoutes.login.name }" class="text-primary!">
+                Sign in again
+            </TextLink>
+        </template>
+    </AuthLayout>
 </template>

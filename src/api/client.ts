@@ -2,6 +2,8 @@ import { useAuthStore } from "@/features/auth/stores/useAuthStore";
 import { createApiClient } from "./generated";
 import { HttpStatusCode, type AxiosError, type AxiosRequestConfig } from "axios";
 
+const SKIP_REFRESH_PATHS = ["/auth/refresh", "/auth/login", "/auth/register"];
+
 const apiClient = createApiClient(import.meta.env.VITE_API_BASE_URL);
 
 apiClient.axios.defaults.withCredentials = true;
@@ -18,8 +20,9 @@ apiClient.axios.interceptors.request.use((request) => {
 });
 
 apiClient.axios.interceptors.response.use(null, async (error: AxiosError) => {
-    const isRefreshEndpoint = error.config?.url?.includes("/auth/refresh");
-    if (isRefreshEndpoint) return Promise.reject(error);
+    const url = error.config?.url ?? "";
+    const isCredentialsEndpoint = SKIP_REFRESH_PATHS.some((path) => url.includes(path));
+    if (isCredentialsEndpoint) return Promise.reject(error);
 
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 

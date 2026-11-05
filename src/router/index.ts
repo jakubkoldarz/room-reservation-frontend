@@ -1,6 +1,7 @@
 import { usePermissions } from "@/composables/usePermissions";
 import { authRoutes } from "@/features/auth/routes";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
+import { onboardingRouteName } from "@/features/auth/utils/onboarding";
 import { buildingRoutes } from "@/features/buildings/routes";
 import { dashboardRoutes } from "@/features/dashboard/routes";
 import { equipmentRoutes } from "@/features/equipment/routes";
@@ -33,10 +34,16 @@ router.beforeEach((to) => {
     const { hasPermission } = usePermissions();
 
     if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-        return { name: authRoutes.login.name };
+        return { name: authRoutes.login.name, query: { redirect: to.fullPath } };
     }
     if (to.meta.requiresGuest && authStore.isAuthenticated) {
         return { name: dashboardRoutes.dashboard.name };
+    }
+
+    if (to.meta.requiresAuth && authStore.user) {
+        const pendingStep = onboardingRouteName(authStore.user.accountStatus);
+        if (pendingStep && to.name !== pendingStep) return { name: pendingStep };
+        if (!pendingStep && to.meta.onboarding) return { name: dashboardRoutes.dashboard.name };
     }
 
     if (to.meta.requiredPermission && !hasPermission(to.meta.requiredPermission)) {
