@@ -3,7 +3,8 @@ import { useId } from "vue";
 defineOptions({ inheritAttrs: false });
 
 const slots = defineSlots<{
-    icon?(): any;
+    icon?(): unknown;
+    suffix?(): unknown;
 }>();
 
 const props = defineProps<{
@@ -55,8 +56,16 @@ const errorId = `${inputId}-error`;
                     errorMessage ? 'border-danger' : 'border-border',
                     isSlim ? 'py-1 text-sm' : 'py-1',
                     hasIcon ? 'pl-8' : '',
+                    slots.suffix ? 'pr-10' : '',
                 ]"
             />
+
+            <div
+                v-if="slots.suffix"
+                class="absolute top-1/2 right-1 flex -translate-y-1/2 items-center"
+            >
+                <slot name="suffix" />
+            </div>
 
             <label
                 v-if="floatingLabel && label"

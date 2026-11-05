@@ -26,3 +26,6 @@ export function blockKindLabel(kind: CalendarBlockKind): string {
 
 export const CLOSED_HOURS_BACKGROUND =
     "repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--color-text-muted) 12%, transparent) 6px 7px)";
+
+export const DARK_CLOSED_HOURS_BACKGROUND =
+    "repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--color-text-muted-secondary) 22%, transparent) 6px 7px)";

@@ -1,96 +1,107 @@
 <script setup lang="ts">
-import { schemas } from "@/api/generated";
-import { authRoutes } from "@/features/auth/routes";
-import BaseButton from "@/features/shared/BaseButton.vue";
-import BaseInput from "@/features/shared/BaseInput.vue";
-import { KeyIcon, UserIcon } from "@heroicons/vue/24/solid";
+import { EnvelopeIcon } from "@heroicons/vue/24/solid";
 import { toTypedSchema } from "@vee-validate/zod";
 import { useForm } from "vee-validate";
-import { useAuthStore } from "../stores/useAuthStore";
-import { ref } from "vue";
-import ErrorText from "@/features/shared/ErrorText.vue";
-import { apiCall } from "@/api/apiCall";
-import { apiErrorMessage } from "@/api/errors";
+import { computed, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import apiClient from "@/api/client";
-import router from "@/router";
+import { apiCall } from "@/api/apiCall";
+import BaseButton from "@/features/shared/BaseButton.vue";
+import BaseInput from "@/features/shared/BaseInput.vue";
+import ErrorText from "@/features/shared/ErrorText.vue";
+import TextLink from "@/features/shared/TextLink.vue";
+import AuthLayout from "../components/AuthLayout.vue";
+import PasswordInput from "../components/PasswordInput.vue";
+import { authRoutes } from "../routes";
+import { LoginFormSchema } from "../schemas";
+import { useAuthStore } from "../stores/useAuthStore";
+import { credentialsErrorMessage } from "../utils/authErrors";
+import { safeRedirect } from "../utils/onboarding";
 
-const isLoading = ref(false);
+const route = useRoute();
+const router = useRouter();
 const authStore = useAuthStore();
 
-const { handleSubmit, errors, defineField } = useForm({
-    validationSchema: toTypedSchema(schemas.RegisterRequestDto),
-});
+const isLoading = ref(false);
+const error = ref<string>();
+const redirect = computed(() => safeRedirect(route.query.redirect));
 
+const { handleSubmit, errors, defineField, setErrors } = useForm({
+    validationSchema: toTypedSchema(LoginFormSchema),
+});
 const [email, emailAttrs] = defineField("email");
 const [password, passwordAttrs] = defineField("password");
 
-const error = ref<string | undefined>();
-
 const onSubmit = handleSubmit(async (values) => {
     isLoading.value = true;
-    const response = await apiCall(() => apiClient.postAuthlogin(values));
+    error.value = undefined;
 
+    const response = await apiCall(() => apiClient.postAuthlogin(values));
     if (!response.ok) {
         isLoading.value = false;
-        error.value = apiErrorMessage(response.error);
-    } else {
-        error.value = undefined;
-        const { requires2FA, jwtToken, verificationId } = response.data;
-        if (jwtToken) {
-            await authStore.login(jwtToken);
+        if (response.error.kind === "validation") {
+            const { fieldErrors } = response.error;
+            setErrors({ email: fieldErrors.email?.[0], password: fieldErrors.password?.[0] });
         }
-        isLoading.value = false;
-
-        if (requires2FA) {
-            router.push({ name: authRoutes.verification.name, params: { verificationId } });
-        } else {
-            router.push({ name: "index" });
-        }
+        error.value = credentialsErrorMessage(response.error);
+        return;
     }
+
+    const { requires2FA, jwtToken, verificationId } = response.data;
+    if (requires2FA && verificationId) {
+        await router.push({
+            name: authRoutes.verification.name,
+            params: { verificationId },
+            query: redirect.value ? { redirect: redirect.value } : {},
+        });
+        return;
+    }
+    if (jwtToken) {
+        await authStore.login(jwtToken);
+        await router.push(redirect.value ?? { name: "index" });
+        return;
+    }
+
+    isLoading.value = false;
+    error.value = "Something went wrong. Please try again.";
 });
 </script>
 
 <template>
-    <section class="grid min-h-screen place-items-center">
-        <form
-            @submit="onSubmit"
-            class="bg-surface flex w-full max-w-100 flex-col gap-2 rounded p-8 shadow"
-        >
-            <h2 class="mb-4 text-center text-xl">Sign in to RoomReservation</h2>
-            <ErrorText :error="error" />
+    <AuthLayout title="Sign in">
+        <form class="flex flex-col gap-4" novalidate @submit="onSubmit">
+            <ErrorText :error class="mb-0!" role="alert" />
             <BaseInput
+                v-model="email"
+                v-bind="emailAttrs"
+                type="email"
+                label="Email"
+                autocomplete="email"
+                :error-message="errors.email"
                 floating-label
                 has-icon
-                v-model="email"
-                type="email"
-                v-bind="emailAttrs"
-                :error-message="errors.email"
-                label="Email"
             >
                 <template #icon>
-                    <UserIcon />
+                    <EnvelopeIcon />
                 </template>
             </BaseInput>
-            <BaseInput
-                floating-label
-                has-icon
+            <PasswordInput
                 v-model="password"
                 v-bind="passwordAttrs"
                 label="Password"
-                type="password"
+                autocomplete="current-password"
                 :error-message="errors.password"
-            >
-                <template #icon>
-                    <KeyIcon />
-                </template>
-            </BaseInput>
-            <BaseButton :is-loading="isLoading" class="mt-4 justify-center"> Sign in </BaseButton>
-            <p class="text-text-muted mt-4 text-center text-sm">
-                Don't have account yet?
-                <RouterLink :to="{ name: authRoutes.register.name }" class="text-primary">
-                    Sign up</RouterLink
-                >
-            </p>
+            />
+            <BaseButton type="submit" :is-loading="isLoading" class="mt-2 justify-center py-2">
+                Sign in
+            </BaseButton>
         </form>
-    </section>
+
+        <template #footer>
+            Don't have an account yet?
+            <TextLink :to="{ name: authRoutes.register.name }" class="text-primary!">
+                Create one
+            </TextLink>
+        </template>
+    </AuthLayout>
 </template>

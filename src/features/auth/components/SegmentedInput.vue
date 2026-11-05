@@ -1,62 +1,148 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 
-const { segments } = defineProps<{
+const {
+    segments,
+    label = "Verification code",
+    disabled = false,
+    invalid = false,
+    autofocus = false,
+} = defineProps<{
     segments: number;
+    label?: string;
+    disabled?: boolean;
+    invalid?: boolean;
+    autofocus?: boolean;
+}>();
+
+const emit = defineEmits<{
+    complete: [code: string];
 }>();
 
 const codeModel = defineModel<string>({ required: true });
 
-const digits = ref<string[]>(Array(segments).fill(""));
+const digits = ref<string[]>(toDigits(codeModel.value));
 const inputRefs = ref<HTMLInputElement[]>([]);
 
-watch(digits, () => (codeModel.value = digits.value.join("")), { deep: true });
-
-function onInput(index: number, event: InputEvent) {
-    const input = event.target as HTMLInputElement;
-    const value = input.value.replace(/[^0-9]/g, "").slice(-1);
-    digits.value[index] = value;
-    if (value) moveFocus(index + 1);
+function toDigits(code: string): string[] {
+    const clean = code.replace(/\D/g, "").slice(0, segments);
+    return Array.from({ length: segments }, (_, index) => clean[index] ?? "");
 }
 
-function clearInput(index: number) {
-    digits.value[index] = "";
-    moveFocus(index - 1);
+watch(codeModel, (code) => {
+    if (code !== digits.value.join("")) digits.value = toDigits(code);
+});
+
+function commit(): void {
+    const code = digits.value.join("");
+    codeModel.value = code;
+    if (code.length === segments) emit("complete", code);
 }
 
-function onPaste(event: ClipboardEvent) {
-    const clipboardText = event.clipboardData?.getData("text");
-    if (!clipboardText) return;
-    const pasted = clipboardText.replace(/[^0-9]/g, "") ?? "";
-    pasted.split("").forEach((char, index) => {
-        digits.value[index] = char;
+function focusAt(index: number): void {
+    const clamped = Math.min(Math.max(index, 0), segments - 1);
+    inputRefs.value[clamped]?.focus();
+    inputRefs.value[clamped]?.select();
+}
+
+function fillFrom(start: number, text: string): void {
+    const chars = text
+        .replace(/\D/g, "")
+        .slice(0, segments - start)
+        .split("");
+    chars.forEach((char, offset) => {
+        digits.value[start + offset] = char;
     });
-
-    inputRefs.value[inputRefs.value.length - 1].focus();
+    focusAt(start + chars.length);
+    commit();
 }
 
-function moveFocus(toIndex: number) {
-    if (toIndex < segments && toIndex >= 0) {
-        const nextInput = inputRefs.value[toIndex];
-        nextInput.focus();
+function onInput(index: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value.replace(/\D/g, "");
+
+    if (value.length > 1) {
+        fillFrom(index, value);
+        input.value = digits.value[index] ?? "";
+        return;
+    }
+
+    digits.value[index] = value;
+    input.value = value;
+    if (value) focusAt(index + 1);
+    commit();
+}
+
+function onPaste(index: number, event: ClipboardEvent): void {
+    const pasted = (event.clipboardData?.getData("text") ?? "").replace(/\D/g, "");
+    if (!pasted) return;
+    fillFrom(pasted.length >= segments ? 0 : index, pasted);
+}
+
+function onBackspace(index: number): void {
+    if (digits.value[index]) {
+        digits.value[index] = "";
+    } else if (index > 0) {
+        digits.value[index - 1] = "";
+        focusAt(index - 1);
+    }
+    commit();
+}
+
+function onKeydown(index: number, event: KeyboardEvent): void {
+    switch (event.key) {
+        case "Backspace":
+            event.preventDefault();
+            onBackspace(index);
+            break;
+        case "ArrowLeft":
+            event.preventDefault();
+            focusAt(index - 1);
+            break;
+        case "ArrowRight":
+            event.preventDefault();
+            focusAt(index + 1);
+            break;
     }
 }
+
+function focus(): void {
+    const firstEmpty = digits.value.findIndex((digit) => digit === "");
+    focusAt(firstEmpty === -1 ? segments - 1 : firstEmpty);
+}
+
+onMounted(() => {
+    if (autofocus) focus();
+});
+
+defineExpose({ focus });
 </script>
 
 <template>
-    <input
-        v-for="(_, index) in Array(segments)"
-        :key="index"
-        ref="inputRefs"
-        :value="digits[index]"
-        inputmode="numeric"
-        maxlength="1"
-        @keydown.right="moveFocus(index + 1)"
-        @keydown.left="moveFocus(index - 1)"
-        @paste.prevent="onPaste($event)"
-        @input="onInput(index, $event)"
-        @keydown.prevent.backspace="clearInput(index)"
-        type="number"
-        class="border-border focus-visible:ring-primary w-full [appearance:textfield] rounded border px-1 py-2 text-center outline-none focus-visible:ring-2 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-    />
+    <div
+        role="group"
+        :aria-label="label"
+        class="grid gap-2"
+        :style="{ gridTemplateColumns: `repeat(${segments}, minmax(0, 1fr))` }"
+    >
+        <input
+            v-for="index in segments"
+            :key="index"
+            ref="inputRefs"
+            :value="digits[index - 1]"
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            :autocomplete="index === 1 ? 'one-time-code' : 'off'"
+            :aria-label="`${label}, digit ${index} of ${segments}`"
+            :aria-invalid="invalid"
+            :disabled
+            class="focus-visible:ring-primary text-text h-12 w-full rounded border text-center text-lg font-semibold tabular-nums outline-none focus-visible:ring-2 disabled:opacity-60"
+            :class="invalid ? 'border-danger' : 'border-border'"
+            @input="onInput(index - 1, $event)"
+            @paste.prevent="onPaste(index - 1, $event)"
+            @keydown="onKeydown(index - 1, $event)"
+            @focus="($event.target as HTMLInputElement).select()"
+        />
+    </div>
 </template>

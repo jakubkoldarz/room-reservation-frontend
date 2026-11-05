@@ -5,10 +5,16 @@ import type { CalendarBlock, CalendarDay } from "../types";
 import { overrideLabel } from "../utils/calendar";
 import { BLOCK_CLASSES, CLOSED_HOURS_BACKGROUND } from "../utils/calendarStyles";
 
-const { days, hours, now } = defineProps<{
+const {
+    days,
+    hours,
+    now,
+    showOpeningHours = true,
+} = defineProps<{
     days: readonly CalendarDay[];
     hours: { start: number; end: number };
     now: Date;
+    showOpeningHours?: boolean;
 }>();
 
 const HOUR_HEIGHT = 48;
@@ -96,11 +102,15 @@ function weekday(date: Date): string {
         <div
             v-for="day in days"
             :key="`body-${day.iso}`"
-            class="border-border bg-background relative border-l"
-            :style="{ height: `${bodyHeight}px`, backgroundImage: CLOSED_HOURS_BACKGROUND }"
+            class="border-border relative border-l"
+            :class="showOpeningHours ? 'bg-background' : 'bg-surface'"
+            :style="{
+                height: `${bodyHeight}px`,
+                backgroundImage: showOpeningHours ? CLOSED_HOURS_BACKGROUND : undefined,
+            }"
         >
             <div
-                v-for="(interval, index) in day.openIntervals"
+                v-for="(interval, index) in showOpeningHours ? day.openIntervals : []"
                 :key="index"
                 class="bg-surface absolute inset-x-0"
                 :style="intervalStyle(interval.start, interval.end)"

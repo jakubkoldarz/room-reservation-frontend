@@ -19,4 +19,16 @@ export const authRoutes = {
         component: () => import("@/features/auth/views/VerificationView.vue"),
         meta: { requiresGuest: true },
     },
+    verifyEmail: {
+        path: "/verify-email",
+        name: "auth.verifyEmail",
+        component: () => import("@/features/auth/views/VerifyEmailView.vue"),
+        meta: { requiresAuth: true, onboarding: true },
+    },
+    completeProfile: {
+        path: "/complete-profile",
+        name: "auth.completeProfile",
+        component: () => import("@/features/auth/views/CompleteProfileView.vue"),
+        meta: { requiresAuth: true, onboarding: true },
+    },
 } as const satisfies Record<string, RouteRecordRaw>;
