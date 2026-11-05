@@ -44,10 +44,8 @@ const days = computed(() =>
         events: [],
         availabilities: [],
         requiresApproval: false,
-        reservationTitle: {
-            label: "Room",
-            of: (reservation) => roomLabels.value.get(reservation.id) ?? "Unknown room",
-        },
+        reservationTitle: (reservation) => roomLabels.value.get(reservation.id) ?? "Unknown room",
+        roomLabel: (reservation) => roomLabels.value.get(reservation.id) ?? "Unknown room",
     }),
 );
 const hours = computed(() => hourRange([], days.value));

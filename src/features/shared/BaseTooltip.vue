@@ -4,10 +4,25 @@ import { onClickOutside, useEventListener } from "@vueuse/core";
 
 defineOptions({ inheritAttrs: false });
 
-const { text, delay = 80 } = defineProps<{
-    text: string;
+const {
+    text = "",
+    delay = 80,
+    variant = "dark",
+} = defineProps<{
+    text?: string;
     delay?: number;
+    variant?: "dark" | "card";
 }>();
+
+defineSlots<{
+    default(): unknown;
+    content?(): unknown;
+}>();
+
+const BUBBLE_CLASSES = {
+    dark: "bg-secondary text-text-secondary max-w-64 rounded-md px-2 py-1 text-xs font-medium whitespace-pre-line shadow-lg",
+    card: "bg-surface text-text border-border w-72 max-w-[calc(100vw-16px)] rounded-lg border p-3 shadow-xl",
+} as const;
 
 const GAP = 8;
 const VIEWPORT_MARGIN = 8;
@@ -102,21 +117,22 @@ onBeforeUnmount(clearTimers);
         <slot />
     </span>
     <Teleport to="body">
-        <span
+        <div
             v-if="isVisible"
             :id
             ref="bubble"
             role="tooltip"
-            class="bg-secondary text-text-secondary pointer-events-none fixed z-1100 max-w-64 rounded-md px-2 py-1 text-xs font-medium whitespace-pre-line shadow-lg transition-opacity duration-100"
-            :class="isPositioned ? 'opacity-100' : 'opacity-0'"
+            class="pointer-events-none fixed z-1100 transition-opacity duration-100"
+            :class="[BUBBLE_CLASSES[variant], isPositioned ? 'opacity-100' : 'opacity-0']"
             :style="{ top: `${top}px`, left: `${left}px` }"
         >
-            {{ text }}
+            <slot name="content">{{ text }}</slot>
             <span
+                v-if="variant === 'dark'"
                 class="bg-secondary absolute size-2 -translate-x-1/2 rotate-45"
                 :class="placement === 'top' ? '-bottom-1' : '-top-1'"
                 :style="{ left: `${arrowLeft}px` }"
             ></span>
-        </span>
+        </div>
     </Teleport>
 </template>

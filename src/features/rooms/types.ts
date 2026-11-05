@@ -22,13 +22,14 @@ export type CalendarBlockKind = ReservationState | "event" | "closed";
 
 export type CalendarBlock = {
     id: string;
-    kind: CalendarBlockKind;
+    kind: ReservationState;
     start: number;
     end: number;
     time: string;
     title: string;
     detail: string;
-    tooltip: string;
+    reservation: Reservation;
+    room: string | null;
     lane: number;
     lanes: number;
 };
@@ -41,11 +42,6 @@ export type CalendarMore = {
     lanes: number;
     count: number;
     tooltip: string;
-};
-
-export type CalendarTitle = {
-    label: string;
-    of: (reservation: Reservation) => string;
 };
 
 export type CalendarAllDay = {

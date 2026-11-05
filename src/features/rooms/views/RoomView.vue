@@ -47,6 +47,11 @@ watch(roomId, load, { immediate: true });
 const { weekStart, isCurrentWeek, weekLabel, showPreviousWeek, showNextWeek, showCurrentWeek } =
     useCalendarWeek(now);
 
+const roomLabel = computed(() => {
+    const details = room.value?.details;
+    return details ? `${details.roomInfo.identifier} · ${details.buildingInfo.name}` : "";
+});
+
 const days = computed(() =>
     buildCalendarDays({
         weekStart: weekStart.value,
@@ -55,6 +60,7 @@ const days = computed(() =>
         events: room.value?.events ?? [],
         availabilities: room.value?.availabilities ?? [],
         requiresApproval: room.value?.details.roomInfo.requiresApproval ?? false,
+        roomLabel: () => roomLabel.value,
     }),
 );
 const hours = computed(() => hourRange(room.value?.availabilities ?? [], days.value));

@@ -7,3 +7,8 @@ export type ReservationListItem = z.infer<typeof schemas.ReservationListItemResp
 export type ReservationListQuery = z.infer<typeof ReservationListQuerySchema>;
 
 export type ReservationState = "approved" | "pending" | "rejected" | "canceled";
+
+export type ReservationDetailRow = {
+    label: string;
+    value: string;
+};

@@ -14,7 +14,6 @@ import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
 import type { ApiResult } from "@/api/apiCall";
-import { useDate } from "@/composables/useDate";
 import { useListQuery } from "@/composables/useListQuery";
 import { usePagedList } from "@/composables/usePagedList";
 import { usePermissions } from "@/composables/usePermissions";
@@ -43,6 +42,11 @@ import { useAllUsers } from "@/features/users/composables/useAllUsers";
 import ReservationStatusChip from "../components/ReservationStatusChip.vue";
 import { REASON_MAX_LENGTH, ReservationListQuerySchema } from "../schemas";
 import type { ReservationListItem } from "../types";
+import {
+    formatActionTime,
+    formatReservationDate,
+    formatReservationTime,
+} from "../utils/reservationDetails";
 import { RESERVATION_STATES, toReservationQueries } from "../utils/reservationQueries";
 import {
     formatUserName,
@@ -178,30 +182,12 @@ function stateOf(item: ReservationListItem) {
     return getReservationState(item.reservationInfo, item.roomInfo.requiresApproval);
 }
 
-const dateFormat = new Intl.DateTimeFormat("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-});
-const { formatTime } = useDate();
-
-function formatDate(isoDate: string): string {
-    const [year, month, day] = isoDate.split("-").map(Number);
-    return dateFormat.format(new Date(year, month - 1, day));
-}
-
 function formatTimeRange(item: ReservationListItem): string {
-    const { startTime, endTime } = item.reservationInfo;
-    return `${formatTime(startTime)}–${formatTime(endTime)}`;
-}
-
-function formatBookedAt(at: string): string {
-    return dateFormat.format(new Date(at));
+    return formatReservationTime(item.reservationInfo);
 }
 
 function summary(item: ReservationListItem): string {
-    return `${item.roomInfo.identifier}, ${formatDate(item.reservationInfo.date)}, ${formatTimeRange(item)}, booked by ${formatUserName(item.reservationInfo.createdBy.by)}.`;
+    return `${item.roomInfo.identifier}, ${formatReservationDate(item.reservationInfo.date)}, ${formatTimeRange(item)}, booked by ${formatUserName(item.reservationInfo.createdBy.by)}.`;
 }
 
 const { roomLink } = useRoomDestination();
@@ -344,7 +330,7 @@ async function forceCancel(item: ReservationListItem): Promise<void> {
             >
                 <template #cell-when="{ row }">
                     <span class="text-text block truncate font-medium">
-                        {{ formatDate(row.reservationInfo.date) }}
+                        {{ formatReservationDate(row.reservationInfo.date) }}
                     </span>
                     <span class="text-text-muted block truncate text-xs tabular-nums">
                         {{ formatTimeRange(row) }}
@@ -372,7 +358,7 @@ async function forceCancel(item: ReservationListItem): Promise<void> {
                         {{ formatUserName(row.reservationInfo.createdBy.by) }}
                     </span>
                     <span class="text-text-muted block truncate text-xs">
-                        Booked {{ formatBookedAt(row.reservationInfo.createdBy.at) }}
+                        Booked {{ formatActionTime(row.reservationInfo.createdBy.at) }}
                     </span>
                 </template>
 

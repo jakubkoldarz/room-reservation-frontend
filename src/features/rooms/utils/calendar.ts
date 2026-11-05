@@ -10,17 +10,9 @@ import type { Reservation, ReservationState } from "@/features/reservations/type
 import {
     formatUserName,
     getReservationState,
-    reservationStateLabel,
 } from "@/features/reservations/utils/reservationState";
 import { toIsoDate } from "@/utils/isoDate";
-import type {
-    CalendarAllDay,
-    CalendarBlock,
-    CalendarBlockKind,
-    CalendarDay,
-    CalendarMore,
-    CalendarTitle,
-} from "../types";
+import type { CalendarAllDay, CalendarBlock, CalendarDay, CalendarMore } from "../types";
 
 const DEFAULT_HOURS = { start: 8, end: 18 };
 export const MAX_GRID_LANES = 2;
@@ -118,65 +110,28 @@ export function hourRange(
     return end > start ? { start, end } : DEFAULT_HOURS;
 }
 
-const BOOKED_BY_TITLE: CalendarTitle = {
-    label: "Booked by",
-    of: (reservation) => formatUserName(reservation.createdBy.by),
-};
-
-const ACTIVE_KINDS: ReadonlySet<CalendarBlockKind> = new Set(["approved", "pending"]);
-
-const ACTOR_VERBS = { approved: "Approved", rejected: "Rejected", canceled: "Canceled" } as const;
-
-function actorLine(reservation: Reservation, state: ReservationState): string | null {
-    if (state === "pending") return null;
-    const actor = {
-        approved: reservation.approvedBy,
-        rejected: reservation.rejectedBy,
-        canceled: reservation.canceledBy,
-    }[state];
-    return actor ? `${ACTOR_VERBS[state]} by ${formatUserName(actor.by)}` : null;
+function bookedBy(reservation: Reservation): string {
+    return formatUserName(reservation.createdBy.by);
 }
 
-function reservationTooltip(
-    reservation: Reservation,
-    state: ReservationState,
-    time: string,
-    title: { label: string; value: string },
-): string {
-    const reasonLabel = state === "rejected" ? "Rejection reason" : "Reason";
-    return [
-        `${reservationStateLabel(state)} · ${time}`,
-        `${title.label}: ${title.value}`,
-        reservation.purpose ? `Purpose: ${reservation.purpose}` : null,
-        actorLine(reservation, state),
-        reservation.reason ? `${reasonLabel}: ${reservation.reason}` : null,
-    ]
-        .filter(Boolean)
-        .join("\n");
-}
+const ACTIVE_KINDS: ReadonlySet<ReservationState> = new Set(["approved", "pending"]);
 
 function reservationBlock(
     reservation: Reservation,
     requiresApproval: boolean,
-    calendarTitle: CalendarTitle,
+    title: string,
+    room: string | null,
 ) {
-    const state = getReservationState(reservation, requiresApproval);
-    const time = `${formatHm(reservation.startTime)}–${formatHm(reservation.endTime)}`;
-    const title = calendarTitle.of(reservation);
-    const detail = reservation.purpose ?? "";
-    const tooltip = reservationTooltip(reservation, state, time, {
-        label: calendarTitle.label,
-        value: title,
-    });
     return {
         id: reservation.id,
-        kind: state,
+        kind: getReservationState(reservation, requiresApproval),
         start: toMinutes(reservation.startTime),
         end: toMinutes(reservation.endTime),
-        time,
+        time: `${formatHm(reservation.startTime)}–${formatHm(reservation.endTime)}`,
         title,
-        detail,
-        tooltip,
+        detail: reservation.purpose ?? "",
+        reservation,
+        room,
     };
 }
 
@@ -235,10 +190,11 @@ export function buildCalendarDays(options: {
     events: readonly EventInfo[];
     availabilities: readonly Availability[];
     requiresApproval: boolean;
-    reservationTitle?: CalendarTitle;
+    reservationTitle?: (reservation: Reservation) => string;
+    roomLabel?: (reservation: Reservation) => string;
 }): CalendarDay[] {
     const todayIso = toIsoDate(options.now);
-    const calendarTitle = options.reservationTitle ?? BOOKED_BY_TITLE;
+    const titleOf = options.reservationTitle ?? bookedBy;
 
     return Array.from({ length: 7 }, (_, index) => {
         const date = addDays(options.weekStart, index);
@@ -248,7 +204,12 @@ export function buildCalendarDays(options: {
         const blocks: Omit<CalendarBlock, "lane" | "lanes">[] = options.reservations
             .filter((reservation) => reservation.date === iso)
             .map((reservation) =>
-                reservationBlock(reservation, options.requiresApproval, calendarTitle),
+                reservationBlock(
+                    reservation,
+                    options.requiresApproval,
+                    titleOf(reservation),
+                    options.roomLabel?.(reservation) ?? null,
+                ),
             );
 
         return {

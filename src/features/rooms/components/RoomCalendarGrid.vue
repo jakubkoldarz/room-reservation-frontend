@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import ReservationDetails from "@/features/reservations/components/ReservationDetails.vue";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
 import type { CalendarDay } from "../types";
 import { overrideLabel } from "../utils/calendar";
@@ -136,7 +137,7 @@ function weekday(date: Date): string {
                 <BaseTooltip
                     v-for="block in day.grid.blocks"
                     :key="block.id"
-                    :text="block.tooltip"
+                    variant="card"
                     class="absolute cursor-default flex-col overflow-hidden rounded border-l-4 px-1.5 py-0.5 text-xs"
                     :class="BLOCK_CLASSES[block.kind]"
                     :style="blockStyle(block)"
@@ -149,6 +150,13 @@ function weekday(date: Date): string {
                     >
                         {{ block.detail }}
                     </span>
+                    <template #content>
+                        <ReservationDetails
+                            :reservation="block.reservation"
+                            :state="block.kind"
+                            :room="block.room"
+                        />
+                    </template>
                 </BaseTooltip>
 
                 <BaseTooltip

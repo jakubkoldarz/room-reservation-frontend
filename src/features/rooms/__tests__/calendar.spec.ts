@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { EventInfo } from "@/features/events/types";
-import type { Reservation } from "@/features/reservations/types";
-import type { CalendarBlockKind } from "../types";
+import type { Reservation, ReservationState } from "@/features/reservations/types";
 import {
     addDays,
     buildCalendarDays,
@@ -135,40 +134,23 @@ describe("buildCalendarDays", () => {
             title: "Anna Nowak",
             detail: "Lecture",
         });
-        expect(days[0].blocks[0].tooltip).toContain("Confirmed");
+        expect(days[0].blocks[0].room).toBeNull();
     });
 
-    it("własny tytuł bloku zamiast autora (kalendarz w profilu)", () => {
+    it("własny tytuł i sala w bloku (kalendarz w profilu), rezerwacja do karty szczegółów", () => {
+        const rejected = reservation({ status: "REJECTED", reason: "Exam week" });
         const days = buildCalendarDays({
             ...base,
-            reservations: [reservation()],
-            reservationTitle: { label: "Room", of: () => "A-101 · Main Building" },
+            reservations: [rejected],
+            reservationTitle: () => "A-101 · Main Building",
+            roomLabel: () => "A-101 · Main Building",
         });
-        expect(days[0].blocks[0].title).toBe("A-101 · Main Building");
-        expect(days[0].blocks[0].tooltip).toContain("Room: A-101 · Main Building");
-    });
-
-    it("tooltip w osobnych liniach: status z godziną, autor, cel, kto odrzucił i powód", () => {
-        const days = buildCalendarDays({
-            ...base,
-            reservations: [
-                reservation({
-                    status: "REJECTED",
-                    reason: "Exam week",
-                    rejectedBy: {
-                        at: "2026-10-31T09:00:00Z",
-                        by: { ...USER, firstname: "Jan", lastname: "Kowalski" },
-                    },
-                }),
-            ],
+        expect(days[0].blocks[0]).toMatchObject({
+            kind: "rejected",
+            title: "A-101 · Main Building",
+            room: "A-101 · Main Building",
+            reservation: rejected,
         });
-        expect(days[0].blocks[0].tooltip.split("\n")).toEqual([
-            "Rejected · 10:00–12:00",
-            "Booked by: Anna Nowak",
-            "Purpose: Lecture",
-            "Rejected by Jan Kowalski",
-            "Rejection reason: Exam week",
-        ]);
     });
 
     it("wydarzenie z godzinami zastępuje godziny otwarcia w każdym dniu zakresu, nie jest blokiem", () => {
@@ -255,8 +237,18 @@ describe("hourRange", () => {
 });
 
 describe("layoutGrid", () => {
-    function block(id: string, start: number, end: number, kind: CalendarBlockKind = "approved") {
-        return { id, kind, start, end, time: "", title: id, detail: "", tooltip: "" };
+    function block(id: string, start: number, end: number, kind: ReservationState = "approved") {
+        return {
+            id,
+            kind,
+            start,
+            end,
+            time: "",
+            title: id,
+            detail: "",
+            reservation: reservation({ id }),
+            room: null,
+        };
     }
 
     it("anulowana nachodząca na aktywną nie zajmuje pasa, a bez konfliktu zostaje", () => {
