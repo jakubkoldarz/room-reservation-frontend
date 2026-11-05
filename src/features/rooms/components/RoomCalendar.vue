@@ -47,20 +47,34 @@ const emit = defineEmits<{
 
 <template>
     <Container class="@container px-0! py-0!">
-        <div class="border-border flex flex-wrap items-center gap-2 border-b p-4">
-            <h2 v-if="title" class="text-lg font-semibold">{{ title }}</h2>
-            <span v-if="title" class="text-text-muted text-sm">{{ weekLabel }}</span>
-            <h2 v-else class="text-lg font-semibold">{{ weekLabel }}</h2>
-            <span class="grow"></span>
-            <OutlineButton class="rounded-lg py-1" :disabled="isCurrentWeek" @click="emit('today')">
-                Today
-            </OutlineButton>
-            <IconButton class="size-8 p-1" aria-label="Previous week" @click="emit('previous')">
-                <ChevronLeftIcon />
-            </IconButton>
-            <IconButton class="size-8 p-1" aria-label="Next week" @click="emit('next')">
-                <ChevronRightIcon />
-            </IconButton>
+        <div class="border-border flex items-center gap-3 border-b p-4">
+            <div class="flex min-w-0 flex-1 flex-col @md:flex-row @md:items-baseline @md:gap-2">
+                <h2 class="truncate text-lg font-semibold">{{ title ?? weekLabel }}</h2>
+                <span v-if="title" class="text-text-muted truncate text-sm">{{ weekLabel }}</span>
+            </div>
+            <div class="flex shrink-0 items-center gap-1">
+                <OutlineButton
+                    class="mr-1 rounded-lg py-1"
+                    :disabled="isCurrentWeek"
+                    @click="emit('today')"
+                >
+                    Today
+                </OutlineButton>
+                <IconButton
+                    class="grid size-8 place-items-center p-1"
+                    aria-label="Previous week"
+                    @click="emit('previous')"
+                >
+                    <ChevronLeftIcon class="size-5" />
+                </IconButton>
+                <IconButton
+                    class="grid size-8 place-items-center p-1"
+                    aria-label="Next week"
+                    @click="emit('next')"
+                >
+                    <ChevronRightIcon class="size-5" />
+                </IconButton>
+            </div>
         </div>
 
         <p

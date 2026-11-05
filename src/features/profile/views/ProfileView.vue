@@ -3,6 +3,7 @@ import { useIntervalFn, useNow } from "@vueuse/core";
 import { computed } from "vue";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
+import { useMyReservations } from "@/features/reservations/composables/useMyReservations";
 import RoomCalendar from "@/features/rooms/components/RoomCalendar.vue";
 import { useCalendarWeek } from "@/features/rooms/composables/useCalendarWeek";
 import { buildCalendarDays, hourRange } from "@/features/rooms/utils/calendar";
@@ -19,14 +20,31 @@ const now = useNow({ scheduler: (tick) => useIntervalFn(tick, 60_000) });
 const { weekStart, isCurrentWeek, weekLabel, showPreviousWeek, showNextWeek, showCurrentWeek } =
     useCalendarWeek(now);
 
+const {
+    items: myReservations,
+    isLoading: isLoadingReservations,
+    error: reservationsError,
+} = useMyReservations(weekStart);
+
+const roomLabels = computed(
+    () =>
+        new Map(
+            myReservations.value.map((item) => [
+                item.reservationInfo.id,
+                `${item.roomInfo.identifier} · ${item.buildingInfo.name}`,
+            ]),
+        ),
+);
+
 const days = computed(() =>
     buildCalendarDays({
         weekStart: weekStart.value,
         now: now.value,
-        reservations: [],
+        reservations: myReservations.value.map((item) => item.reservationInfo),
         events: [],
         availabilities: [],
         requiresApproval: false,
+        reservationTitle: (reservation) => roomLabels.value.get(reservation.id) ?? "Room",
     }),
 );
 const hours = computed(() => hourRange([], days.value));
@@ -46,7 +64,8 @@ const hours = computed(() => hourRange([], days.value));
                     <ActiveSessions :sessions="user.refreshTokens" />
                     <RoomCalendar
                         title="My reservations"
-                        notice="Booking rooms is not available yet. Your reservations will show up here."
+                        :notice="reservationsError ?? undefined"
+                        :is-loading="isLoadingReservations"
                         :days
                         :hours
                         :now

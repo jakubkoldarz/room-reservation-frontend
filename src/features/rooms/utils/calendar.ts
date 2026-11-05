@@ -102,10 +102,13 @@ export function hourRange(
     return end > start ? { start, end } : DEFAULT_HOURS;
 }
 
-function reservationBlock(reservation: Reservation, requiresApproval: boolean) {
+function bookedByTitle(reservation: Reservation): string {
+    return formatUserName(reservation.createdBy.by);
+}
+
+function reservationBlock(reservation: Reservation, requiresApproval: boolean, title: string) {
     const state = getReservationState(reservation, requiresApproval);
     const time = `${formatHm(reservation.startTime)}–${formatHm(reservation.endTime)}`;
-    const title = formatUserName(reservation.createdBy.by);
     const detail = reservation.purpose ?? "";
     const tooltip = [time, reservationStateLabel(state), title, detail, reservation.reason ?? ""]
         .filter(Boolean)
@@ -141,8 +144,10 @@ export function buildCalendarDays(options: {
     events: readonly EventInfo[];
     availabilities: readonly Availability[];
     requiresApproval: boolean;
+    reservationTitle?: (reservation: Reservation) => string;
 }): CalendarDay[] {
     const todayIso = toIsoDate(options.now);
+    const titleOf = options.reservationTitle ?? bookedByTitle;
 
     return Array.from({ length: 7 }, (_, index) => {
         const date = addDays(options.weekStart, index);
@@ -151,7 +156,9 @@ export function buildCalendarDays(options: {
 
         const blocks: Omit<CalendarBlock, "lane" | "lanes">[] = options.reservations
             .filter((reservation) => reservation.date === iso)
-            .map((reservation) => reservationBlock(reservation, options.requiresApproval));
+            .map((reservation) =>
+                reservationBlock(reservation, options.requiresApproval, titleOf(reservation)),
+            );
 
         return {
             date,

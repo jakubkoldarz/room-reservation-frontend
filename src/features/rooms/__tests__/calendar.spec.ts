@@ -136,6 +136,16 @@ describe("buildCalendarDays", () => {
         expect(days[0].blocks[0].tooltip).toContain("Confirmed");
     });
 
+    it("własny tytuł bloku zamiast autora (kalendarz w profilu)", () => {
+        const days = buildCalendarDays({
+            ...base,
+            reservations: [reservation()],
+            reservationTitle: () => "A-101 · Main Building",
+        });
+        expect(days[0].blocks[0].title).toBe("A-101 · Main Building");
+        expect(days[0].blocks[0].tooltip).toContain("A-101 · Main Building");
+    });
+
     it("wydarzenie z godzinami zastępuje godziny otwarcia w każdym dniu zakresu, nie jest blokiem", () => {
         const days = buildCalendarDays({
             ...base,
