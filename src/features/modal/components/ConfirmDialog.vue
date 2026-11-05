@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { useId, useTemplateRef, watch } from "vue";
+import { ref, useId, useTemplateRef, watch } from "vue";
 import OutlineButton from "@/features/shared/OutlineButton.vue";
 import { useConfirmDialogState } from "../composables/useConfirm";
 
 const { pending, answer } = useConfirmDialogState();
 const dialog = useTemplateRef("dialog");
 const titleId = useId();
+const inputId = useId();
+const inputValue = ref("");
 
 watch(pending, (current) => {
+    inputValue.value = "";
     if (current && !dialog.value?.open) dialog.value?.showModal();
     if (!current && dialog.value?.open) dialog.value.close();
 });
@@ -25,6 +28,25 @@ watch(pending, (current) => {
             <h2 :id="titleId" class="text-lg font-semibold">{{ pending.options.title }}</h2>
             <p class="text-text-muted text-sm">{{ pending.options.message }}</p>
 
+            <div v-if="pending.options.input" class="flex flex-col gap-1">
+                <label :for="inputId" class="text-sm font-semibold">
+                    {{ pending.options.input.label }}
+                </label>
+                <textarea
+                    :id="inputId"
+                    v-model="inputValue"
+                    rows="3"
+                    :maxlength="pending.options.input.maxLength"
+                    class="border-border text-text focus-visible:ring-primary w-full resize-none rounded border px-2 py-1 text-sm outline-none focus-visible:ring-2"
+                ></textarea>
+                <span
+                    v-if="pending.options.input.maxLength"
+                    class="text-text-muted self-end text-xs tabular-nums"
+                >
+                    {{ inputValue.length }}/{{ pending.options.input.maxLength }}
+                </span>
+            </div>
+
             <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <OutlineButton class="justify-center py-2 sm:py-1" @click="answer(false)">
                     {{ pending.options.cancelText ?? "Cancel" }}
@@ -37,7 +59,7 @@ watch(pending, (current) => {
                             ? 'bg-danger focus-visible:ring-danger hover:opacity-90'
                             : 'bg-primary hover:bg-primary-hover focus-visible:ring-primary'
                     "
-                    @click="answer(true)"
+                    @click="answer(true, inputValue)"
                 >
                     {{ pending.options.confirmText ?? "Confirm" }}
                 </button>

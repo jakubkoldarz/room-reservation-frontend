@@ -163,8 +163,13 @@ const UpdateReservationRequestDto = z.object({
     endTime: z.string(),
     purpose: z.union([z.null(), z.string()]).optional(),
 });
-const PagedResponseDtoOfReservationResponseDto = z.object({
-    items: z.array(ReservationResponseDto),
+const ReservationListItemResponseDto = z.object({
+    reservationInfo: ReservationResponseDto,
+    roomInfo: BasicRoomResponseDto,
+    buildingInfo: BasicBuildingResponseDto,
+});
+const PagedResponseDtoOfReservationListItemResponseDto = z.object({
+    items: z.array(ReservationListItemResponseDto),
     totalCount: z.number().int(),
     page: z.number().int(),
     pageSize: z.number().int(),
@@ -282,7 +287,8 @@ export const schemas = {
     ReservationActorResponseDto,
     ReservationResponseDto,
     UpdateReservationRequestDto,
-    PagedResponseDtoOfReservationResponseDto,
+    ReservationListItemResponseDto,
+    PagedResponseDtoOfReservationListItemResponseDto,
     CreateReservationRequestDto,
     ReservationReasonRequestDto,
     RoleResponseDto,
@@ -882,7 +888,7 @@ const endpoints = makeApi([
                 schema: z.number().int().gte(1).lte(100).optional(),
             },
         ],
-        response: PagedResponseDtoOfReservationResponseDto,
+        response: PagedResponseDtoOfReservationListItemResponseDto,
     },
     {
         method: "post",
@@ -1108,7 +1114,7 @@ const endpoints = makeApi([
                 schema: z.string().uuid().optional(),
             },
         ],
-        response: PagedResponseDtoOfReservationResponseDto,
+        response: PagedResponseDtoOfReservationListItemResponseDto,
     },
     {
         method: "get",

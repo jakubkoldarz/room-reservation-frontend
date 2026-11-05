@@ -19,7 +19,7 @@ const {
     layout?: "inline" | "grid";
 }>();
 
-const TYPED_FILTERS: ReadonlySet<Filter["type"]> = new Set(["text", "number", "time"]);
+const TYPED_FILTERS: ReadonlySet<Filter["type"]> = new Set(["text", "number", "time", "date"]);
 
 const emit = defineEmits<{
     change: [key: K, value: string];
