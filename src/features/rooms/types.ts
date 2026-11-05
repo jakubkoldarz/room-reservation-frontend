@@ -1,6 +1,6 @@
 import type { schemas } from "@/api/generated";
 import type { z } from "zod";
-import type { ReservationState } from "@/features/reservations/types";
+import type { Reservation, ReservationState } from "@/features/reservations/types";
 import type {
     ConflictingReservationSchema,
     ConflictingRoomSchema,
@@ -33,6 +33,21 @@ export type CalendarBlock = {
     lanes: number;
 };
 
+export type CalendarMore = {
+    id: string;
+    start: number;
+    end: number;
+    lane: number;
+    lanes: number;
+    count: number;
+    tooltip: string;
+};
+
+export type CalendarTitle = {
+    label: string;
+    of: (reservation: Reservation) => string;
+};
+
 export type CalendarAllDay = {
     id: string;
     title: string;
@@ -47,4 +62,5 @@ export type CalendarDay = {
     openIntervals: { start: number; end: number }[];
     allDay: CalendarAllDay[];
     blocks: CalendarBlock[];
+    grid: { blocks: CalendarBlock[]; more: CalendarMore[] };
 };

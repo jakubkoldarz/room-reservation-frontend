@@ -84,16 +84,13 @@ const emit = defineEmits<{
             {{ notice }}
         </p>
 
-        <div v-if="isLoading" class="flex flex-col gap-3 p-4">
-            <Skeleton v-for="n in 8" :key="n" class="w-full" />
+        <div class="hidden @3xl:block">
+            <RoomCalendarGrid :days :hours :now :show-opening-hours :is-loading />
         </div>
-
-        <template v-else>
-            <div class="hidden @3xl:block">
-                <RoomCalendarGrid :days :hours :now :show-opening-hours />
-            </div>
-            <RoomCalendarAgenda :days :show-opening-hours class="@3xl:hidden" />
-        </template>
+        <div v-if="isLoading" class="flex animate-pulse flex-col gap-3 p-4 @3xl:hidden">
+            <Skeleton v-for="n in 7" :key="n" class="w-full" />
+        </div>
+        <RoomCalendarAgenda v-else :days :show-opening-hours class="@3xl:hidden" />
 
         <ul
             class="border-border text-text-muted flex flex-wrap gap-x-4 gap-y-2 border-t p-4 text-xs"

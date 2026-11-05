@@ -6,16 +6,24 @@ import {
     toMinutes,
 } from "@/features/availabilities/utils/schedule";
 import type { EventInfo } from "@/features/events/types";
-import type { Reservation } from "@/features/reservations/types";
+import type { Reservation, ReservationState } from "@/features/reservations/types";
 import {
     formatUserName,
     getReservationState,
     reservationStateLabel,
 } from "@/features/reservations/utils/reservationState";
 import { toIsoDate } from "@/utils/isoDate";
-import type { CalendarAllDay, CalendarBlock, CalendarDay } from "../types";
+import type {
+    CalendarAllDay,
+    CalendarBlock,
+    CalendarBlockKind,
+    CalendarDay,
+    CalendarMore,
+    CalendarTitle,
+} from "../types";
 
 const DEFAULT_HOURS = { start: 8, end: 18 };
+export const MAX_GRID_LANES = 2;
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 export function startOfWeek(date: Date): Date {
@@ -58,16 +66,18 @@ export function minutesToHm(minutes: number): string {
 
 export function layoutLanes<T extends { start: number; end: number }>(
     items: readonly T[],
-): (T & { lane: number; lanes: number })[] {
+): (T & { lane: number; lanes: number; cluster: number })[] {
     const sorted = [...items].sort((a, b) => a.start - b.start || b.end - a.end);
-    const result: (T & { lane: number; lanes: number })[] = [];
-    let cluster: (T & { lane: number; lanes: number })[] = [];
+    const result: (T & { lane: number; lanes: number; cluster: number })[] = [];
+    let cluster: (T & { lane: number; lanes: number; cluster: number })[] = [];
     let laneEnds: number[] = [];
     let clusterEnd = -1;
+    let clusterIndex = 0;
 
     const closeCluster = () => {
         for (const item of cluster) item.lanes = laneEnds.length;
         result.push(...cluster);
+        if (cluster.length > 0) clusterIndex++;
         cluster = [];
         laneEnds = [];
     };
@@ -78,7 +88,7 @@ export function layoutLanes<T extends { start: number; end: number }>(
         if (lane === -1) lane = laneEnds.length;
         laneEnds[lane] = item.end;
         clusterEnd = Math.max(clusterEnd, item.end);
-        cluster.push({ ...item, lane, lanes: 1 });
+        cluster.push({ ...item, lane, lanes: 1, cluster: clusterIndex });
     }
     closeCluster();
     return result;
@@ -88,31 +98,76 @@ export function hourRange(
     availabilities: readonly Availability[],
     days: readonly CalendarDay[],
 ): { start: number; end: number } {
-    const minutes = [
+    const scheduleMinutes = [
         ...availabilities.flatMap((slot) => [toMinutes(slot.startTime), toMinutes(slot.endTime)]),
         ...days.flatMap((day) =>
             day.openIntervals.flatMap((interval) => [interval.start, interval.end]),
         ),
+    ];
+    const baseMinutes =
+        scheduleMinutes.length > 0
+            ? scheduleMinutes
+            : [DEFAULT_HOURS.start * 60, DEFAULT_HOURS.end * 60];
+    const minutes = [
+        ...baseMinutes,
         ...days.flatMap((day) => day.blocks.flatMap((block) => [block.start, block.end])),
     ];
-    if (minutes.length === 0) return DEFAULT_HOURS;
 
     const start = Math.max(0, Math.floor(Math.min(...minutes) / 60));
     const end = Math.min(24, Math.ceil(Math.max(...minutes) / 60));
     return end > start ? { start, end } : DEFAULT_HOURS;
 }
 
-function bookedByTitle(reservation: Reservation): string {
-    return formatUserName(reservation.createdBy.by);
+const BOOKED_BY_TITLE: CalendarTitle = {
+    label: "Booked by",
+    of: (reservation) => formatUserName(reservation.createdBy.by),
+};
+
+const ACTIVE_KINDS: ReadonlySet<CalendarBlockKind> = new Set(["approved", "pending"]);
+
+const ACTOR_VERBS = { approved: "Approved", rejected: "Rejected", canceled: "Canceled" } as const;
+
+function actorLine(reservation: Reservation, state: ReservationState): string | null {
+    if (state === "pending") return null;
+    const actor = {
+        approved: reservation.approvedBy,
+        rejected: reservation.rejectedBy,
+        canceled: reservation.canceledBy,
+    }[state];
+    return actor ? `${ACTOR_VERBS[state]} by ${formatUserName(actor.by)}` : null;
 }
 
-function reservationBlock(reservation: Reservation, requiresApproval: boolean, title: string) {
+function reservationTooltip(
+    reservation: Reservation,
+    state: ReservationState,
+    time: string,
+    title: { label: string; value: string },
+): string {
+    const reasonLabel = state === "rejected" ? "Rejection reason" : "Reason";
+    return [
+        `${reservationStateLabel(state)} · ${time}`,
+        `${title.label}: ${title.value}`,
+        reservation.purpose ? `Purpose: ${reservation.purpose}` : null,
+        actorLine(reservation, state),
+        reservation.reason ? `${reasonLabel}: ${reservation.reason}` : null,
+    ]
+        .filter(Boolean)
+        .join("\n");
+}
+
+function reservationBlock(
+    reservation: Reservation,
+    requiresApproval: boolean,
+    calendarTitle: CalendarTitle,
+) {
     const state = getReservationState(reservation, requiresApproval);
     const time = `${formatHm(reservation.startTime)}–${formatHm(reservation.endTime)}`;
+    const title = calendarTitle.of(reservation);
     const detail = reservation.purpose ?? "";
-    const tooltip = [time, reservationStateLabel(state), title, detail, reservation.reason ?? ""]
-        .filter(Boolean)
-        .join(" · ");
+    const tooltip = reservationTooltip(reservation, state, time, {
+        label: calendarTitle.label,
+        value: title,
+    });
     return {
         id: reservation.id,
         kind: state,
@@ -137,6 +192,42 @@ export function overrideLabel(item: CalendarAllDay): string {
     return item.isClosed ? `Closed: ${item.title}` : `${item.title} · special hours ${item.hours}`;
 }
 
+export function layoutGrid(
+    blocks: readonly Omit<CalendarBlock, "lane" | "lanes">[],
+    maxLanes = MAX_GRID_LANES,
+): CalendarDay["grid"] {
+    const active = blocks.filter((block) => ACTIVE_KINDS.has(block.kind));
+    const overlapsActive = (block: { start: number; end: number }) =>
+        active.some((other) => other.start < block.end && block.start < other.end);
+    const shown = blocks.filter((block) => ACTIVE_KINDS.has(block.kind) || !overlapsActive(block));
+
+    const visible: CalendarBlock[] = [];
+    const hidden = new Map<number, CalendarBlock[]>();
+    for (const { cluster, ...block } of layoutLanes(shown)) {
+        if (block.lanes <= maxLanes) visible.push(block);
+        else if (block.lane < maxLanes - 1) visible.push({ ...block, lanes: maxLanes });
+        else hidden.set(cluster, [...(hidden.get(cluster) ?? []), block]);
+    }
+
+    const more: CalendarMore[] = [...hidden.values()].map((group) => {
+        const sorted = [...group].sort((a, b) => a.start - b.start);
+        return {
+            id: `more-${sorted[0].id}`,
+            start: Math.min(...sorted.map((block) => block.start)),
+            end: Math.max(...sorted.map((block) => block.end)),
+            lane: maxLanes - 1,
+            lanes: maxLanes,
+            count: sorted.length,
+            tooltip: [
+                `${sorted.length} more at this time:`,
+                ...sorted.map((block) => `${block.time} · ${block.title}`),
+            ].join("\n"),
+        };
+    });
+
+    return { blocks: visible, more };
+}
+
 export function buildCalendarDays(options: {
     weekStart: Date;
     now: Date;
@@ -144,10 +235,10 @@ export function buildCalendarDays(options: {
     events: readonly EventInfo[];
     availabilities: readonly Availability[];
     requiresApproval: boolean;
-    reservationTitle?: (reservation: Reservation) => string;
+    reservationTitle?: CalendarTitle;
 }): CalendarDay[] {
     const todayIso = toIsoDate(options.now);
-    const titleOf = options.reservationTitle ?? bookedByTitle;
+    const calendarTitle = options.reservationTitle ?? BOOKED_BY_TITLE;
 
     return Array.from({ length: 7 }, (_, index) => {
         const date = addDays(options.weekStart, index);
@@ -157,7 +248,7 @@ export function buildCalendarDays(options: {
         const blocks: Omit<CalendarBlock, "lane" | "lanes">[] = options.reservations
             .filter((reservation) => reservation.date === iso)
             .map((reservation) =>
-                reservationBlock(reservation, options.requiresApproval, titleOf(reservation)),
+                reservationBlock(reservation, options.requiresApproval, calendarTitle),
             );
 
         return {
@@ -169,6 +260,7 @@ export function buildCalendarDays(options: {
             ),
             allDay: event ? [eventOverride(event)] : [],
             blocks: layoutLanes(blocks),
+            grid: layoutGrid(blocks),
         };
     });
 }

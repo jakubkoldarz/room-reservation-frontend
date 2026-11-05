@@ -44,7 +44,10 @@ const days = computed(() =>
         events: [],
         availabilities: [],
         requiresApproval: false,
-        reservationTitle: (reservation) => roomLabels.value.get(reservation.id) ?? "Room",
+        reservationTitle: {
+            label: "Room",
+            of: (reservation) => roomLabels.value.get(reservation.id) ?? "Unknown room",
+        },
     }),
 );
 const hours = computed(() => hourRange([], days.value));
@@ -52,31 +55,33 @@ const hours = computed(() => hourRange([], days.value));
 
 <template>
     <AsideNavbarLayout>
-        <div v-if="user" class="@container">
-            <div class="flex flex-col gap-4 @5xl:flex-row @5xl:items-start">
+        <div v-if="user" class="@container flex flex-col gap-4">
+            <RoomCalendar
+                title="My reservations"
+                class="order-2 @5xl:order-1"
+                :notice="reservationsError ?? undefined"
+                :is-loading="isLoadingReservations"
+                :days
+                :hours
+                :now
+                :week-label
+                :is-current-week
+                :show-opening-hours="false"
+                @previous="showPreviousWeek"
+                @next="showNextWeek"
+                @today="showCurrentWeek"
+            />
+            <div class="order-1 flex flex-col gap-4 @5xl:order-2 @5xl:flex-row @5xl:items-start">
                 <div class="flex flex-col gap-4 @5xl:order-2 @5xl:w-80 @5xl:shrink-0">
                     <ProfileCard :user />
                     <ProfileDetailsForm :user-info="user.userInfo" />
                     <EmailSettings :email="user.email" :pending-email="user.pendingEmail" />
                     <SecuritySettings :has2fa-enabled="user.accountStatus.has2faEnabled" />
                 </div>
-                <div class="flex min-w-0 flex-1 flex-col gap-4 @5xl:order-1">
-                    <ActiveSessions :sessions="user.refreshTokens" />
-                    <RoomCalendar
-                        title="My reservations"
-                        :notice="reservationsError ?? undefined"
-                        :is-loading="isLoadingReservations"
-                        :days
-                        :hours
-                        :now
-                        :week-label
-                        :is-current-week
-                        :show-opening-hours="false"
-                        @previous="showPreviousWeek"
-                        @next="showNextWeek"
-                        @today="showCurrentWeek"
-                    />
-                </div>
+                <ActiveSessions
+                    :sessions="user.refreshTokens"
+                    class="min-w-0 flex-1 @5xl:order-1"
+                />
             </div>
         </div>
     </AsideNavbarLayout>

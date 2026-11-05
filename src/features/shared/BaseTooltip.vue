@@ -107,7 +107,7 @@ onBeforeUnmount(clearTimers);
             :id
             ref="bubble"
             role="tooltip"
-            class="bg-secondary text-text-secondary pointer-events-none fixed z-1100 max-w-64 rounded-md px-2 py-1 text-xs font-medium shadow-lg transition-opacity duration-100"
+            class="bg-secondary text-text-secondary pointer-events-none fixed z-1100 max-w-64 rounded-md px-2 py-1 text-xs font-medium whitespace-pre-line shadow-lg transition-opacity duration-100"
             :class="isPositioned ? 'opacity-100' : 'opacity-0'"
             :style="{ top: `${top}px`, left: `${left}px` }"
         >
