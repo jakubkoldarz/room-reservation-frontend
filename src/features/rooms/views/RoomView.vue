@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import { useIntervalFn, useNow } from "@vueuse/core";
 import { z } from "zod";
 import apiClient from "@/api/client";
@@ -10,19 +10,11 @@ import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import RoomCalendar from "../components/RoomCalendar.vue";
 import RoomInfoPanel from "../components/RoomInfoPanel.vue";
+import { useCalendarWeek } from "../composables/useCalendarWeek";
 import type { RoomSummary } from "../types";
-import {
-    addDays,
-    buildCalendarDays,
-    formatWeekRange,
-    hourRange,
-    parseIsoDate,
-    startOfWeek,
-} from "../utils/calendar";
-import { toIsoDate } from "@/utils/isoDate";
+import { buildCalendarDays, hourRange } from "../utils/calendar";
 
 const route = useRoute();
-const router = useRouter();
 const now = useNow({ scheduler: (tick) => useIntervalFn(tick, 60_000) });
 
 const roomId = computed(() => {
@@ -52,14 +44,8 @@ async function load(id: string | null): Promise<void> {
 
 watch(roomId, load, { immediate: true });
 
-const currentWeekStart = computed(() => startOfWeek(now.value));
-const weekStart = computed(() => {
-    const fromUrl = parseIsoDate(route.query.week);
-    return fromUrl ? startOfWeek(fromUrl) : currentWeekStart.value;
-});
-const isCurrentWeek = computed(
-    () => toIsoDate(weekStart.value) === toIsoDate(currentWeekStart.value),
-);
+const { weekStart, isCurrentWeek, weekLabel, showPreviousWeek, showNextWeek, showCurrentWeek } =
+    useCalendarWeek(now);
 
 const days = computed(() =>
     buildCalendarDays({
@@ -72,12 +58,6 @@ const days = computed(() =>
     }),
 );
 const hours = computed(() => hourRange(room.value?.availabilities ?? [], days.value));
-
-function showWeek(start: Date): void {
-    const week =
-        toIsoDate(start) === toIsoDate(currentWeekStart.value) ? undefined : toIsoDate(start);
-    router.replace({ query: { ...route.query, week } });
-}
 </script>
 
 <template>
@@ -95,13 +75,13 @@ function showWeek(start: Date): void {
                     :days
                     :hours
                     :now
-                    :week-label="formatWeekRange(weekStart)"
+                    :week-label
                     :is-current-week
                     :is-loading
                     class="min-w-0 flex-1 @5xl:order-1"
-                    @previous="showWeek(addDays(weekStart, -7))"
-                    @next="showWeek(addDays(weekStart, 7))"
-                    @today="showWeek(currentWeekStart)"
+                    @previous="showPreviousWeek"
+                    @next="showNextWeek"
+                    @today="showCurrentWeek"
                 />
             </div>
         </div>

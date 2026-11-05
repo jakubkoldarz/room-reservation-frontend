@@ -5,6 +5,7 @@ import Logo from "./Logo.vue";
 import Searchbar from "./Searchbar.vue";
 import { Bars4Icon, MagnifyingGlassIcon } from "@heroicons/vue/24/solid";
 import { nextTick, ref } from "vue";
+import { profileRoutes } from "../profile/routes";
 
 const isMobileSearchOpen = ref(false);
 const searchbarRef = ref<InstanceType<typeof Searchbar>>();
@@ -41,9 +42,13 @@ const emit = defineEmits<{
             <IconButton @click="toggleMobileSearch" class="block size-6 sm:hidden">
                 <MagnifyingGlassIcon />
             </IconButton>
-            <IconButton @click="console.log('przycisk')" class="size-6">
+            <RouterLink
+                :to="{ name: profileRoutes.view.name }"
+                aria-label="My profile"
+                class="hover:text-primary focus-visible:ring-primary block size-6 rounded-full outline-none focus-visible:ring-1"
+            >
                 <UserIcon />
-            </IconButton>
+            </RouterLink>
         </div>
     </nav>
 </template>

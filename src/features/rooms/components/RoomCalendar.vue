@@ -4,6 +4,7 @@ import Container from "@/features/shared/Container.vue";
 import IconButton from "@/features/shared/IconButton.vue";
 import OutlineButton from "@/features/shared/OutlineButton.vue";
 import Skeleton from "@/features/shared/Skeleton.vue";
+import { computed } from "vue";
 import type { CalendarDay } from "../types";
 import { BLOCK_CLASSES, CLOSED_HOURS_BACKGROUND, LEGEND } from "../utils/calendarStyles";
 import RoomCalendarAgenda from "./RoomCalendarAgenda.vue";
@@ -16,6 +17,9 @@ const {
     weekLabel,
     isCurrentWeek,
     isLoading = false,
+    title,
+    notice,
+    showOpeningHours = true,
 } = defineProps<{
     days: readonly CalendarDay[];
     hours: { start: number; end: number };
@@ -23,7 +27,16 @@ const {
     weekLabel: string;
     isCurrentWeek: boolean;
     isLoading?: boolean;
+    title?: string;
+    notice?: string;
+    showOpeningHours?: boolean;
 }>();
+
+const legend = computed(() =>
+    showOpeningHours
+        ? LEGEND
+        : LEGEND.filter((item) => item.kind !== "event" && item.kind !== "closed"),
+);
 
 const emit = defineEmits<{
     previous: [];
@@ -35,7 +48,9 @@ const emit = defineEmits<{
 <template>
     <Container class="@container px-0! py-0!">
         <div class="border-border flex flex-wrap items-center gap-2 border-b p-4">
-            <h2 class="text-lg font-semibold">{{ weekLabel }}</h2>
+            <h2 v-if="title" class="text-lg font-semibold">{{ title }}</h2>
+            <span v-if="title" class="text-text-muted text-sm">{{ weekLabel }}</span>
+            <h2 v-else class="text-lg font-semibold">{{ weekLabel }}</h2>
             <span class="grow"></span>
             <OutlineButton class="rounded-lg py-1" :disabled="isCurrentWeek" @click="emit('today')">
                 Today
@@ -48,25 +63,32 @@ const emit = defineEmits<{
             </IconButton>
         </div>
 
+        <p
+            v-if="notice"
+            class="border-border bg-background text-text-muted border-b px-4 py-2 text-sm"
+        >
+            {{ notice }}
+        </p>
+
         <div v-if="isLoading" class="flex flex-col gap-3 p-4">
             <Skeleton v-for="n in 8" :key="n" class="w-full" />
         </div>
 
         <template v-else>
             <div class="hidden @3xl:block">
-                <RoomCalendarGrid :days :hours :now />
+                <RoomCalendarGrid :days :hours :now :show-opening-hours />
             </div>
-            <RoomCalendarAgenda :days class="@3xl:hidden" />
+            <RoomCalendarAgenda :days :show-opening-hours class="@3xl:hidden" />
         </template>
 
         <ul
             class="border-border text-text-muted flex flex-wrap gap-x-4 gap-y-2 border-t p-4 text-xs"
         >
-            <li v-for="item in LEGEND" :key="item.kind" class="flex items-center gap-1.5">
+            <li v-for="item in legend" :key="item.kind" class="flex items-center gap-1.5">
                 <span class="size-3 rounded-sm border-l-4" :class="BLOCK_CLASSES[item.kind]"></span>
                 {{ item.label }}
             </li>
-            <li class="flex items-center gap-1.5">
+            <li v-if="showOpeningHours" class="flex items-center gap-1.5">
                 <span
                     class="border-border bg-background size-3 rounded-sm border"
                     :style="{ backgroundImage: CLOSED_HOURS_BACKGROUND }"

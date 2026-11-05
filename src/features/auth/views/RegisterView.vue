@@ -54,7 +54,7 @@ const onSubmit = handleSubmit(async (values) => {
     }
 
     await authStore.login(response.data.jwtToken);
-    await router.push({ name: authRoutes.verifyEmail.name, state: { email: values.email } });
+    await router.push({ name: authRoutes.verifyEmail.name, state: { codeSent: true } });
 });
 </script>
 

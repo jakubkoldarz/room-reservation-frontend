@@ -5,6 +5,7 @@ import { onboardingRouteName } from "@/features/auth/utils/onboarding";
 import { buildingRoutes } from "@/features/buildings/routes";
 import { dashboardRoutes } from "@/features/dashboard/routes";
 import { equipmentRoutes } from "@/features/equipment/routes";
+import { profileRoutes } from "@/features/profile/routes";
 import { roomRoutes } from "@/features/rooms/routes";
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 
@@ -20,6 +21,7 @@ const routes: RouteRecordRaw[] = [
     ...Object.values(buildingRoutes),
     ...Object.values(equipmentRoutes),
     ...Object.values(roomRoutes),
+    ...Object.values(profileRoutes),
 ];
 
 const router = createRouter({

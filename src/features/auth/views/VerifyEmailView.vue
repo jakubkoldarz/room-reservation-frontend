@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useIntervalFn } from "@vueuse/core";
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import apiClient from "@/api/client";
@@ -10,21 +9,19 @@ import PlainButton from "@/features/shared/PlainButton.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import AuthLayout from "../components/AuthLayout.vue";
 import SegmentedInput from "../components/SegmentedInput.vue";
+import { useResendCooldown } from "../composables/useResendCooldown";
 import { useSignOut } from "../composables/useSignOut";
 import { VERIFICATION_CODE_LENGTH } from "../schemas";
 import { useAuthStore } from "../stores/useAuthStore";
 import { authErrorMessage, verificationCodeErrorMessage } from "../utils/authErrors";
 import { ONBOARDING_STEPS } from "../utils/onboarding";
 
-const RESEND_COOLDOWN_SECONDS = 60;
-
 const router = useRouter();
 const authStore = useAuthStore();
 const toasts = useToastsStore();
 const { signOut, isSigningOut } = useSignOut();
 
-const historyEmail: unknown = window.history.state?.email;
-const email = typeof historyEmail === "string" ? historyEmail : null;
+const email = computed(() => authStore.user?.email ?? null);
 
 const code = ref("");
 const isVerifying = ref(false);
@@ -33,14 +30,8 @@ const error = ref<string>();
 const codeInput = ref<InstanceType<typeof SegmentedInput>>();
 const isComplete = computed(() => code.value.length === VERIFICATION_CODE_LENGTH);
 
-const cooldown = ref(email ? RESEND_COOLDOWN_SECONDS : 0);
-const { pause, resume } = useIntervalFn(
-    () => {
-        cooldown.value = Math.max(cooldown.value - 1, 0);
-        if (cooldown.value === 0) pause();
-    },
-    1000,
-    { immediate: cooldown.value > 0 },
+const { remaining: cooldown, start: startCooldown } = useResendCooldown(
+    window.history.state?.codeSent === true,
 );
 
 async function continueOnboarding(): Promise<void> {
@@ -89,8 +80,7 @@ async function resend(): Promise<void> {
     code.value = "";
     codeInput.value?.focus();
     toasts.pushInfo({ title: "Code sent", message: "Check your inbox for a new code." });
-    cooldown.value = RESEND_COOLDOWN_SECONDS;
-    resume();
+    startCooldown();
 }
 </script>
 

@@ -37,6 +37,8 @@ const RefreshTokenResponseDto = z.object({
 });
 const UserDetailsResponseDto = z.object({
     userInfo: BasicUserResponseDto,
+    email: z.string(),
+    pendingEmail: z.union([z.null(), z.string()]).optional(),
     accountStatus: UserAccountStatusResponseDto,
     roleInfo: RoleWithPermissionsResponseDto,
     refreshTokens: z.array(RefreshTokenResponseDto),

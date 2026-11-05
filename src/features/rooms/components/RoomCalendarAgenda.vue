@@ -4,8 +4,9 @@ import type { CalendarDay } from "../types";
 import { minutesToHm, overrideLabel } from "../utils/calendar";
 import { BLOCK_CLASSES, blockKindLabel } from "../utils/calendarStyles";
 
-const { days } = defineProps<{
+const { days, showOpeningHours = true } = defineProps<{
     days: readonly CalendarDay[];
+    showOpeningHours?: boolean;
 }>();
 
 function dayLabel(date: Date): string {
@@ -33,7 +34,9 @@ function openingHours(day: CalendarDay): string {
                 </span>
                 <Badge v-if="day.isToday" class="px-2!">Today</Badge>
                 <span class="grow"></span>
-                <span class="text-text-muted text-xs">{{ openingHours(day) }}</span>
+                <span v-if="showOpeningHours" class="text-text-muted text-xs">
+                    {{ openingHours(day) }}
+                </span>
             </div>
 
             <ul v-if="day.allDay.length > 0 || day.blocks.length > 0" class="flex flex-col gap-1.5">

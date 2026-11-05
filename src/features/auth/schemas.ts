@@ -3,20 +3,20 @@ import { z } from "zod";
 export const VERIFICATION_CODE_LENGTH = 6;
 export const MIN_PASSWORD_LENGTH = 8;
 
-const emailField = z
+export const EmailSchema = z
     .string({ required_error: "Email is required" })
     .trim()
     .min(1, "Email is required")
     .email("Enter a valid email address");
 
 export const LoginFormSchema = z.object({
-    email: emailField,
+    email: EmailSchema,
     password: z.string({ required_error: "Password is required" }).min(1, "Password is required"),
 });
 
 export const RegisterFormSchema = z
     .object({
-        email: emailField,
+        email: EmailSchema,
         password: z
             .string({ required_error: "Password is required" })
             .min(
