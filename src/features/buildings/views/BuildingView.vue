@@ -14,6 +14,7 @@ import AvailabilitiesTable from "@/features/availabilities/components/Availabili
 import { formatAddress } from "../utils/formatAddres.ts";
 import type { BuildingDetails } from "../types.ts";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore.ts";
+import RoomsTable from "@/features/rooms/components/RoomsTable.vue";
 
 const route = useRoute();
 const buildingId = computed(() => route.params.buildingId as string);
@@ -69,7 +70,12 @@ function gotoBuildingEdit() {
                 :items="building?.availabilities"
                 :has-edit-permission="hasPermission(Permission.BuildingEdit)"
             />
-            TODO: ADD ROOMS TABLE
+            <RoomsTable
+                v-if="hasPermission(Permission.RoomList)"
+                :building-id="buildingId"
+                title="Rooms"
+                :page-size="10"
+            />
         </div>
     </AsideNavbarLayout>
 </template>

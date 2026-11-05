@@ -1,4 +1,4 @@
-import { onMounted, ref, shallowRef } from "vue";
+import { onMounted, ref, shallowRef, toValue, type MaybeRefOrGetter } from "vue";
 import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
@@ -9,14 +9,14 @@ import type { Building } from "../types";
 
 const MAX_PAGE_SIZE = 100;
 
-export function useAllBuildings() {
+export function useAllBuildings(enabled: MaybeRefOrGetter<boolean> = true) {
     const buildings = shallowRef<readonly Building[]>([]);
     const isLoading = ref(false);
     const { hasPermission } = usePermissions();
     const toasts = useToastsStore();
 
     onMounted(async () => {
-        if (!hasPermission(Permission.BuildingList)) return;
+        if (!toValue(enabled) || !hasPermission(Permission.BuildingList)) return;
 
         isLoading.value = true;
         const result = await apiCall(() =>
