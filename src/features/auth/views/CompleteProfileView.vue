@@ -16,6 +16,7 @@ import { useSignOut } from "../composables/useSignOut";
 import { ProfileFormSchema } from "../schemas";
 import { useAuthStore } from "../stores/useAuthStore";
 import { authErrorMessage } from "../utils/authErrors";
+import { ONBOARDING_STEPS } from "../utils/onboarding";
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -64,9 +65,9 @@ const onSubmit = handleSubmit(async (values) => {
 <template>
     <AuthLayout
         title="Complete your profile"
-        description="Tell us your name so others know who booked a room."
-        :step="2"
-        :total-steps="2"
+        description="Your name will be shown on your reservations."
+        :steps="ONBOARDING_STEPS"
+        :current-step="2"
     >
         <form class="flex flex-col gap-4" novalidate @submit="onSubmit">
             <ErrorText :error class="mb-0!" role="alert" />

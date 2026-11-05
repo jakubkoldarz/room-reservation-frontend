@@ -59,10 +59,7 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
-    <AuthLayout
-        title="Create an account"
-        description="Sign up to start booking rooms. It only takes a minute."
-    >
+    <AuthLayout title="Create an account" description="You will get a confirmation code by email.">
         <form class="flex flex-col gap-4" novalidate @submit="onSubmit">
             <ErrorText :error class="mb-0!" role="alert" />
             <BaseInput

@@ -67,8 +67,8 @@ async function verify(): Promise<void> {
 <template>
     <AuthLayout title="Two-step verification">
         <template #description>
-            We sent a {{ VERIFICATION_CODE_LENGTH }}-digit code to your email. Enter it below to
-            finish signing in. The code expires in 5 minutes.
+            We sent a {{ VERIFICATION_CODE_LENGTH }}-digit code to your email. It is valid for 5
+            minutes.
         </template>
 
         <form class="flex flex-col gap-4" novalidate @submit.prevent="verify">

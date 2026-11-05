@@ -2,6 +2,8 @@ import type { UserAccountStatus } from "@/features/users/types";
 import { authRoutes } from "../routes";
 import type { OnboardingRouteName } from "../types";
 
+export const ONBOARDING_STEPS = ["Confirm email", "Your profile"] as const;
+
 export function onboardingRouteName(status: UserAccountStatus): OnboardingRouteName | null {
     if (!status.hasEmailVerified) return authRoutes.verifyEmail.name;
     if (!status.hasProfileCompleted) return authRoutes.completeProfile.name;

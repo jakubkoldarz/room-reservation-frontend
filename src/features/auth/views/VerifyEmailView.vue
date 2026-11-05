@@ -14,6 +14,7 @@ import { useSignOut } from "../composables/useSignOut";
 import { VERIFICATION_CODE_LENGTH } from "../schemas";
 import { useAuthStore } from "../stores/useAuthStore";
 import { authErrorMessage, verificationCodeErrorMessage } from "../utils/authErrors";
+import { ONBOARDING_STEPS } from "../utils/onboarding";
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
@@ -94,12 +95,11 @@ async function resend(): Promise<void> {
 </script>
 
 <template>
-    <AuthLayout title="Confirm your email" :step="1" :total-steps="2">
+    <AuthLayout title="Confirm your email" :steps="ONBOARDING_STEPS" :current-step="1">
         <template #description>
             We sent a {{ VERIFICATION_CODE_LENGTH }}-digit code to
             <span v-if="email" class="font-medium">{{ email }}</span>
-            <template v-else>your email address</template>. Enter it below to activate your account.
-            The code expires in 15 minutes.
+            <template v-else>your email address</template>. It is valid for 15 minutes.
         </template>
 
         <form class="flex flex-col gap-4" novalidate @submit.prevent="verify">

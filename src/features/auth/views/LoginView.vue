@@ -68,7 +68,7 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
-    <AuthLayout title="Sign in" description="Welcome back! Sign in to book and manage rooms.">
+    <AuthLayout title="Sign in">
         <form class="flex flex-col gap-4" novalidate @submit="onSubmit">
             <ErrorText :error class="mb-0!" role="alert" />
             <BaseInput
