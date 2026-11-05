@@ -3,28 +3,29 @@ import { shallowRef, watch, type ShallowRef } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { MagnifyingGlassIcon } from "@heroicons/vue/24/solid";
 import BaseInput from "@/features/shared/BaseInput.vue";
+import ComboBox from "@/features/shared/ComboBox.vue";
+import MultiSelect from "@/features/shared/MultiSelect.vue";
 import type { Filter, FilterValues } from "../types";
 
 const {
     filters,
     values,
     debounce = 300,
+    layout = "inline",
 } = defineProps<{
     filters: readonly Filter<K>[];
-    /** Bieżące wartości (zwykle `query` z useListQuery) — tylko do odczytu. */
     values: FilterValues<K>;
-    /** Opóźnienie dla pól tekstowych w ms. */
     debounce?: number;
+    layout?: "inline" | "grid";
 }>();
+
+const TYPED_FILTERS: ReadonlySet<Filter["type"]> = new Set(["text", "number", "time"]);
 
 const emit = defineEmits<{
     change: [key: K, value: string];
 }>();
 
-// Lokalny szkic: pole musi reagować od razu, a `change` wysyłamy dopiero po przerwie w pisaniu.
 const draft: ShallowRef<FilterValues<K>> = shallowRef({ ...values });
-// Wartości, które sami wysłaliśmy — ich powrót z URL nie może nadpisać tego, co użytkownik
-// zdążył dopisać w trakcie nawigacji.
 const sent = new Map<K, string>();
 
 watch(
@@ -38,7 +39,7 @@ watch(
                 sent.delete(filter.key);
                 continue;
             }
-            updated[filter.key] = value; // zmiana z zewnątrz, np. przycisk „wstecz”
+            updated[filter.key] = value;
         }
         draft.value = updated;
     },
@@ -53,7 +54,7 @@ const flushText = useDebounceFn(
     () => {
         for (const filter of filters) {
             const value = draft.value[filter.key] ?? "";
-            if (filter.type === "text" && value !== (values[filter.key] ?? ""))
+            if (TYPED_FILTERS.has(filter.type) && value !== (values[filter.key] ?? ""))
                 send(filter.key, value);
         }
     },
@@ -65,40 +66,64 @@ function onText(key: K, value: string | number | null | undefined): void {
     void flushText();
 }
 
-function onSelect(key: K, event: Event): void {
-    if (!(event.target instanceof HTMLSelectElement)) return;
-    draft.value = { ...draft.value, [key]: event.target.value };
-    send(key, event.target.value);
+function onSelect(key: K, value: string): void {
+    draft.value = { ...draft.value, [key]: value };
+    send(key, value);
+}
+
+function toList(value: string | undefined): string[] {
+    return value ? value.split(",") : [];
 }
 </script>
 
 <template>
-    <div class="flex w-full flex-wrap gap-2">
-        <div v-for="filter in filters" :key="filter.key" class="flex w-full flex-col gap-2">
+    <div
+        :class="
+            layout === 'grid'
+                ? 'grid w-full grid-cols-1 gap-x-2 gap-y-4 @sm:grid-cols-2 @3xl:grid-cols-3'
+                : 'flex w-full flex-col gap-2 @sm:w-auto @sm:flex-row'
+        "
+    >
+        <div
+            v-for="filter in filters"
+            :key="filter.key"
+            :class="layout === 'grid' ? 'min-w-0' : 'w-full @sm:w-56'"
+        >
             <BaseInput
-                v-if="filter.type === 'text'"
-                type="text"
+                v-if="TYPED_FILTERS.has(filter.type)"
+                :type="filter.type"
                 :label="filter.placeholder"
                 floating-label
                 has-icon
                 :model-value="draft[filter.key] ?? ''"
                 @update:model-value="(value) => onText(filter.key, value)"
             >
-                <template #icon> <MagnifyingGlassIcon /> </template>
+                <template #icon> <component :is="filter.icon ?? MagnifyingGlassIcon" /> </template>
             </BaseInput>
 
-            <select
+            <ComboBox
                 v-else-if="filter.type === 'select'"
-                :aria-label="filter.placeholder"
-                :value="draft[filter.key] ?? ''"
-                class="text-text border-border bg-surface focus-visible:ring-primary w-full rounded border px-2 py-1 outline-none focus-visible:ring-2"
-                @change="(event) => onSelect(filter.key, event)"
+                :label="filter.placeholder"
+                :options="filter.values"
+                floating-label
+                has-icon
+                :model-value="draft[filter.key] ?? ''"
+                @update:model-value="(value) => onSelect(filter.key, value)"
             >
-                <option value="">{{ filter.placeholder }}</option>
-                <option v-for="option in filter.values" :key="option.value" :value="option.value">
-                    {{ option.label }}
-                </option>
-            </select>
+                <template #icon> <component :is="filter.icon ?? MagnifyingGlassIcon" /> </template>
+            </ComboBox>
+
+            <MultiSelect
+                v-else-if="filter.type === 'multiselect'"
+                :label="filter.placeholder"
+                :options="filter.values"
+                floating-label
+                has-icon
+                :model-value="toList(draft[filter.key])"
+                @update:model-value="(value) => onSelect(filter.key, value.join(','))"
+            >
+                <template #icon> <component :is="filter.icon ?? MagnifyingGlassIcon" /> </template>
+            </MultiSelect>
         </div>
     </div>
 </template>

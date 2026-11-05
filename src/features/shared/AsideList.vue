@@ -16,7 +16,7 @@ const props = withDefaults(
         isLoading?: boolean;
         searchbarPlaceholder?: string;
         displayCount?: number;
-        items?: { id: string; name: string; to: RouteLocationRaw }[];
+        items?: { id: string; name: string; to?: RouteLocationRaw }[];
     }>(),
     {
         isLoading: false,
@@ -83,9 +83,10 @@ const searchbarModel = defineModel<string>();
                 :title="item.name"
             >
                 <div class="bg-primary size-2 shrink-0 rounded-full"></div>
-                <RouterLink :to="item.to" class="shrink truncate">
+                <RouterLink v-if="item.to" :to="item.to" class="shrink truncate">
                     {{ item.name }}
                 </RouterLink>
+                <span v-else class="shrink truncate">{{ item.name }}</span>
             </li>
         </ul>
     </div>

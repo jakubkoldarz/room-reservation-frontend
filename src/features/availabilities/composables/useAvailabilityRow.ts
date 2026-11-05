@@ -1,5 +1,5 @@
 import { useDate } from "@/composables/useDate";
-import type { Availability } from "@/types/availabilities";
+import type { Availability } from "../types";
 import { computed, toValue, type MaybeRefOrGetter } from "vue";
 
 export function useAvailabilityRow(

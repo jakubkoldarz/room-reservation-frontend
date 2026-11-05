@@ -13,6 +13,7 @@ import {
     PencilSquareIcon,
     PlusIcon,
 } from "@heroicons/vue/24/solid";
+import { roomRoutes } from "@/features/rooms/routes";
 import { buildingRoutes } from "../routes";
 
 const { hasPermission } = usePermissions();
@@ -29,12 +30,15 @@ const props = defineProps<{
 function gotoEdit() {
     router.push({ name: buildingRoutes.edit.name, params: { buildingId: props.buildingId } });
 }
+
+function gotoAddRoom() {
+    router.push({ name: roomRoutes.add.name, query: { buildingId: props.buildingId } });
+}
 </script>
 
 <template>
     <Container class="flex w-full flex-col justify-start">
         <template v-if="isLoading">
-            <!-- Skeleton -->
             <div class="flex w-full animate-pulse flex-col gap-1">
                 <Skeleton class="w-full" />
                 <Skeleton class="mt-4 w-full" />
@@ -76,7 +80,11 @@ function gotoEdit() {
                 >
                     <PencilSquareIcon class="size-5" /> Edit Building
                 </OutlineButton>
-                <BaseButton v-if="hasPermission(Permission.RoomAdd)" class="rounded-lg py-1">
+                <BaseButton
+                    v-if="hasPermission(Permission.RoomAdd)"
+                    class="rounded-lg py-1"
+                    @click="gotoAddRoom"
+                >
                     <PlusIcon class="size-5" /> Add Room
                 </BaseButton>
             </div>

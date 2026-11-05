@@ -1,17 +1,19 @@
 <script setup lang="ts">
+import { roomConflicts } from "@/features/rooms/utils/conflicts";
+import { apiCall } from "@/api/apiCall";
+import { apiErrorMessage } from "@/api/errors";
 import apiClient from "@/api/client";
-import { useApiCall } from "@/composables/useApiCall";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import EditHeader from "../components/EditHeader.vue";
+import FormHeader from "@/features/shared/FormHeader.vue";
 import EditInfo from "../components/EditInfo.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore.ts";
 import router from "@/router/index.ts";
-import { buildingRoutes } from "../routes.ts";
+import { useBuildingDestination } from "../composables/useBuildingDestination";
 import { useBuildingsStore } from "../stores/useBuildingsStore.ts";
 import NumberCircle from "../components/NumberCircle.vue";
-import type { Availability } from "@/types/availabilities.ts";
+import type { Availability } from "@/features/availabilities/types.ts";
 import AvailabilitiesEdit from "@/features/availabilities/components/AvailabilitiesEdit.vue";
 import type { BuildingDetails } from "../types.ts";
 
@@ -19,29 +21,40 @@ const editRef = ref<InstanceType<typeof EditInfo>>();
 const availabilitiesModel = ref<Availability[]>([]);
 
 const buildingsStore = useBuildingsStore();
+const destinationFor = useBuildingDestination();
 const route = useRoute();
 const buildingId = computed(() => route.params.buildingId as string);
 const building = ref<BuildingDetails | null>();
-const { call, isLoading } = useApiCall();
+const isLoading = ref(false);
+const isSaving = ref(false);
+const toastsStore = useToastsStore();
 
 watch(() => buildingId.value, fetchBuilding, { immediate: true });
 async function fetchBuilding() {
-    const response = await call(() =>
+    isLoading.value = true;
+    const response = await apiCall(() =>
         apiClient.getBuildingsBuildingId({ params: { buildingId: buildingId.value } }),
     );
-    if (response.success) {
+    isLoading.value = false;
+
+    if (response.ok) {
         building.value = response.data;
         availabilitiesModel.value = response.data.availabilities;
+    } else {
+        toastsStore.pushError({
+            title: "Failed to load building",
+            message: apiErrorMessage(response.error),
+        });
     }
 }
 
 async function handleSave() {
+    if (isSaving.value) return;
     const values = await editRef.value?.submit();
     if (!values) return;
 
-    const toastsStore = useToastsStore();
-
-    const response = await call(() =>
+    isSaving.value = true;
+    const response = await apiCall(() =>
         apiClient.putBuildingsBuildingId(
             {
                 ...values,
@@ -50,29 +63,39 @@ async function handleSave() {
             { params: { buildingId: buildingId.value } },
         ),
     );
+    isSaving.value = false;
 
-    if (response.success) {
+    if (response.ok) {
         toastsStore.pushSuccess({ message: "Building updated successfully" });
         buildingsStore.fetchBuildings();
         gotoBuildingView();
-    } else if (response.success === false) {
-        toastsStore.pushApiError({
-            title: "Failed to update building",
-            error: response.error,
-        });
+        return;
     }
+    if (response.error.kind === "validation") {
+        editRef.value?.showServerErrors(response.error.fieldErrors);
+    }
+    const rooms = roomConflicts(response.error).map((room) => room.identifier);
+    toastsStore.pushError({
+        title: "Failed to update building",
+        message:
+            rooms.length > 0
+                ? `These rooms would be open outside the new building hours: ${rooms.join(", ")}. Change their hours first.`
+                : apiErrorMessage(response.error),
+    });
 }
 
 function gotoBuildingView() {
-    router.push({ name: buildingRoutes.view.name, params: { buildingId: buildingId.value } });
+    router.push(destinationFor(buildingId.value));
 }
 </script>
 
 <template>
     <AsideNavbarLayout>
         <div class="flex flex-col gap-4 pb-20">
-            <EditHeader
-                :name="building?.buildingInfo.name"
+            <FormHeader
+                mode="edit"
+                :is-saving
+                :title="building?.buildingInfo.name"
                 :is-loading="isLoading"
                 @save="handleSave"
                 @cancel="gotoBuildingView"

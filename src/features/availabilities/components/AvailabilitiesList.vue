@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Skeleton from "@/features/shared/Skeleton.vue";
-import type { Availability } from "@/types/availabilities";
+import type { Availability } from "../types";
 import { useAvailabilityRow } from "../composables/useAvailabilityRow";
 
 const props = withDefaults(

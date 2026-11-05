@@ -11,16 +11,33 @@ import { computed, onMounted, watch } from "vue";
 import { watchDebounced } from "@vueuse/core";
 import { buildingRoutes } from "../buildings/routes.ts";
 import { equipmentRoutes } from "../equipment/routes.ts";
+import { roomRoutes } from "../rooms/routes.ts";
+import { useRoomsStore } from "../rooms/stores/useRoomsStore.ts";
+import { useRoomDestination } from "../rooms/composables/useRoomDestination.ts";
 
 const { hasPermission } = usePermissions();
 const buildingsStore = useBuildingsStore();
+const roomsStore = useRoomsStore();
+const { roomLink } = useRoomDestination();
 const route = useRoute();
 
 const buildingItems = computed(() => {
+    const canView = hasPermission(Permission.BuildingView);
     return buildingsStore.buildings?.map((b) => ({
         name: b.name,
         id: b.id,
-        to: { name: buildingRoutes.view.name, params: { buildingId: b.id } },
+        to: canView ? { name: buildingRoutes.view.name, params: { buildingId: b.id } } : undefined,
+    }));
+});
+
+const roomItems = computed(() => {
+    return roomsStore.rooms.map(({ roomInfo }) => ({
+        name: roomInfo.identifier,
+        id: roomInfo.id,
+        to: roomLink(roomInfo.id) ?? {
+            name: roomRoutes.list.name,
+            query: { identifier: roomInfo.identifier },
+        },
     }));
 });
 
@@ -41,10 +58,17 @@ onMounted(() => {
     if (hasPermission(Permission.BuildingList)) {
         buildingsStore.ensureLoaded();
     }
+    if (hasPermission(Permission.RoomList)) {
+        roomsStore.ensureLoaded();
+    }
 });
 
 async function refetchBuildings() {
     await buildingsStore.fetchBuildings();
+}
+
+async function refetchRooms() {
+    await roomsStore.fetchRooms();
 }
 
 watchDebounced(
@@ -56,11 +80,20 @@ watchDebounced(
     },
     { debounce: 300 },
 );
+
+watchDebounced(
+    () => roomsStore.queryParam,
+    () => {
+        if (hasPermission(Permission.RoomList)) {
+            refetchRooms();
+        }
+    },
+    { debounce: 300 },
+);
 </script>
 
 <template>
     <aside class="shrink-0 md:block">
-        <!-- backdrop -->
         <div
             @click="emit('forceClose')"
             :class="[
@@ -70,7 +103,6 @@ watchDebounced(
             ]"
         ></div>
 
-        <!-- aside panel -->
         <div
             :class="[
                 isMobileAsideOpen ? 'fixed translate-x-0' : 'hidden -translate-x-full',
@@ -84,11 +116,14 @@ watchDebounced(
                     <HomeIcon />
                     Dashboard
                 </LinkButton>
-                <LinkButton :to="equipmentRoutes.list">
+                <LinkButton
+                    v-if="hasPermission(Permission.EquipmentList)"
+                    :to="equipmentRoutes.list"
+                >
                     <RectangleGroupIcon />
                     Equipment
                 </LinkButton>
-                <LinkButton :to="equipmentRoutes.list">
+                <LinkButton v-if="hasPermission(Permission.EventList)" :to="equipmentRoutes.list">
                     <StarIcon />
                     Events
                 </LinkButton>
@@ -106,11 +141,17 @@ watchDebounced(
                     @searchbar-focus="refetchBuildings"
                 />
                 <AsideList
+                    v-model="roomsStore.queryParam"
+                    v-if="hasPermission(Permission.RoomList)"
                     class="mt-4"
                     title="Rooms"
-                    :is-loading="true"
-                    :total-count="14"
-                    v-if="hasPermission(Permission.RoomList)"
+                    :to="roomRoutes.list"
+                    :items="roomItems"
+                    :display-count="4"
+                    :is-loading="roomsStore.isLoading"
+                    :total-count="roomsStore.totalCount"
+                    searchbar-placeholder="Search rooms..."
+                    @searchbar-focus="refetchRooms"
                 />
             </div>
         </div>

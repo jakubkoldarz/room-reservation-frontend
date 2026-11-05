@@ -1,8 +1,17 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { watch } from "vue";
 import { z } from "zod";
-import { ArrowRightIcon, PlusIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import {
+    EnvelopeIcon,
+    HashtagIcon,
+    MapIcon,
+    MapPinIcon,
+    PlusIcon,
+    Square3Stack3DIcon,
+    TrashIcon,
+} from "@heroicons/vue/24/solid";
 import apiClient from "@/api/client";
+import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
 import { pageParam, textParam, useListQuery } from "@/composables/useListQuery";
 import { usePagedList } from "@/composables/usePagedList";
@@ -10,29 +19,33 @@ import { usePermissions } from "@/composables/usePermissions";
 import { useVisibleColumns } from "@/composables/useVisibleColumns";
 import { Permission } from "@/features/auth/constants/permissions";
 import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
+import MoreFiltersButton from "@/features/filters/components/MoreFiltersButton.vue";
+import MoreFiltersPanel from "@/features/filters/components/MoreFiltersPanel.vue";
+import { useMoreFilters } from "@/features/filters/composables/useMoreFilters";
 import { defineFilters } from "@/features/filters/types";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
-import Modal from "@/features/modal/components/Modal.vue";
+import { useConfirm } from "@/features/modal/composables/useConfirm";
 import PagerBlock from "@/features/pager/components/PagerBlock.vue";
-import Badge from "@/features/shared/Badge.vue";
 import Container from "@/features/shared/Container.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import IconButton from "@/features/shared/IconButton.vue";
 import LinkButton from "@/features/shared/LinkButton.vue";
+import TextLink from "@/features/shared/TextLink.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
+import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { buildingRoutes } from "../routes";
-import { formatAddress } from "../utils/formatAddres";
+import { useBuildingsStore } from "../stores/useBuildingsStore";
+import type { Building } from "../types";
+import { formatCityLine } from "../utils/formatAddres";
 
 const PAGE_SIZE = 25;
 
 const { hasPermission } = usePermissions();
 
 const columns = useVisibleColumns(() => [
-    { key: "link", width: 65, align: "center", visible: hasPermission(Permission.BuildingView) },
-    { key: "identifier", label: "Identifier", width: 150, align: "left" },
-    { key: "name", label: "Name" },
-    { key: "location", label: "Location", width: 350 },
-    { key: "floors", label: "Floors", width: 100, align: "center" },
+    { key: "name", label: "Building", align: "left" },
+    { key: "location", label: "Address", width: 320, align: "left" },
+    { key: "floors", label: "Floors", width: 140, align: "left" },
     {
         key: "delete",
         width: 65,
@@ -41,42 +54,90 @@ const columns = useVisibleColumns(() => [
     },
 ]);
 
-const filters = defineFilters([{ key: "name", type: "text", placeholder: "Building name" }]);
+const filters = defineFilters([
+    { key: "name", type: "text", placeholder: "Building name" },
+    { key: "city", type: "text", placeholder: "City", icon: MapIcon },
+]);
 
-const { query, setFilter, clampPage } = useListQuery(
-    z.object({ page: pageParam, name: textParam }),
+const moreFilters = defineFilters([
+    { key: "identifier", type: "text", placeholder: "Identifier", icon: HashtagIcon },
+    { key: "street", type: "text", placeholder: "Street", icon: MapPinIcon },
+    { key: "postalCode", type: "text", placeholder: "Postal code", icon: EnvelopeIcon },
+]);
+
+const { query, setFilter, setFilters, clampPage } = useListQuery(
+    z.object({
+        page: pageParam,
+        name: textParam,
+        city: textParam,
+        identifier: textParam,
+        street: textParam,
+        postalCode: textParam,
+    }),
 );
 
-const { data, isLoading, error } = usePagedList(
-    (q, signal) =>
+const moreFiltersState = useMoreFilters(moreFilters, query, setFilters);
+const { activeCount: activeMoreFilters, isOpen: showMoreFilters } = moreFiltersState;
+
+const { data, isLoading, error, reload } = usePagedList(
+    (q) =>
         apiClient.getBuildings({
-            queries: { Name: q.name.trim() || undefined, Page: q.page, PageSize: PAGE_SIZE },
-            signal,
+            queries: {
+                Name: q.name.trim() || undefined,
+                City: q.city.trim() || undefined,
+                Identifier: q.identifier.trim() || undefined,
+                Street: q.street.trim() || undefined,
+                PostalCode: q.postalCode.trim() || undefined,
+                Page: q.page,
+                PageSize: PAGE_SIZE,
+            },
         }),
     query,
 );
 
 watch(data, (page) => {
-    if (page) void clampPage(page.totalPages);
+    if (page) clampPage(page.totalPages);
 });
 
-const pendingDeleteId = ref<string | null>(null);
-const isModalOpen = ref(false);
+const confirm = useConfirm();
+const toasts = useToastsStore();
+const buildingsStore = useBuildingsStore();
 
-function deleteBuilding(buildingId: string): void {
-    pendingDeleteId.value = buildingId;
-    isModalOpen.value = true;
+async function deleteBuilding(building: Building): Promise<void> {
+    const confirmed = await confirm({
+        title: "Delete building?",
+        message: `"${building.name}" will be permanently deleted. This cannot be undone.`,
+        confirmText: "Delete",
+        danger: true,
+    });
+    if (!confirmed) return;
+
+    const result = await apiCall(() =>
+        apiClient.deleteBuildingsBuildingId(undefined, { params: { buildingId: building.id } }),
+    );
+    if (!result.ok) {
+        toasts.pushError({
+            title: "Failed to delete building",
+            message: apiErrorMessage(result.error),
+        });
+        return;
+    }
+
+    toasts.pushSuccess({ title: "Deleted", message: `Building "${building.name}" was deleted` });
+    await reload();
+    buildingsStore.fetchBuildings();
 }
 </script>
 
 <template>
     <AsideNavbarLayout>
-        <Modal :is-open="isModalOpen" @close="isModalOpen = false" />
         <Container class="@container px-0! py-0!">
             <div
                 class="border-border flex flex-col flex-wrap items-center justify-between gap-2 border-b p-4 @md:flex-row"
             >
-                <div class="flex shrink-0 flex-col items-center gap-2 @sm:flex-row">
+                <div
+                    class="flex w-full shrink-0 flex-col items-center gap-2 @sm:w-auto @sm:flex-row"
+                >
                     <LinkButton
                         v-if="hasPermission(Permission.BuildingAdd)"
                         :to="{ name: buildingRoutes.add.name }"
@@ -91,9 +152,24 @@ function deleteBuilding(buildingId: string): void {
                         class="w-full shrink-0 @sm:w-auto"
                         @change="setFilter"
                     />
+                    <MoreFiltersButton
+                        v-model="showMoreFilters"
+                        controls="building-more-filters"
+                        :active-count="activeMoreFilters"
+                    />
                 </div>
                 <PagerBlock :current="query.page" :total="data?.totalPages ?? 1" />
             </div>
+
+            <MoreFiltersPanel
+                v-show="showMoreFilters"
+                id="building-more-filters"
+                :filters="moreFilters"
+                :values="query"
+                :active-count="activeMoreFilters"
+                @change="setFilter"
+                @clear="moreFiltersState.clear"
+            />
 
             <ErrorText v-if="error" :error="apiErrorMessage(error)" class="mt-4" />
 
@@ -104,35 +180,41 @@ function deleteBuilding(buildingId: string): void {
                 :is-loading="isLoading"
                 :skeleton-rows="PAGE_SIZE"
             >
-                <template #cell-link="{ row }">
-                    <LinkButton
-                        class="flex! items-center justify-center px-4! py-0!"
-                        :to="{ name: buildingRoutes.view.name, params: { buildingId: row.id } }"
-                    >
-                        <ArrowRightIcon />
-                    </LinkButton>
-                </template>
-
-                <template #cell-identifier="{ row }">
-                    <Badge v-if="row.identifier">
-                        {{ row.identifier }}
-                    </Badge>
-                </template>
-
                 <template #cell-name="{ row }">
-                    {{ row.name }}
+                    <TextLink
+                        v-if="hasPermission(Permission.BuildingView)"
+                        :to="{ name: buildingRoutes.view.name, params: { buildingId: row.id } }"
+                        class="block truncate"
+                    >
+                        {{ row.name }}
+                    </TextLink>
+                    <span v-else class="text-text block truncate font-medium">{{ row.name }}</span>
+                    <span v-if="row.identifier" class="text-text-muted block truncate text-xs">
+                        {{ row.identifier }}
+                    </span>
                 </template>
 
                 <template #cell-location="{ row }">
-                    {{ formatAddress(row) }}
+                    <span class="inline-flex max-w-full items-start gap-2 text-left align-middle">
+                        <MapPinIcon class="text-text-muted/70 mt-0.5 size-4 shrink-0" />
+                        <span class="min-w-0">
+                            <span class="block truncate">{{ row.street }}</span>
+                            <span class="text-text-muted block truncate text-xs">
+                                {{ formatCityLine(row) }}
+                            </span>
+                        </span>
+                    </span>
                 </template>
 
                 <template #cell-floors="{ row }">
-                    {{ row.floorsCount }}
+                    <span class="inline-flex items-center gap-2 align-middle">
+                        <Square3Stack3DIcon class="text-text-muted/70 size-4 shrink-0" />
+                        {{ row.floorsCount }} {{ row.floorsCount === 1 ? "floor" : "floors" }}
+                    </span>
                 </template>
 
                 <template #cell-delete="{ row }">
-                    <IconButton type="danger" @click="deleteBuilding(row.id)">
+                    <IconButton type="danger" @click="deleteBuilding(row)">
                         <TrashIcon class="size-4" />
                     </IconButton>
                 </template>

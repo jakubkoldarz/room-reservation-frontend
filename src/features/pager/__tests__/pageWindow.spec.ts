@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { pageWindow, type PageItem } from "../utils/pageWindow";
+import type { PageItem } from "../types";
+import { pageWindow } from "../utils/pageWindow";
 
-/** Zapis jak w specyfikacji: "1 … 4 [5] 6 … 10" */
 function render(items: PageItem[]): string {
     return items
         .map((item) => {

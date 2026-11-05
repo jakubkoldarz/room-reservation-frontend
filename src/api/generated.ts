@@ -199,8 +199,14 @@ const RoleRequestDto = z.object({
     isSuperAdmin: z.boolean(),
     permissionIds: z.array(z.string().uuid()),
 });
-const PagedResponseDtoOfBasicRoomResponseDto = z.object({
-    items: z.array(BasicRoomResponseDto),
+const RoomListItemResponseDto = z.object({
+    roomInfo: BasicRoomResponseDto,
+    buildingInfo: BasicBuildingResponseDto,
+    equipment: z.array(EquipmentResponseDto),
+    availabilities: z.array(AvailabilityResponseDto),
+});
+const PagedResponseDtoOfRoomListItemResponseDto = z.object({
+    items: z.array(RoomListItemResponseDto),
     totalCount: z.number().int(),
     page: z.number().int(),
     pageSize: z.number().int(),
@@ -280,7 +286,8 @@ export const schemas = {
     RoleResponseDto,
     PagedResponseDtoOfRoleResponseDto,
     RoleRequestDto,
-    PagedResponseDtoOfBasicRoomResponseDto,
+    RoomListItemResponseDto,
+    PagedResponseDtoOfRoomListItemResponseDto,
     RoomRequestDto,
     RoomResponseDto,
     RoomDetailsResponseDto,
@@ -1277,7 +1284,7 @@ const endpoints = makeApi([
                 schema: z.number().int().gte(1).lte(100).optional(),
             },
         ],
-        response: PagedResponseDtoOfBasicRoomResponseDto,
+        response: PagedResponseDtoOfRoomListItemResponseDto,
     },
     {
         method: "post",
