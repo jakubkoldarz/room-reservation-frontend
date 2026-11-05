@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Navbar from "@/features/shared/Navbar.vue";
+import AppNavbar from "@/features/shared/AppNavbar.vue";
 import { ref } from "vue";
 import AsidePanel from "../shared/AsidePanel.vue";
 
@@ -8,7 +8,7 @@ const isMobileAsideOpen = ref(false);
 
 <template>
     <section class="flex grow flex-col">
-        <Navbar @mobile-burger-click="isMobileAsideOpen = !isMobileAsideOpen" />
+        <AppNavbar @mobile-burger-click="isMobileAsideOpen = !isMobileAsideOpen" />
         <div class="flex grow">
             <AsidePanel
                 :is-mobile-aside-open="isMobileAsideOpen"

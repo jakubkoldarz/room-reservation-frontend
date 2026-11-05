@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { UserIcon } from "@heroicons/vue/24/outline";
+import { ArrowRightStartOnRectangleIcon, UserIcon } from "@heroicons/vue/24/outline";
+import BaseTooltip from "./BaseTooltip.vue";
 import IconButton from "./IconButton.vue";
 import Logo from "./Logo.vue";
 import Searchbar from "./Searchbar.vue";
 import { Bars4Icon, MagnifyingGlassIcon } from "@heroicons/vue/24/solid";
 import { nextTick, ref } from "vue";
+import { useSignOut } from "../auth/composables/useSignOut";
 import { profileRoutes } from "../profile/routes";
 
+const { signOut, isSigningOut } = useSignOut();
 const isMobileSearchOpen = ref(false);
 const searchbarRef = ref<InstanceType<typeof Searchbar>>();
 
@@ -45,10 +48,20 @@ const emit = defineEmits<{
             <RouterLink
                 :to="{ name: profileRoutes.view.name }"
                 aria-label="My profile"
-                class="hover:text-primary focus-visible:ring-primary block size-6 rounded-full outline-none focus-visible:ring-1"
+                class="text-text-secondary hover:text-primary focus-visible:ring-primary block size-6 rounded-full outline-none focus-visible:ring-1"
             >
                 <UserIcon />
             </RouterLink>
+            <BaseTooltip text="Sign out">
+                <IconButton
+                    class="text-text-secondary block size-6 disabled:opacity-60"
+                    aria-label="Sign out"
+                    :disabled="isSigningOut"
+                    @click="signOut"
+                >
+                    <ArrowRightStartOnRectangleIcon />
+                </IconButton>
+            </BaseTooltip>
         </div>
     </nav>
 </template>
