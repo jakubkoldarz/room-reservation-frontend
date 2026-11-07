@@ -14,4 +14,10 @@ export const eventRoutes = {
         component: () => import("@/features/events/views/EventAdd.vue"),
         meta: { requiresAuth: true, requiredPermission: Permission.EventAdd },
     },
+    edit: {
+        path: "/events/:eventId/edit",
+        name: "events.edit",
+        component: () => import("@/features/events/views/EventEdit.vue"),
+        meta: { requiresAuth: true, requiredPermission: Permission.EventEdit },
+    },
 } as const satisfies Record<string, RouteRecordRaw>;

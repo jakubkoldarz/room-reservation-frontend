@@ -6,14 +6,26 @@ import { computed } from "vue";
 import NumberCircle from "@/features/buildings/components/NumberCircle.vue";
 import BaseInput from "@/features/shared/BaseInput.vue";
 import Container from "@/features/shared/Container.vue";
+import { formatHm } from "@/features/availabilities/utils/schedule";
 import { toIsoDate } from "@/utils/isoDate";
-import { EventFormSchema } from "../schemas";
-import type { EventForm } from "../types";
+import { createEventFormSchema } from "../schemas";
+import type { EventForm, EventInfo } from "../types";
 import { eventDayCount } from "../utils/eventFormat";
 
+const { event = null } = defineProps<{
+    event?: EventInfo | null;
+}>();
+
 const { handleSubmit, errors, defineField, setErrors, values } = useForm({
-    validationSchema: toTypedSchema(EventFormSchema),
-    initialValues: { name: "", startDate: "", endDate: "", isClosed: true },
+    validationSchema: toTypedSchema(createEventFormSchema(event?.startDate)),
+    initialValues: {
+        name: event?.name ?? "",
+        startDate: event?.startDate ?? "",
+        endDate: event?.endDate ?? "",
+        isClosed: event?.isClosed ?? true,
+        startTime: event?.startTime ? formatHm(event.startTime) : undefined,
+        endTime: event?.endTime ? formatHm(event.endTime) : undefined,
+    },
 });
 const [name, nameAttrs] = defineField("name");
 const [startDate, startDateAttrs] = defineField("startDate");
@@ -23,6 +35,7 @@ const [startTime, startTimeAttrs] = defineField("startTime");
 const [endTime, endTimeAttrs] = defineField("endTime");
 
 const today = toIsoDate(new Date());
+const earliestStart = event && event.startDate < today ? event.startDate : today;
 
 const TYPES = [
     {
@@ -95,7 +108,7 @@ defineExpose({ submit, showServerErrors });
                 type="date"
                 label="From"
                 is-required
-                :min="today"
+                :min="earliestStart"
                 :error-message="errors.startDate"
                 @update:model-value="onStartDate"
             />

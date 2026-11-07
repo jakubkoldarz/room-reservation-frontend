@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { EventFormSchema } from "../schemas";
+import { createEventFormSchema, EventFormSchema } from "../schemas";
 import { toEventRequest } from "../utils/eventConflicts";
 
 function issues(input: Record<string, unknown>) {
@@ -40,8 +40,28 @@ describe("EventFormSchema", () => {
 
     it("data początku nie w przeszłości, koniec nie przed początkiem", () => {
         expect(
-            issues({ name: "X", startDate: "2026-11-06", endDate: "2026-11-05", isClosed: true }),
-        ).toEqual(["startDate", "endDate"]);
+            issues({ name: "X", startDate: "2026-11-06", endDate: "2026-11-08", isClosed: true }),
+        ).toEqual(["startDate"]);
+        expect(
+            issues({ name: "X", startDate: "2026-11-10", endDate: "2026-11-09", isClosed: true }),
+        ).toEqual(["endDate"]);
+    });
+
+    it("edycja trwającego eventu: stara data początku zostaje, ale koniec nie w przeszłości", () => {
+        const schema = createEventFormSchema("2026-11-05");
+        const parse = (input: Record<string, unknown>) => {
+            const result = schema.safeParse(input);
+            return result.success ? [] : result.error.issues.map((issue) => issue.path.join("."));
+        };
+        const ongoing = {
+            name: "X",
+            startDate: "2026-11-05",
+            endDate: "2026-11-09",
+            isClosed: true,
+        };
+        expect(parse(ongoing)).toEqual([]);
+        expect(parse({ ...ongoing, startDate: "2026-11-04" })).toEqual(["startDate"]);
+        expect(parse({ ...ongoing, endDate: "2026-11-06" })).toEqual(["endDate"]);
     });
 });
 

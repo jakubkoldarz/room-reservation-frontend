@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { CheckIcon, ChevronDownIcon } from "@heroicons/vue/24/solid";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import NumberCircle from "@/features/buildings/components/NumberCircle.vue";
 import type { RoomListItem } from "@/features/rooms/types";
 import { formatFloor } from "@/features/rooms/utils/formatRoom";
@@ -60,6 +60,18 @@ function toggleRoom(roomId: string): void {
     const isSelected = selectedIds.value.includes(roomId);
     selectedIds.value = toggleRooms(selectedIds.value, [roomId], !isSelected);
 }
+
+watch(
+    () => rooms.length,
+    () => {
+        const withSelection = groupRoomsByBuilding(rooms)
+            .filter((group) => selectedCount(group) > 0)
+            .map((group) => group.id);
+        if (withSelection.length > 0)
+            expanded.value = new Set([...expanded.value, ...withSelection]);
+    },
+    { immediate: true },
+);
 
 const selectedBuildings = computed(
     () => groupRoomsByBuilding(rooms).filter((group) => selectedCount(group) > 0).length,

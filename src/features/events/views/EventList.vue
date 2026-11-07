@@ -207,7 +207,14 @@ const periodNotice = computed(() => {
                 :skeleton-rows="PAGE_SIZE"
             >
                 <template #cell-name="{ row }">
-                    <span class="text-text block truncate font-medium">{{ row.name }}</span>
+                    <TextLink
+                        v-if="hasPermission(Permission.EventEdit)"
+                        :to="{ name: eventRoutes.edit.name, params: { eventId: row.id } }"
+                        class="block truncate"
+                    >
+                        {{ row.name }}
+                    </TextLink>
+                    <span v-else class="text-text block truncate font-medium">{{ row.name }}</span>
                     <span
                         class="block text-xs"
                         :class="
