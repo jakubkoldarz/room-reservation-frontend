@@ -3,6 +3,7 @@ import type { EventInfo } from "@/features/events/types";
 import type { Reservation, ReservationState } from "@/features/reservations/types";
 import {
     addDays,
+    blockLines,
     buildCalendarDays,
     formatWeekRange,
     hourRange,
@@ -273,5 +274,23 @@ describe("layoutGrid", () => {
         expect(grid.blocks.map((b) => [b.id, b.lane, b.lanes])).toEqual([["a", 0, 2]]);
         expect(grid.more).toHaveLength(1);
         expect(grid.more[0]).toMatchObject({ start: 600, end: 700, lane: 1, lanes: 2, count: 2 });
+    });
+});
+
+describe("blockLines", () => {
+    const withPurpose = { time: "10:00–10:30", title: "Anna Nowak", detail: "Lecture" };
+
+    it("cel jest zaraz po godzinie, autor na końcu", () => {
+        expect(blockLines(withPurpose, 3)).toEqual(["10:00–10:30", "Lecture", "Anna Nowak"]);
+        expect(blockLines(withPurpose, 2)).toEqual(["10:00–10:30", "Lecture"]);
+    });
+
+    it("w jednej linii godzina początku z celem, a bez celu z autorem", () => {
+        expect(blockLines(withPurpose, 1)).toEqual(["10:00 Lecture"]);
+        expect(blockLines({ ...withPurpose, detail: "" }, 1)).toEqual(["10:00 Anna Nowak"]);
+        expect(blockLines({ ...withPurpose, detail: "" }, 3)).toEqual([
+            "10:00–10:30",
+            "Anna Nowak",
+        ]);
     });
 });

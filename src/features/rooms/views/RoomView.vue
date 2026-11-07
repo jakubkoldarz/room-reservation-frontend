@@ -2,17 +2,25 @@
 import { computed, ref, shallowRef, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useIntervalFn, useNow } from "@vueuse/core";
+import { PlusIcon } from "@heroicons/vue/24/solid";
 import { z } from "zod";
 import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
+import { usePermissions } from "@/composables/usePermissions";
+import { Permission } from "@/features/auth/constants/permissions";
+import { slotsForDate } from "@/features/availabilities/utils/schedule";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
+import ReservationCreateDialog from "@/features/reservations/components/ReservationCreateDialog.vue";
+import type { ReservationDraft } from "@/features/reservations/types";
+import BaseTooltip from "@/features/shared/BaseTooltip.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
+import { toIsoDate } from "@/utils/isoDate";
 import RoomCalendar from "../components/RoomCalendar.vue";
 import RoomInfoPanel from "../components/RoomInfoPanel.vue";
 import { useCalendarWeek } from "../composables/useCalendarWeek";
-import type { RoomSummary } from "../types";
-import { buildCalendarDays, hourRange } from "../utils/calendar";
+import type { CalendarSelection, RoomSummary } from "../types";
+import { buildCalendarDays, hourRange, minutesToHm } from "../utils/calendar";
 
 const route = useRoute();
 const now = useNow({ scheduler: (tick) => useIntervalFn(tick, 60_000) });
@@ -44,6 +52,13 @@ async function load(id: string | null): Promise<void> {
 
 watch(roomId, load, { immediate: true });
 
+async function refresh(): Promise<void> {
+    const id = roomId.value;
+    if (!id) return;
+    const result = await apiCall(() => apiClient.getRoomsRoomId({ params: { roomId: id } }));
+    if (result.ok && id === roomId.value) room.value = result.data;
+}
+
 const { weekStart, isCurrentWeek, weekLabel, showPreviousWeek, showNextWeek, showCurrentWeek } =
     useCalendarWeek(now);
 
@@ -64,6 +79,64 @@ const days = computed(() =>
     }),
 );
 const hours = computed(() => hourRange(room.value?.availabilities ?? [], days.value));
+
+const { hasPermission } = usePermissions();
+const canReserve = computed(
+    () => hasPermission(Permission.ReservationCreate) && room.value !== null,
+);
+
+const selection = ref<CalendarSelection | null>(null);
+const draft = ref<ReservationDraft | null>(null);
+const isDialogOpen = ref(false);
+
+function openDialog(next: ReservationDraft): void {
+    draft.value = next;
+    isDialogOpen.value = true;
+}
+
+function onSelect(next: CalendarSelection): void {
+    selection.value = next;
+    openDialog({
+        date: next.iso,
+        startTime: minutesToHm(next.start),
+        endTime: minutesToHm(next.end),
+    });
+}
+
+function defaultDraft(): ReservationDraft {
+    const date = isCurrentWeek.value ? new Date(now.value) : new Date(weekStart.value);
+    const isToday = toIsoDate(date) === toIsoDate(now.value);
+    const firstSlot = slotsForDate(
+        room.value?.availabilities ?? [],
+        date,
+        room.value?.events ?? [],
+    )[0];
+    const openingHour = firstSlot ? Number(firstSlot.startTime.split(":")[0]) : 8;
+    const startHour = Math.min(
+        isToday ? Math.max(now.value.getHours() + 1, openingHour) : openingHour,
+        22,
+    );
+    return {
+        date: toIsoDate(date),
+        startTime: minutesToHm(startHour * 60),
+        endTime: minutesToHm((startHour + 1) * 60),
+    };
+}
+
+function openNewReservation(): void {
+    selection.value = null;
+    openDialog(defaultDraft());
+}
+
+function closeDialog(): void {
+    isDialogOpen.value = false;
+    selection.value = null;
+}
+
+async function onCreated(): Promise<void> {
+    closeDialog();
+    await refresh();
+}
 </script>
 
 <template>
@@ -84,12 +157,41 @@ const hours = computed(() => hourRange(room.value?.availabilities ?? [], days.va
                     :week-label
                     :is-current-week
                     :is-loading
+                    :selectable="canReserve"
+                    :selection
                     class="min-w-0 flex-1 @5xl:order-1"
                     @previous="showPreviousWeek"
                     @next="showNextWeek"
                     @today="showCurrentWeek"
-                />
+                    @select="onSelect"
+                >
+                    <template #actions>
+                        <BaseTooltip v-if="canReserve" text="New reservation" class="@3xl:hidden">
+                            <button
+                                type="button"
+                                aria-label="New reservation"
+                                class="bg-primary text-surface hover:bg-primary-hover focus-visible:ring-primary grid size-8 cursor-pointer place-items-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+                                @click="openNewReservation"
+                            >
+                                <PlusIcon class="size-5" />
+                            </button>
+                        </BaseTooltip>
+                    </template>
+                </RoomCalendar>
             </div>
         </div>
+        <ReservationCreateDialog
+            v-if="room"
+            :open="isDialogOpen"
+            :room-id="room.details.roomInfo.id"
+            :room-label
+            :requires-approval="room.details.roomInfo.requiresApproval"
+            :draft
+            :availabilities="room.availabilities"
+            :events="room.events"
+            @close="closeDialog"
+            @created="onCreated"
+            @conflict="refresh"
+        />
     </AsideNavbarLayout>
 </template>

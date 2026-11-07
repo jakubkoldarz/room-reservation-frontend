@@ -60,3 +60,12 @@ export type CalendarDay = {
     blocks: CalendarBlock[];
     grid: { blocks: CalendarBlock[]; more: CalendarMore[] };
 };
+
+export type MinuteRange = {
+    start: number;
+    end: number;
+};
+
+export type CalendarSelection = MinuteRange & {
+    iso: string;
+};

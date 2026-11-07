@@ -147,6 +147,17 @@ export function overrideLabel(item: CalendarAllDay): string {
     return item.isClosed ? `Closed: ${item.title}` : `${item.title} · special hours ${item.hours}`;
 }
 
+export function blockLines(
+    block: Pick<CalendarBlock, "time" | "title" | "detail">,
+    capacity: number,
+): string[] {
+    if (capacity <= 1) {
+        const startTime = block.time.split("–")[0];
+        return [`${startTime} ${block.detail || block.title}`];
+    }
+    return [block.time, block.detail, block.title].filter(Boolean).slice(0, capacity);
+}
+
 export function layoutGrid(
     blocks: readonly Omit<CalendarBlock, "lane" | "lanes">[],
     maxLanes = MAX_GRID_LANES,
