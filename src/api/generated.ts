@@ -873,6 +873,16 @@ const endpoints = makeApi([
                 schema: z.string().optional(),
             },
             {
+                name: "DateFrom",
+                type: "Query",
+                schema: z.string().optional(),
+            },
+            {
+                name: "DateTo",
+                type: "Query",
+                schema: z.string().optional(),
+            },
+            {
                 name: "Status",
                 type: "Query",
                 schema: z.number().int().optional(),
@@ -1090,6 +1100,16 @@ const endpoints = makeApi([
             },
             {
                 name: "Date",
+                type: "Query",
+                schema: z.string().optional(),
+            },
+            {
+                name: "DateFrom",
+                type: "Query",
+                schema: z.string().optional(),
+            },
+            {
+                name: "DateTo",
                 type: "Query",
                 schema: z.string().optional(),
             },
