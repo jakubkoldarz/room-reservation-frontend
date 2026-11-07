@@ -123,6 +123,14 @@ const EventResponseDto = z.object({
     endTime: z.union([z.null(), z.string()]).optional(),
     rooms: z.array(BasicRoomResponseDto),
 });
+const PagedResponseDtoOfEventResponseDto = z.object({
+    items: z.array(EventResponseDto),
+    totalCount: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
+    totalPages: z.number().int(),
+    hasNextPage: z.boolean(),
+});
 const EventRequestDto = z.object({
     name: z.string().max(100),
     roomIds: z.array(z.string().uuid()),
@@ -281,6 +289,7 @@ export const schemas = {
     PagedResponseDtoOfEquipmentResponseDto,
     EquipmentRequestDto,
     EventResponseDto,
+    PagedResponseDtoOfEventResponseDto,
     EventRequestDto,
     PermissionResponseDto,
     PagedResponseDtoOfPermissionResponseDto,
@@ -721,6 +730,55 @@ const endpoints = makeApi([
             },
         ],
         response: z.void(),
+    },
+    {
+        method: "get",
+        path: "/events",
+        alias: "getEvents",
+        requestFormat: "json",
+        parameters: [
+            {
+                name: "Name",
+                type: "Query",
+                schema: z.string().optional(),
+            },
+            {
+                name: "RoomId",
+                type: "Query",
+                schema: z.string().uuid().optional(),
+            },
+            {
+                name: "BuildingId",
+                type: "Query",
+                schema: z.string().uuid().optional(),
+            },
+            {
+                name: "IsClosed",
+                type: "Query",
+                schema: z.boolean().optional(),
+            },
+            {
+                name: "DateFrom",
+                type: "Query",
+                schema: z.string().optional(),
+            },
+            {
+                name: "DateTo",
+                type: "Query",
+                schema: z.string().optional(),
+            },
+            {
+                name: "Page",
+                type: "Query",
+                schema: z.number().int().gte(1).lte(2147483647).optional(),
+            },
+            {
+                name: "PageSize",
+                type: "Query",
+                schema: z.number().int().gte(1).lte(100).optional(),
+            },
+        ],
+        response: PagedResponseDtoOfEventResponseDto,
     },
     {
         method: "post",

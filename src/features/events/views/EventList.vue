@@ -4,6 +4,7 @@ import {
     BuildingOfficeIcon,
     CalendarDaysIcon,
     ClockIcon,
+    PlusIcon,
     RectangleStackIcon,
     TagIcon,
 } from "@heroicons/vue/24/solid";
@@ -27,10 +28,12 @@ import { BLOCK_CLASSES } from "@/features/rooms/utils/calendarStyles";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
 import Container from "@/features/shared/Container.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
+import LinkButton from "@/features/shared/LinkButton.vue";
 import TextLink from "@/features/shared/TextLink.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
 import type { Column } from "@/features/table/types";
 import { toIsoDate } from "@/utils/isoDate";
+import { eventRoutes } from "../routes";
 import { EventListQuerySchema } from "../schemas";
 import type { EventPeriod } from "../types";
 import { eventDayCount, eventHours, eventPeriod, formatEventDates } from "../utils/eventFormat";
@@ -154,6 +157,14 @@ const periodNotice = computed(() => {
                 <div
                     class="flex w-full shrink-0 flex-col items-center gap-2 @sm:w-auto @sm:flex-row"
                 >
+                    <LinkButton
+                        v-if="hasPermission(Permission.EventAdd)"
+                        :to="eventRoutes.add"
+                        class="w-full rounded! py-1.5! sm:max-w-45"
+                    >
+                        <PlusIcon />
+                        Add event
+                    </LinkButton>
                     <FiltersPanel
                         :filters
                         :values="query"

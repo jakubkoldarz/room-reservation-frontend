@@ -8,7 +8,7 @@ export function isConflict(error: ApiError): boolean {
     return error.kind === "http" && error.status === HttpStatusCode.Conflict;
 }
 
-function conflictingItems<T>(error: ApiError, schema: z.ZodType<T>): T[] {
+export function conflictingItems<T>(error: ApiError, schema: z.ZodType<T>): T[] {
     if (error.kind !== "http" || !isConflict(error) || error.conflictingItems.length === 0)
         return [];
     const parsed = z.array(schema).safeParse(error.conflictingItems);
