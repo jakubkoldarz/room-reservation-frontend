@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { useConfirm, useConfirmDialogState } from "../composables/useConfirm";
+import { useConfirm, useConfirmDialogState, usePrompt } from "../composables/useConfirm";
 
 const options = { title: "Delete?", message: "Sure?" };
 
@@ -40,5 +40,21 @@ describe("useConfirm", () => {
         dialog.answer(true);
         dialog.answer(false);
         expect(await answer).toBe(true);
+    });
+});
+
+describe("usePrompt", () => {
+    const promptOptions = { ...options, input: { label: "Reason", maxLength: 100 } };
+
+    it("zwraca przycięty tekst po potwierdzeniu", async () => {
+        const answer = usePrompt()(promptOptions);
+        useConfirmDialogState().answer(true, "  Room is closed  ");
+        expect(await answer).toBe("Room is closed");
+    });
+
+    it("zwraca null po anulowaniu", async () => {
+        const answer = usePrompt()(promptOptions);
+        useConfirmDialogState().answer(false, "ignored");
+        expect(await answer).toBeNull();
     });
 });

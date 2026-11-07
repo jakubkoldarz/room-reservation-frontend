@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import ReservationDetails from "@/features/reservations/components/ReservationDetails.vue";
 import Badge from "@/features/shared/Badge.vue";
+import BaseTooltip from "@/features/shared/BaseTooltip.vue";
 import type { CalendarDay } from "../types";
 import { minutesToHm, overrideLabel } from "../utils/calendar";
 import { BLOCK_CLASSES, blockKindLabel } from "../utils/calendarStyles";
@@ -51,20 +53,31 @@ function openingHours(day: CalendarDay): string {
                 <li
                     v-for="block in [...day.blocks].sort((a, b) => a.start - b.start)"
                     :key="block.id"
-                    class="flex gap-3 rounded border-l-4 px-3 py-1.5 text-sm"
-                    :class="BLOCK_CLASSES[block.kind]"
                 >
-                    <span class="w-24 shrink-0 font-semibold">{{ block.time }}</span>
-                    <span class="flex min-w-0 flex-col">
-                        <span class="truncate font-medium">{{ block.title }}</span>
-                        <span class="truncate text-xs opacity-80">
-                            {{
-                                [blockKindLabel(block.kind), block.detail]
-                                    .filter(Boolean)
-                                    .join(" · ")
-                            }}
+                    <BaseTooltip
+                        variant="card"
+                        class="flex w-full cursor-default gap-3 rounded border-l-4 px-3 py-1.5 text-sm"
+                        :class="BLOCK_CLASSES[block.kind]"
+                    >
+                        <span class="w-24 shrink-0 font-semibold">{{ block.time }}</span>
+                        <span class="flex min-w-0 flex-col">
+                            <span class="truncate font-medium">{{ block.title }}</span>
+                            <span class="truncate text-xs opacity-80">
+                                {{
+                                    [blockKindLabel(block.kind), block.detail]
+                                        .filter(Boolean)
+                                        .join(" · ")
+                                }}
+                            </span>
                         </span>
-                    </span>
+                        <template #content>
+                            <ReservationDetails
+                                :reservation="block.reservation"
+                                :state="block.kind"
+                                :room="block.room"
+                            />
+                        </template>
+                    </BaseTooltip>
                 </li>
             </ul>
             <p v-else class="text-text-muted text-xs">No reservations</p>

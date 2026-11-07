@@ -5,8 +5,13 @@ import IconButton from "@/features/shared/IconButton.vue";
 import OutlineButton from "@/features/shared/OutlineButton.vue";
 import Skeleton from "@/features/shared/Skeleton.vue";
 import { computed } from "vue";
-import type { CalendarDay } from "../types";
-import { BLOCK_CLASSES, CLOSED_HOURS_BACKGROUND, LEGEND } from "../utils/calendarStyles";
+import type { CalendarBlockKind, CalendarDay, CalendarSelection } from "../types";
+import {
+    BLOCK_CLASSES,
+    CLOSED_HOURS_BACKGROUND,
+    LEGEND,
+    ROOM_LEGEND_KINDS,
+} from "../utils/calendarStyles";
 import RoomCalendarAgenda from "./RoomCalendarAgenda.vue";
 import RoomCalendarGrid from "./RoomCalendarGrid.vue";
 
@@ -20,6 +25,9 @@ const {
     title,
     notice,
     showOpeningHours = true,
+    selectable = false,
+    selection = null,
+    legendKinds = ROOM_LEGEND_KINDS,
 } = defineProps<{
     days: readonly CalendarDay[];
     hours: { start: number; end: number };
@@ -30,37 +38,56 @@ const {
     title?: string;
     notice?: string;
     showOpeningHours?: boolean;
+    selectable?: boolean;
+    selection?: CalendarSelection | null;
+    legendKinds?: readonly CalendarBlockKind[];
 }>();
 
-const legend = computed(() =>
-    showOpeningHours
-        ? LEGEND
-        : LEGEND.filter((item) => item.kind !== "event" && item.kind !== "closed"),
-);
+defineSlots<{
+    actions?(): unknown;
+}>();
+
+const legend = computed(() => LEGEND.filter((item) => legendKinds.includes(item.kind)));
 
 const emit = defineEmits<{
     previous: [];
     next: [];
     today: [];
+    select: [selection: CalendarSelection];
 }>();
 </script>
 
 <template>
     <Container class="@container px-0! py-0!">
-        <div class="border-border flex flex-wrap items-center gap-2 border-b p-4">
-            <h2 v-if="title" class="text-lg font-semibold">{{ title }}</h2>
-            <span v-if="title" class="text-text-muted text-sm">{{ weekLabel }}</span>
-            <h2 v-else class="text-lg font-semibold">{{ weekLabel }}</h2>
-            <span class="grow"></span>
-            <OutlineButton class="rounded-lg py-1" :disabled="isCurrentWeek" @click="emit('today')">
-                Today
-            </OutlineButton>
-            <IconButton class="size-8 p-1" aria-label="Previous week" @click="emit('previous')">
-                <ChevronLeftIcon />
-            </IconButton>
-            <IconButton class="size-8 p-1" aria-label="Next week" @click="emit('next')">
-                <ChevronRightIcon />
-            </IconButton>
+        <div class="border-border flex items-center gap-3 border-b p-4">
+            <div class="flex min-w-0 flex-1 flex-col @md:flex-row @md:items-baseline @md:gap-2">
+                <h2 class="text-lg leading-tight font-semibold">{{ title ?? weekLabel }}</h2>
+                <span v-if="title" class="text-text-muted truncate text-sm">{{ weekLabel }}</span>
+            </div>
+            <slot name="actions" />
+            <div class="flex shrink-0 items-center gap-1">
+                <OutlineButton
+                    class="mr-1 rounded-lg py-1"
+                    :disabled="isCurrentWeek"
+                    @click="emit('today')"
+                >
+                    Today
+                </OutlineButton>
+                <IconButton
+                    class="grid size-8 place-items-center p-1"
+                    aria-label="Previous week"
+                    @click="emit('previous')"
+                >
+                    <ChevronLeftIcon class="size-5" />
+                </IconButton>
+                <IconButton
+                    class="grid size-8 place-items-center p-1"
+                    aria-label="Next week"
+                    @click="emit('next')"
+                >
+                    <ChevronRightIcon class="size-5" />
+                </IconButton>
+            </div>
         </div>
 
         <p
@@ -70,16 +97,22 @@ const emit = defineEmits<{
             {{ notice }}
         </p>
 
-        <div v-if="isLoading" class="flex flex-col gap-3 p-4">
-            <Skeleton v-for="n in 8" :key="n" class="w-full" />
+        <div class="hidden @3xl:block">
+            <RoomCalendarGrid
+                :days
+                :hours
+                :now
+                :show-opening-hours
+                :is-loading
+                :selectable
+                :selection
+                @select="emit('select', $event)"
+            />
         </div>
-
-        <template v-else>
-            <div class="hidden @3xl:block">
-                <RoomCalendarGrid :days :hours :now :show-opening-hours />
-            </div>
-            <RoomCalendarAgenda :days :show-opening-hours class="@3xl:hidden" />
-        </template>
+        <div v-if="isLoading" class="flex animate-pulse flex-col gap-3 p-4 @3xl:hidden">
+            <Skeleton v-for="n in 7" :key="n" class="w-full" />
+        </div>
+        <RoomCalendarAgenda v-else :days :show-opening-hours class="@3xl:hidden" />
 
         <ul
             class="border-border text-text-muted flex flex-wrap gap-x-4 gap-y-2 border-t p-4 text-xs"

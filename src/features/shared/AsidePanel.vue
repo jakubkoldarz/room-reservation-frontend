@@ -3,7 +3,7 @@ import { usePermissions } from "@/composables/usePermissions";
 import { Permission } from "../auth/constants/permissions";
 import LinkButton from "./LinkButton.vue";
 import { dashboardRoutes } from "../dashboard/routes";
-import { HomeIcon, RectangleGroupIcon, StarIcon } from "@heroicons/vue/24/solid";
+import { CalendarDaysIcon, HomeIcon, RectangleGroupIcon, StarIcon } from "@heroicons/vue/24/solid";
 import { useBuildingsStore } from "../buildings/stores/useBuildingsStore.ts";
 import AsideList from "./AsideList.vue";
 import { useRoute } from "vue-router";
@@ -11,6 +11,7 @@ import { computed, onMounted, watch } from "vue";
 import { watchDebounced } from "@vueuse/core";
 import { buildingRoutes } from "../buildings/routes.ts";
 import { equipmentRoutes } from "../equipment/routes.ts";
+import { reservationRoutes } from "../reservations/routes.ts";
 import { roomRoutes } from "../rooms/routes.ts";
 import { useRoomsStore } from "../rooms/stores/useRoomsStore.ts";
 import { useRoomDestination } from "../rooms/composables/useRoomDestination.ts";
@@ -115,6 +116,13 @@ watchDebounced(
                 <LinkButton :to="dashboardRoutes.dashboard">
                     <HomeIcon />
                     Dashboard
+                </LinkButton>
+                <LinkButton
+                    v-if="hasPermission(Permission.ReservationList)"
+                    :to="reservationRoutes.list"
+                >
+                    <CalendarDaysIcon />
+                    Reservations
                 </LinkButton>
                 <LinkButton
                     v-if="hasPermission(Permission.EquipmentList)"

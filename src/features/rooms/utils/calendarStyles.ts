@@ -3,8 +3,8 @@ import type { CalendarBlockKind } from "../types";
 
 export const BLOCK_CLASSES: Record<CalendarBlockKind, string> = {
     approved: "bg-primary/10 border-primary text-primary",
-    pending: "bg-warning/10 border-warning text-warning-text border-dashed",
-    rejected: "bg-text-muted/10 border-text-muted/40 text-text-muted line-through",
+    pending: "bg-warning/10 border-warning text-warning-text",
+    rejected: "bg-danger/10 border-danger text-danger line-through",
     canceled: "bg-text-muted/10 border-text-muted/40 text-text-muted line-through",
     event: "bg-secondary/10 border-secondary text-secondary",
     closed: "bg-danger/10 border-danger text-danger",
@@ -13,9 +13,24 @@ export const BLOCK_CLASSES: Record<CalendarBlockKind, string> = {
 export const LEGEND: { kind: CalendarBlockKind; label: string }[] = [
     { kind: "approved", label: "Confirmed" },
     { kind: "pending", label: "Waiting for approval" },
-    { kind: "canceled", label: "Canceled / rejected" },
+    { kind: "rejected", label: "Rejected" },
+    { kind: "canceled", label: "Canceled" },
     { kind: "event", label: "Special hours" },
     { kind: "closed", label: "Closed (event)" },
+];
+
+export const ROOM_LEGEND_KINDS: readonly CalendarBlockKind[] = [
+    "approved",
+    "pending",
+    "event",
+    "closed",
+];
+
+export const PERSONAL_LEGEND_KINDS: readonly CalendarBlockKind[] = [
+    "approved",
+    "pending",
+    "rejected",
+    "canceled",
 ];
 
 export function blockKindLabel(kind: CalendarBlockKind): string {

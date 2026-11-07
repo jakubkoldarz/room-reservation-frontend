@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { EventInfo } from "@/features/events/types";
-import type { Reservation } from "@/features/reservations/types";
+import type { Reservation, ReservationState } from "@/features/reservations/types";
 import {
     addDays,
+    blockLines,
     buildCalendarDays,
     formatWeekRange,
     hourRange,
+    layoutGrid,
     layoutLanes,
     overrideLabel,
     parseIsoDate,
@@ -133,7 +135,23 @@ describe("buildCalendarDays", () => {
             title: "Anna Nowak",
             detail: "Lecture",
         });
-        expect(days[0].blocks[0].tooltip).toContain("Confirmed");
+        expect(days[0].blocks[0].room).toBeNull();
+    });
+
+    it("własny tytuł i sala w bloku (kalendarz w profilu), rezerwacja do karty szczegółów", () => {
+        const rejected = reservation({ status: "REJECTED", reason: "Exam week" });
+        const days = buildCalendarDays({
+            ...base,
+            reservations: [rejected],
+            reservationTitle: () => "A-101",
+            roomOf: () => ({ name: "A-101", building: "Main Building" }),
+        });
+        expect(days[0].blocks[0]).toMatchObject({
+            kind: "rejected",
+            title: "A-101",
+            room: { name: "A-101", building: "Main Building" },
+            reservation: rejected,
+        });
     });
 
     it("wydarzenie z godzinami zastępuje godziny otwarcia w każdym dniu zakresu, nie jest blokiem", () => {
@@ -202,5 +220,77 @@ describe("hourRange", () => {
 
     it("bez danych → domyślnie 8–18", () => {
         expect(hourRange([], [])).toEqual({ start: 8, end: 18 });
+    });
+
+    it("bez godzin otwarcia jedna rezerwacja nie zawęża zakresu, a późna go poszerza", () => {
+        const week = (startTime: string, endTime: string) =>
+            buildCalendarDays({
+                weekStart: MONDAY,
+                now: MONDAY,
+                reservations: [reservation({ startTime, endTime })],
+                events: [],
+                availabilities: [],
+                requiresApproval: false,
+            });
+        expect(hourRange([], week("09:00:00", "11:00:00"))).toEqual({ start: 8, end: 18 });
+        expect(hourRange([], week("19:00:00", "20:30:00"))).toEqual({ start: 8, end: 21 });
+    });
+});
+
+describe("layoutGrid", () => {
+    function block(id: string, start: number, end: number, kind: ReservationState = "approved") {
+        return {
+            id,
+            kind,
+            start,
+            end,
+            time: "",
+            title: id,
+            detail: "",
+            reservation: reservation({ id }),
+            room: null,
+        };
+    }
+
+    it("anulowana nachodząca na aktywną nie zajmuje pasa, a bez konfliktu zostaje", () => {
+        const grid = layoutGrid([
+            block("active", 600, 720),
+            block("canceled-overlap", 600, 660, "canceled"),
+            block("rejected-alone", 800, 860, "rejected"),
+        ]);
+        expect(grid.blocks.map((b) => [b.id, b.lane, b.lanes])).toEqual([
+            ["active", 0, 1],
+            ["rejected-alone", 0, 1],
+        ]);
+        expect(grid.more).toEqual([]);
+    });
+
+    it("więcej niż 2 pasy → pierwszy pas widoczny, reszta jako „+N”", () => {
+        const grid = layoutGrid([
+            block("a", 600, 720),
+            block("b", 600, 660, "pending"),
+            block("c", 610, 700, "pending"),
+        ]);
+        expect(grid.blocks.map((b) => [b.id, b.lane, b.lanes])).toEqual([["a", 0, 2]]);
+        expect(grid.more).toHaveLength(1);
+        expect(grid.more[0]).toMatchObject({ start: 600, end: 700, lane: 1, lanes: 2, count: 2 });
+    });
+});
+
+describe("blockLines", () => {
+    const withPurpose = { time: "10:00–10:30", title: "Anna Nowak", detail: "Lecture" };
+
+    it("cel jest zaraz po godzinie, autor na końcu", () => {
+        expect(blockLines(withPurpose, 3)).toEqual(["10:00–10:30", "Lecture", "Anna Nowak"]);
+        expect(blockLines(withPurpose, 2)).toEqual(["10:00–10:30", "Lecture"]);
+    });
+
+    it("w jednej linii godzina początku z celem, a bez celu z autorem", () => {
+        expect(blockLines(withPurpose, 1)).toEqual(["10:00 Lecture"]);
+        expect(blockLines({ ...withPurpose, detail: "" }, 1)).toEqual(["10:00 Anna Nowak"]);
+        expect(blockLines({ ...withPurpose, detail: "" }, 3)).toEqual([
+            "10:00–10:30",
+            "Anna Nowak",
+        ]);
     });
 });

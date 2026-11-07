@@ -6,6 +6,7 @@ import { buildingRoutes } from "@/features/buildings/routes";
 import { dashboardRoutes } from "@/features/dashboard/routes";
 import { equipmentRoutes } from "@/features/equipment/routes";
 import { profileRoutes } from "@/features/profile/routes";
+import { reservationRoutes } from "@/features/reservations/routes";
 import { roomRoutes } from "@/features/rooms/routes";
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 
@@ -22,6 +23,7 @@ const routes: RouteRecordRaw[] = [
     ...Object.values(equipmentRoutes),
     ...Object.values(roomRoutes),
     ...Object.values(profileRoutes),
+    ...Object.values(reservationRoutes),
 ];
 
 const router = createRouter({

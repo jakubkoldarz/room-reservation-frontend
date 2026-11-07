@@ -14,7 +14,7 @@ export type Filter<K extends string = string> = FilterBase<K> &
               values: readonly SelectOption[];
           }
         | {
-              type: "text" | "number" | "time";
+              type: "text" | "number" | "time" | "date";
           }
     );
 
