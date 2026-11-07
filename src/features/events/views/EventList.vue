@@ -30,6 +30,7 @@ import { useAllRooms } from "@/features/rooms/composables/useAllRooms";
 import { useRoomDestination } from "@/features/rooms/composables/useRoomDestination";
 import { BLOCK_CLASSES } from "@/features/rooms/utils/calendarStyles";
 import {
+    reservationConflictItems,
     reservationConflicts,
     reservationsAffectedMessage,
 } from "@/features/rooms/utils/conflicts";
@@ -181,12 +182,10 @@ async function deleteEvent(event: EventInfo): Promise<void> {
         const reservations = reservationConflicts(result.error);
         if (reservations.length > 0) {
             const roomNames = new Map(event.rooms.map((room) => [room.id, room.identifier]));
-            const affected = [
-                ...new Set(reservations.map((r) => roomNames.get(r.roomId) ?? "unknown room")),
-            ];
             const forced = await confirm({
                 title: "Delete event anyway?",
-                message: `Some reservations were made for the event hours and don't fit the normal opening hours. ${reservationsAffectedMessage(reservations.length)} Affected rooms: ${affected.join(", ")}.`,
+                message: `Some reservations were made for the event hours and don't fit the normal opening hours. ${reservationsAffectedMessage(reservations.length)}`,
+                items: reservationConflictItems(reservations, (id) => roomNames.get(id)),
                 confirmText: "Delete anyway",
                 danger: true,
             });

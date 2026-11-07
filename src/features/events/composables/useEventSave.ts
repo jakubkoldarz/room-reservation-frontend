@@ -2,6 +2,7 @@ import { ref } from "vue";
 import type { ApiResult } from "@/api/apiCall";
 import { useConfirm } from "@/features/modal/composables/useConfirm";
 import {
+    reservationConflictItems,
     reservationConflicts,
     reservationsAffectedMessage,
 } from "@/features/rooms/utils/conflicts";
@@ -11,10 +12,6 @@ import { eventConflicts } from "../utils/eventConflicts";
 export function useEventSave(roomNames: () => ReadonlyMap<string, string>) {
     const confirm = useConfirm();
     const isSaving = ref(false);
-
-    function affectedRooms(roomIds: readonly string[]): string {
-        return [...new Set(roomIds)].map((id) => roomNames().get(id) ?? "unknown room").join(", ");
-    }
 
     async function save(
         send: (force: boolean) => Promise<ApiResult<EventInfo>>,
@@ -32,7 +29,8 @@ export function useEventSave(roomNames: () => ReadonlyMap<string, string>) {
                 isSaving.value = false;
                 const confirmed = await confirm({
                     title: confirmTitle,
-                    message: `${reservationsAffectedMessage(reservations.length)} Affected rooms: ${affectedRooms(reservations.map((r) => r.roomId))}.`,
+                    message: reservationsAffectedMessage(reservations.length),
+                    items: reservationConflictItems(reservations, (id) => roomNames().get(id)),
                     confirmText,
                     danger: true,
                 });

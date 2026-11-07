@@ -21,7 +21,11 @@ import RoomAvailabilitiesEdit from "../components/RoomAvailabilitiesEdit.vue";
 import { roomRoutes } from "../routes";
 import { useRoomsStore } from "../stores/useRoomsStore";
 import type { ConflictingReservation, RoomForm, RoomSummary } from "../types";
-import { reservationConflicts, reservationsAffectedMessage } from "../utils/conflicts";
+import {
+    reservationConflictItems,
+    reservationConflicts,
+    reservationsAffectedMessage,
+} from "../utils/conflicts";
 
 const route = useRoute();
 const router = useRouter();
@@ -102,6 +106,7 @@ function confirmForce(conflicts: readonly ConflictingReservation[]): Promise<boo
     return confirm({
         title: "Save changes anyway?",
         message: `The new opening hours do not cover some upcoming reservations. ${reservationsAffectedMessage(conflicts.length)}`,
+        items: reservationConflictItems(conflicts, () => undefined),
         confirmText: "Save anyway",
         danger: true,
     });

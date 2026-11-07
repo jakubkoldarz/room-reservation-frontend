@@ -62,7 +62,7 @@ function toggleRoom(roomId: string): void {
 }
 
 watch(
-    () => rooms.length,
+    () => `${rooms.length}:${selectedIds.value.length > 0}`,
     () => {
         const withSelection = groupRoomsByBuilding(rooms)
             .filter((group) => selectedCount(group) > 0)

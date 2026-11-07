@@ -5,6 +5,12 @@ export interface ConfirmOptions {
     cancelText?: string;
     danger?: boolean;
     input?: ConfirmInput;
+    items?: readonly ConfirmItem[];
+}
+
+export interface ConfirmItem {
+    primary: string;
+    secondary?: string;
 }
 
 export interface ConfirmInput {

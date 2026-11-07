@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, useTemplateRef } from "vue";
-import { useRouter } from "vue-router";
+import { computed, ref, useTemplateRef, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { z } from "zod";
 import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
@@ -14,6 +15,7 @@ import { useEventSave } from "../composables/useEventSave";
 import { eventRoutes } from "../routes";
 import { overlapMessage, toEventRequest } from "../utils/eventConflicts";
 
+const route = useRoute();
 const router = useRouter();
 const toasts = useToastsStore();
 const form = useTemplateRef("form");
@@ -22,6 +24,25 @@ const { rooms, isLoading: isRoomsLoading } = useAllRooms();
 
 const roomIds = ref<string[]>([]);
 const roomsError = ref<string>();
+
+const uuid = z.string().uuid();
+const preselectedRoomId = uuid.safeParse(route.query.roomId).data;
+const preselectedBuildingId = uuid.safeParse(route.query.buildingId).data;
+
+watch(
+    rooms,
+    (list, previous) => {
+        if (list.length === 0 || (previous?.length ?? 0) > 0 || roomIds.value.length > 0) return;
+        roomIds.value = list
+            .filter(
+                (room) =>
+                    room.roomInfo.id === preselectedRoomId ||
+                    room.buildingInfo.id === preselectedBuildingId,
+            )
+            .map((room) => room.roomInfo.id);
+    },
+    { immediate: true },
+);
 
 const roomNames = computed(
     () => new Map(rooms.value.map((room) => [room.roomInfo.id, room.roomInfo.identifier])),

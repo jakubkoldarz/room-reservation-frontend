@@ -28,6 +28,22 @@ watch(pending, (current) => {
             <h2 :id="titleId" class="text-lg font-semibold">{{ pending.options.title }}</h2>
             <p class="text-text-muted text-sm">{{ pending.options.message }}</p>
 
+            <ul
+                v-if="pending.options.items?.length"
+                class="border-border divide-border max-h-56 divide-y overflow-y-auto rounded border text-sm"
+            >
+                <li
+                    v-for="(item, index) in pending.options.items"
+                    :key="index"
+                    class="flex flex-wrap items-baseline justify-between gap-x-3 px-3 py-1.5"
+                >
+                    <span class="text-text">{{ item.primary }}</span>
+                    <span v-if="item.secondary" class="text-text-muted text-xs">
+                        {{ item.secondary }}
+                    </span>
+                </li>
+            </ul>
+
             <div v-if="pending.options.input" class="flex flex-col gap-1">
                 <label :for="inputId" class="text-sm font-semibold">
                     {{ pending.options.input.label }}
