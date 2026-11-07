@@ -7,12 +7,15 @@ import {
     PlusIcon,
     RectangleStackIcon,
     TagIcon,
+    TrashIcon,
 } from "@heroicons/vue/24/solid";
 import apiClient from "@/api/client";
+import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
 import { useListQuery } from "@/composables/useListQuery";
 import { usePagedList } from "@/composables/usePagedList";
 import { usePermissions } from "@/composables/usePermissions";
+import { useVisibleColumns } from "@/composables/useVisibleColumns";
 import { Permission } from "@/features/auth/constants/permissions";
 import { useAllBuildings } from "@/features/buildings/composables/useAllBuildings";
 import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
@@ -21,33 +24,47 @@ import MoreFiltersPanel from "@/features/filters/components/MoreFiltersPanel.vue
 import { useMoreFilters } from "@/features/filters/composables/useMoreFilters";
 import { defineFilters, type Filter } from "@/features/filters/types";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
+import { useConfirm } from "@/features/modal/composables/useConfirm";
 import PagerBlock from "@/features/pager/components/PagerBlock.vue";
 import { useAllRooms } from "@/features/rooms/composables/useAllRooms";
 import { useRoomDestination } from "@/features/rooms/composables/useRoomDestination";
 import { BLOCK_CLASSES } from "@/features/rooms/utils/calendarStyles";
+import {
+    reservationConflicts,
+    reservationsAffectedMessage,
+} from "@/features/rooms/utils/conflicts";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
 import Container from "@/features/shared/Container.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
+import IconButton from "@/features/shared/IconButton.vue";
 import LinkButton from "@/features/shared/LinkButton.vue";
 import TextLink from "@/features/shared/TextLink.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
-import type { Column } from "@/features/table/types";
+import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { toIsoDate } from "@/utils/isoDate";
 import { eventRoutes } from "../routes";
 import { EventListQuerySchema } from "../schemas";
-import type { EventPeriod } from "../types";
+import type { EventInfo, EventPeriod } from "../types";
 import { eventDayCount, eventHours, eventPeriod, formatEventDates } from "../utils/eventFormat";
 import { toEventQueries } from "../utils/eventQueries";
 
 const PAGE_SIZE = 25;
 const VISIBLE_ROOMS = 3;
 
-const columns: Column[] = [
+const { hasPermission } = usePermissions();
+
+const columns = useVisibleColumns(() => [
     { key: "name", label: "Event", align: "left" },
     { key: "dates", label: "Dates", width: 250, align: "left" },
     { key: "hours", label: "Opening hours", width: 150, align: "left" },
     { key: "rooms", label: "Rooms", width: 240, align: "left" },
-];
+    {
+        key: "delete",
+        width: 65,
+        align: "center",
+        visible: hasPermission(Permission.EventDelete),
+    },
+]);
 
 const PERIOD_LABELS: Record<EventPeriod, string> = {
     upcoming: "Upcoming",
@@ -55,7 +72,6 @@ const PERIOD_LABELS: Record<EventPeriod, string> = {
     past: "Past",
 };
 
-const { hasPermission } = usePermissions();
 const { buildings } = useAllBuildings();
 const { rooms } = useAllRooms();
 const { roomLink } = useRoomDestination();
@@ -129,7 +145,7 @@ const moreFilters = computed(() =>
 const moreFiltersState = useMoreFilters(moreFilters, query, setFilters);
 const { activeCount: activeMoreFilters, isOpen: showMoreFilters } = moreFiltersState;
 
-const { data, isLoading, error } = usePagedList(
+const { data, isLoading, error, reload } = usePagedList(
     (q) => apiClient.getEvents({ queries: toEventQueries(q, PAGE_SIZE, new Date()) }),
     query,
 );
@@ -139,6 +155,57 @@ watch(data, (page) => {
 });
 
 const todayIso = toIsoDate(new Date());
+
+const toasts = useToastsStore();
+const confirm = useConfirm();
+
+async function deleteEvent(event: EventInfo): Promise<void> {
+    const confirmed = await confirm({
+        title: "Delete event?",
+        message: `"${event.name}" (${formatEventDates(event)}) will be deleted. The rooms return to their normal opening hours on these days.`,
+        confirmText: "Delete",
+        danger: true,
+    });
+    if (!confirmed) return;
+
+    const remove = (force: boolean) =>
+        apiCall(() =>
+            apiClient.deleteEventsEventId(undefined, {
+                params: { eventId: event.id },
+                queries: { force },
+            }),
+        );
+
+    let result = await remove(false);
+    if (!result.ok) {
+        const reservations = reservationConflicts(result.error);
+        if (reservations.length > 0) {
+            const roomNames = new Map(event.rooms.map((room) => [room.id, room.identifier]));
+            const affected = [
+                ...new Set(reservations.map((r) => roomNames.get(r.roomId) ?? "unknown room")),
+            ];
+            const forced = await confirm({
+                title: "Delete event anyway?",
+                message: `Some reservations were made for the event hours and don't fit the normal opening hours. ${reservationsAffectedMessage(reservations.length)} Affected rooms: ${affected.join(", ")}.`,
+                confirmText: "Delete anyway",
+                danger: true,
+            });
+            if (!forced) return;
+            result = await remove(true);
+        }
+    }
+
+    if (!result.ok) {
+        toasts.pushError({
+            title: "Failed to delete event",
+            message: apiErrorMessage(result.error),
+        });
+        return;
+    }
+
+    toasts.pushSuccess({ title: "Deleted", message: `Event "${event.name}" was deleted.` });
+    await reload();
+}
 
 const periodNotice = computed(() => {
     if (query.value.date) return null;
@@ -265,6 +332,12 @@ const periodNotice = computed(() => {
                             </span>
                         </BaseTooltip>
                     </span>
+                </template>
+
+                <template #cell-delete="{ row }">
+                    <IconButton type="danger" aria-label="Delete event" @click="deleteEvent(row)">
+                        <TrashIcon class="size-4" />
+                    </IconButton>
                 </template>
             </DataTable>
         </Container>
