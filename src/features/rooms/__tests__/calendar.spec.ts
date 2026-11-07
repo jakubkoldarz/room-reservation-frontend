@@ -143,13 +143,13 @@ describe("buildCalendarDays", () => {
         const days = buildCalendarDays({
             ...base,
             reservations: [rejected],
-            reservationTitle: () => "A-101 · Main Building",
-            roomLabel: () => "A-101 · Main Building",
+            reservationTitle: () => "A-101",
+            roomOf: () => ({ name: "A-101", building: "Main Building" }),
         });
         expect(days[0].blocks[0]).toMatchObject({
             kind: "rejected",
-            title: "A-101 · Main Building",
-            room: "A-101 · Main Building",
+            title: "A-101",
+            room: { name: "A-101", building: "Main Building" },
             reservation: rejected,
         });
     });

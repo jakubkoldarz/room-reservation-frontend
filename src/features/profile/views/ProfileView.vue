@@ -4,9 +4,11 @@ import { computed } from "vue";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { useMyReservations } from "@/features/reservations/composables/useMyReservations";
+import type { Reservation, ReservationRoom } from "@/features/reservations/types";
 import RoomCalendar from "@/features/rooms/components/RoomCalendar.vue";
 import { useCalendarWeek } from "@/features/rooms/composables/useCalendarWeek";
 import { buildCalendarDays, hourRange } from "@/features/rooms/utils/calendar";
+import { PERSONAL_LEGEND_KINDS } from "@/features/rooms/utils/calendarStyles";
 import ActiveSessions from "../components/ActiveSessions.vue";
 import EmailSettings from "../components/EmailSettings.vue";
 import ProfileCard from "../components/ProfileCard.vue";
@@ -26,15 +28,21 @@ const {
     error: reservationsError,
 } = useMyReservations(weekStart);
 
-const roomLabels = computed(
+const UNKNOWN_ROOM: ReservationRoom = { name: "Unknown room", building: "" };
+
+const reservationRooms = computed(
     () =>
-        new Map(
+        new Map<string, ReservationRoom>(
             myReservations.value.map((item) => [
                 item.reservationInfo.id,
-                `${item.roomInfo.identifier} · ${item.buildingInfo.name}`,
+                { name: item.roomInfo.identifier, building: item.buildingInfo.name },
             ]),
         ),
 );
+
+function roomOf(reservation: Reservation): ReservationRoom {
+    return reservationRooms.value.get(reservation.id) ?? UNKNOWN_ROOM;
+}
 
 const days = computed(() =>
     buildCalendarDays({
@@ -44,8 +52,8 @@ const days = computed(() =>
         events: [],
         availabilities: [],
         requiresApproval: false,
-        reservationTitle: (reservation) => roomLabels.value.get(reservation.id) ?? "Unknown room",
-        roomLabel: (reservation) => roomLabels.value.get(reservation.id) ?? "Unknown room",
+        reservationTitle: (reservation) => roomOf(reservation).name,
+        roomOf,
     }),
 );
 const hours = computed(() => hourRange([], days.value));
@@ -65,6 +73,7 @@ const hours = computed(() => hourRange([], days.value));
                 :week-label
                 :is-current-week
                 :show-opening-hours="false"
+                :legend-kinds="PERSONAL_LEGEND_KINDS"
                 @previous="showPreviousWeek"
                 @next="showNextWeek"
                 @today="showCurrentWeek"

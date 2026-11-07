@@ -18,10 +18,12 @@ function reservation(overrides: Partial<Reservation> = {}): Reservation {
 
 describe("reservationDetailRows", () => {
     it("każda informacja w osobnym wierszu, z salą i autorem", () => {
-        expect(reservationDetailRows(reservation(), "pending", "A-101 · Main Building")).toEqual([
+        const room = { name: "A-101", building: "Main Building" };
+        expect(reservationDetailRows(reservation(), "pending", room)).toEqual([
             { label: "Date", value: "Thu, 5 Nov 2026" },
             { label: "Time", value: "13:00–15:00" },
-            { label: "Room", value: "A-101 · Main Building" },
+            { label: "Room", value: "A-101" },
+            { label: "Building", value: "Main Building" },
             { label: "Booked by", value: "Anna Nowak, 3 Nov 2026, 10:15" },
         ]);
     });

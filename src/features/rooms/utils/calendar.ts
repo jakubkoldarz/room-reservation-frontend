@@ -6,7 +6,7 @@ import {
     toMinutes,
 } from "@/features/availabilities/utils/schedule";
 import type { EventInfo } from "@/features/events/types";
-import type { Reservation, ReservationState } from "@/features/reservations/types";
+import type { Reservation, ReservationRoom, ReservationState } from "@/features/reservations/types";
 import {
     formatUserName,
     getReservationState,
@@ -120,7 +120,7 @@ function reservationBlock(
     reservation: Reservation,
     requiresApproval: boolean,
     title: string,
-    room: string | null,
+    room: ReservationRoom | null,
 ) {
     return {
         id: reservation.id,
@@ -202,7 +202,7 @@ export function buildCalendarDays(options: {
     availabilities: readonly Availability[];
     requiresApproval: boolean;
     reservationTitle?: (reservation: Reservation) => string;
-    roomLabel?: (reservation: Reservation) => string;
+    roomOf?: (reservation: Reservation) => ReservationRoom;
 }): CalendarDay[] {
     const todayIso = toIsoDate(options.now);
     const titleOf = options.reservationTitle ?? bookedBy;
@@ -219,7 +219,7 @@ export function buildCalendarDays(options: {
                     reservation,
                     options.requiresApproval,
                     titleOf(reservation),
-                    options.roomLabel?.(reservation) ?? null,
+                    options.roomOf?.(reservation) ?? null,
                 ),
             );
 

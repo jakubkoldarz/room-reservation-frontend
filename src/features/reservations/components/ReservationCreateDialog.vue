@@ -16,12 +16,12 @@ import OutlineButton from "@/features/shared/OutlineButton.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { toIsoDate } from "@/utils/isoDate";
 import { PURPOSE_MAX_LENGTH, ReservationFormSchema } from "../schemas";
-import type { Reservation, ReservationDraft } from "../types";
+import type { Reservation, ReservationDraft, ReservationRoom } from "../types";
 
-const { open, roomId, roomLabel, requiresApproval, draft, availabilities, events } = defineProps<{
+const { open, roomId, room, requiresApproval, draft, availabilities, events } = defineProps<{
     open: boolean;
     roomId: string;
-    roomLabel: string;
+    room: ReservationRoom;
     requiresApproval: boolean;
     draft: ReservationDraft | null;
     availabilities: readonly Availability[];
@@ -139,7 +139,8 @@ const submit = handleSubmit(async (values) => {
         <form class="flex flex-col gap-4 p-4 sm:p-6" novalidate @submit="submit">
             <div class="flex flex-col gap-1">
                 <h2 :id="titleId" class="text-lg font-semibold">New reservation</h2>
-                <p class="text-text-muted text-sm">{{ roomLabel }}</p>
+                <p class="text-sm font-medium">{{ room.name }}</p>
+                <p class="text-text-muted text-sm">{{ room.building }}</p>
             </div>
 
             <ErrorText :error="formError" class="mb-0! text-left" role="alert" />

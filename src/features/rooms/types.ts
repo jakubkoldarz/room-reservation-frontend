@@ -1,6 +1,6 @@
 import type { schemas } from "@/api/generated";
 import type { z } from "zod";
-import type { Reservation, ReservationState } from "@/features/reservations/types";
+import type { Reservation, ReservationRoom, ReservationState } from "@/features/reservations/types";
 import type {
     ConflictingReservationSchema,
     ConflictingRoomSchema,
@@ -29,7 +29,7 @@ export type CalendarBlock = {
     title: string;
     detail: string;
     reservation: Reservation;
-    room: string | null;
+    room: ReservationRoom | null;
     lane: number;
     lanes: number;
 };

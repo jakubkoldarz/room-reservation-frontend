@@ -1,5 +1,10 @@
 import { formatHm } from "@/features/availabilities/utils/schedule";
-import type { Reservation, ReservationDetailRow, ReservationState } from "../types";
+import type {
+    Reservation,
+    ReservationDetailRow,
+    ReservationRoom,
+    ReservationState,
+} from "../types";
 import { formatUserName } from "./reservationState";
 
 type Actor = Reservation["createdBy"];
@@ -49,12 +54,13 @@ const REASON_LABELS: Record<ReservationState, string> = {
 export function reservationDetailRows(
     reservation: Reservation,
     state: ReservationState,
-    room: string | null,
+    room: ReservationRoom | null,
 ): ReservationDetailRow[] {
     return [
         { label: "Date", value: formatReservationDate(reservation.date) },
         { label: "Time", value: formatReservationTime(reservation) },
-        ...(room ? [{ label: "Room", value: room }] : []),
+        ...(room ? [{ label: "Room", value: room.name }] : []),
+        ...(room?.building ? [{ label: "Building", value: room.building }] : []),
         ...actorRow("Booked by", reservation.createdBy),
         ...actorRow("Approved by", reservation.approvedBy),
         ...actorRow("Rejected by", reservation.rejectedBy),

@@ -24,7 +24,7 @@ const HOUR_MARKS = Array.from({ length: END_HOUR - START_HOUR }, (_, index) => S
 
 const KIND_CLASSES: Record<PreviewKind, string> = {
     approved: "bg-primary/30 border-primary",
-    pending: "bg-warning/15 border-warning border-dashed",
+    pending: "bg-warning/15 border-warning",
     event: "bg-text-muted-secondary/20 border-text-muted-secondary",
 };
 
@@ -190,9 +190,7 @@ function formatHour(hour: number): string {
                 <span class="text-text-muted-secondary text-xs">Confirmed</span>
             </li>
             <li class="flex items-center gap-1.5">
-                <span
-                    class="bg-warning/15 border-warning size-3 rounded-sm border-l-4 border-dashed"
-                ></span>
+                <span class="bg-warning/15 border-warning size-3 rounded-sm border-l-4"></span>
                 <span class="text-text-muted-secondary text-xs">Waiting for approval</span>
             </li>
             <li class="flex items-center gap-1.5">

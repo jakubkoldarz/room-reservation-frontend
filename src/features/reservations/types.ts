@@ -8,6 +8,11 @@ export type ReservationListQuery = z.infer<typeof ReservationListQuerySchema>;
 
 export type ReservationState = "approved" | "pending" | "rejected" | "canceled";
 
+export type ReservationRoom = {
+    name: string;
+    building: string;
+};
+
 export type ReservationDetailRow = {
     label: string;
     value: string;

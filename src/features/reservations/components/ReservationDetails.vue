@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { Reservation, ReservationState } from "../types";
+import type { Reservation, ReservationRoom, ReservationState } from "../types";
 import { reservationDetailRows } from "../utils/reservationDetails";
 import ReservationStatusChip from "./ReservationStatusChip.vue";
 
@@ -11,7 +11,7 @@ const {
 } = defineProps<{
     reservation: Reservation;
     state: ReservationState;
-    room?: string | null;
+    room?: ReservationRoom | null;
 }>();
 
 const rows = computed(() => reservationDetailRows(reservation, state, room));

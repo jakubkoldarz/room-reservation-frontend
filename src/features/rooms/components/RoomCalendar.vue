@@ -5,8 +5,13 @@ import IconButton from "@/features/shared/IconButton.vue";
 import OutlineButton from "@/features/shared/OutlineButton.vue";
 import Skeleton from "@/features/shared/Skeleton.vue";
 import { computed } from "vue";
-import type { CalendarDay, CalendarSelection } from "../types";
-import { BLOCK_CLASSES, CLOSED_HOURS_BACKGROUND, LEGEND } from "../utils/calendarStyles";
+import type { CalendarBlockKind, CalendarDay, CalendarSelection } from "../types";
+import {
+    BLOCK_CLASSES,
+    CLOSED_HOURS_BACKGROUND,
+    LEGEND,
+    ROOM_LEGEND_KINDS,
+} from "../utils/calendarStyles";
 import RoomCalendarAgenda from "./RoomCalendarAgenda.vue";
 import RoomCalendarGrid from "./RoomCalendarGrid.vue";
 
@@ -22,6 +27,7 @@ const {
     showOpeningHours = true,
     selectable = false,
     selection = null,
+    legendKinds = ROOM_LEGEND_KINDS,
 } = defineProps<{
     days: readonly CalendarDay[];
     hours: { start: number; end: number };
@@ -34,17 +40,14 @@ const {
     showOpeningHours?: boolean;
     selectable?: boolean;
     selection?: CalendarSelection | null;
+    legendKinds?: readonly CalendarBlockKind[];
 }>();
 
 defineSlots<{
     actions?(): unknown;
 }>();
 
-const legend = computed(() =>
-    showOpeningHours
-        ? LEGEND
-        : LEGEND.filter((item) => item.kind !== "event" && item.kind !== "closed"),
-);
+const legend = computed(() => LEGEND.filter((item) => legendKinds.includes(item.kind)));
 
 const emit = defineEmits<{
     previous: [];

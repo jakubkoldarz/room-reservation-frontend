@@ -12,7 +12,7 @@ import { Permission } from "@/features/auth/constants/permissions";
 import { slotsForDate } from "@/features/availabilities/utils/schedule";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import ReservationCreateDialog from "@/features/reservations/components/ReservationCreateDialog.vue";
-import type { ReservationDraft } from "@/features/reservations/types";
+import type { ReservationDraft, ReservationRoom } from "@/features/reservations/types";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import { toIsoDate } from "@/utils/isoDate";
@@ -62,10 +62,10 @@ async function refresh(): Promise<void> {
 const { weekStart, isCurrentWeek, weekLabel, showPreviousWeek, showNextWeek, showCurrentWeek } =
     useCalendarWeek(now);
 
-const roomLabel = computed(() => {
-    const details = room.value?.details;
-    return details ? `${details.roomInfo.identifier} · ${details.buildingInfo.name}` : "";
-});
+const reservationRoom = computed<ReservationRoom>(() => ({
+    name: room.value?.details.roomInfo.identifier ?? "",
+    building: room.value?.details.buildingInfo.name ?? "",
+}));
 
 const days = computed(() =>
     buildCalendarDays({
@@ -75,7 +75,7 @@ const days = computed(() =>
         events: room.value?.events ?? [],
         availabilities: room.value?.availabilities ?? [],
         requiresApproval: room.value?.details.roomInfo.requiresApproval ?? false,
-        roomLabel: () => roomLabel.value,
+        roomOf: () => reservationRoom.value,
     }),
 );
 const hours = computed(() => hourRange(room.value?.availabilities ?? [], days.value));
@@ -184,7 +184,7 @@ async function onCreated(): Promise<void> {
             v-if="room"
             :open="isDialogOpen"
             :room-id="room.details.roomInfo.id"
-            :room-label
+            :room="reservationRoom"
             :requires-approval="room.details.roomInfo.requiresApproval"
             :draft
             :availabilities="room.availabilities"
