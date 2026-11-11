@@ -25,3 +25,8 @@ export type ReservationDraft = {
     startTime: string;
     endTime: string;
 };
+
+export type ReservationTimeRange = {
+    startTime: string;
+    endTime: string;
+};

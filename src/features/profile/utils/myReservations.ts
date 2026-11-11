@@ -33,13 +33,13 @@ export function hasStarted(
     return reservation.startTime.slice(0, 5) <= currentHm(now);
 }
 
-export function myReservationAction(
+export function myReservationActions(
     state: ReservationState,
     reservation: Pick<Reservation, "date" | "startTime">,
     now: Date,
-): MyReservationAction | null {
-    if (hasStarted(reservation, now)) return null;
-    if (state === "pending") return "withdraw";
-    if (state === "approved") return "cancel";
-    return null;
+): MyReservationAction[] {
+    if (hasStarted(reservation, now)) return [];
+    if (state === "pending") return ["edit", "withdraw"];
+    if (state === "approved") return ["edit", "cancel"];
+    return [];
 }

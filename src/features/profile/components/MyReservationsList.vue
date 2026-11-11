@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { NoSymbolIcon, TagIcon, ClockIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import {
+    ClockIcon,
+    NoSymbolIcon,
+    PencilSquareIcon,
+    TagIcon,
+    TrashIcon,
+} from "@heroicons/vue/24/solid";
 import { useIntervalFn, useNow } from "@vueuse/core";
 import { computed, ref, watch } from "vue";
 import apiClient from "@/api/client";
@@ -7,12 +13,15 @@ import { apiCall, type ApiResult } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
 import { useListQuery } from "@/composables/useListQuery";
 import { useListSort } from "@/composables/useListSort";
+import { usePermissions } from "@/composables/usePermissions";
 import { usePagedList } from "@/composables/usePagedList";
+import { Permission } from "@/features/auth/constants/permissions";
 import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
 import { defineFilters, type Filter } from "@/features/filters/types";
 import { useConfirm, usePrompt } from "@/features/modal/composables/useConfirm";
 import PagerBlock from "@/features/pager/components/PagerBlock.vue";
 import ReservationStatusChip from "@/features/reservations/components/ReservationStatusChip.vue";
+import { reservationRoutes } from "@/features/reservations/routes";
 import { REASON_MAX_LENGTH } from "@/features/reservations/schemas";
 import type { ReservationListItem } from "@/features/reservations/types";
 import {
@@ -36,16 +45,18 @@ import type { Column } from "@/features/table/types";
 import { toSortQueries } from "@/features/table/utils/sort";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { MyReservationsQuerySchema } from "../schemas";
-import { myReservationAction, toMyReservationQueries } from "../utils/myReservations";
+import { myReservationActions, toMyReservationQueries } from "../utils/myReservations";
 
 const PAGE_SIZE = 20;
+
+const { hasPermission } = usePermissions();
 
 const columns: Column[] = [
     { key: "when", label: "Date", width: 200, align: "left", sortKey: "date" },
     { key: "room", label: "Room", width: 220, align: "left", sortKey: "room" },
     { key: "purpose", label: "Purpose", align: "left" },
     { key: "status", label: "Status", width: 190, align: "left", sortKey: "status" },
-    { key: "actions", width: 70, align: "center" },
+    { key: "actions", width: 100, align: "center" },
 ];
 
 const now = useNow({ scheduler: (tick) => useIntervalFn(tick, 60_000) });
@@ -114,8 +125,17 @@ function stateOf(item: ReservationListItem) {
     return getReservationState(item.reservationInfo, item.roomInfo.requiresApproval);
 }
 
-function actionOf(item: ReservationListItem) {
-    return myReservationAction(stateOf(item), item.reservationInfo, now.value);
+const canOpenReservation = hasPermission(Permission.ReservationView);
+
+function actionsOf(item: ReservationListItem) {
+    return myReservationActions(stateOf(item), item.reservationInfo, now.value);
+}
+
+function editLink(item: ReservationListItem) {
+    return {
+        name: reservationRoutes.edit.name,
+        params: { reservationId: item.reservationInfo.id },
+    };
 }
 
 function summary(item: ReservationListItem): string {
@@ -270,26 +290,40 @@ async function cancel(item: ReservationListItem): Promise<void> {
             </template>
 
             <template #cell-actions="{ row }">
-                <BaseTooltip v-if="actionOf(row) === 'withdraw'" text="Withdraw request">
-                    <IconButton
-                        type="danger"
-                        aria-label="Withdraw request"
-                        :disabled="busyId === row.reservationInfo.id"
-                        @click="withdraw(row)"
+                <span class="inline-flex items-center gap-1.5 align-middle">
+                    <BaseTooltip
+                        v-if="canOpenReservation && actionsOf(row).includes('edit')"
+                        text="Edit reservation"
                     >
-                        <TrashIcon class="size-4" />
-                    </IconButton>
-                </BaseTooltip>
-                <BaseTooltip v-else-if="actionOf(row) === 'cancel'" text="Cancel reservation">
-                    <IconButton
-                        type="warning"
-                        aria-label="Cancel reservation"
-                        :disabled="busyId === row.reservationInfo.id"
-                        @click="cancel(row)"
-                    >
-                        <NoSymbolIcon class="size-4" />
-                    </IconButton>
-                </BaseTooltip>
+                        <RouterLink
+                            :to="editLink(row)"
+                            aria-label="Edit reservation"
+                            class="border-border text-text-muted hover:text-primary hover:border-primary/40 focus-visible:ring-primary inline-flex rounded-lg border p-0.5 transition-all outline-none focus-visible:ring-1"
+                        >
+                            <PencilSquareIcon class="size-4" />
+                        </RouterLink>
+                    </BaseTooltip>
+                    <BaseTooltip v-if="actionsOf(row).includes('withdraw')" text="Withdraw request">
+                        <IconButton
+                            type="danger"
+                            aria-label="Withdraw request"
+                            :disabled="busyId === row.reservationInfo.id"
+                            @click="withdraw(row)"
+                        >
+                            <TrashIcon class="size-4" />
+                        </IconButton>
+                    </BaseTooltip>
+                    <BaseTooltip v-if="actionsOf(row).includes('cancel')" text="Cancel reservation">
+                        <IconButton
+                            type="warning"
+                            aria-label="Cancel reservation"
+                            :disabled="busyId === row.reservationInfo.id"
+                            @click="cancel(row)"
+                        >
+                            <NoSymbolIcon class="size-4" />
+                        </IconButton>
+                    </BaseTooltip>
+                </span>
             </template>
         </DataTable>
     </Container>

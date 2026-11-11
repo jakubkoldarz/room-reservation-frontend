@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { groupPermissions } from "../utils/permissions";
-import { hasStarted, myReservationAction, toMyReservationQueries } from "../utils/myReservations";
+import { hasStarted, myReservationActions, toMyReservationQueries } from "../utils/myReservations";
 
 const NOW = new Date(2026, 10, 11, 14, 0);
 const QUERY = { page: 1, when: "", status: "", sort: "" };
@@ -40,20 +40,20 @@ describe("hasStarted", () => {
     });
 });
 
-describe("myReservationAction", () => {
+describe("myReservationActions", () => {
     const later = { date: "2026-11-12", startTime: "10:00:00" };
 
-    it("oczekującą można wycofać, potwierdzoną anulować", () => {
-        expect(myReservationAction("pending", later, NOW)).toBe("withdraw");
-        expect(myReservationAction("approved", later, NOW)).toBe("cancel");
+    it("oczekującą można edytować i wycofać, potwierdzoną edytować i anulować", () => {
+        expect(myReservationActions("pending", later, NOW)).toEqual(["edit", "withdraw"]);
+        expect(myReservationActions("approved", later, NOW)).toEqual(["edit", "cancel"]);
     });
 
     it("brak akcji dla odrzuconych, anulowanych i już rozpoczętych", () => {
-        expect(myReservationAction("rejected", later, NOW)).toBeNull();
-        expect(myReservationAction("canceled", later, NOW)).toBeNull();
+        expect(myReservationActions("rejected", later, NOW)).toEqual([]);
+        expect(myReservationActions("canceled", later, NOW)).toEqual([]);
         expect(
-            myReservationAction("approved", { date: "2026-11-11", startTime: "09:00:00" }, NOW),
-        ).toBeNull();
+            myReservationActions("approved", { date: "2026-11-11", startTime: "09:00:00" }, NOW),
+        ).toEqual([]);
     });
 });
 
