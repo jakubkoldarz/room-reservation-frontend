@@ -21,9 +21,13 @@ function isReservationState(value: string): value is ReservationState {
     return Object.hasOwn(STATUS_CODES, value);
 }
 
+export function reservationStatusCode(value: string): number | undefined {
+    return isReservationState(value) ? STATUS_CODES[value] : undefined;
+}
+
 export function toReservationQueries(query: ReservationListQuery, pageSize: number) {
     return {
-        Status: isReservationState(query.status) ? STATUS_CODES[query.status] : undefined,
+        Status: reservationStatusCode(query.status),
         Date: parseIsoDate(query.date) ? query.date : undefined,
         BuildingId: uuidOrUndefined(query.building),
         RoomId: uuidOrUndefined(query.room),

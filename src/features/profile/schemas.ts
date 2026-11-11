@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { pageParam, textParam } from "@/composables/useListQuery";
 import { EmailSchema, MIN_PASSWORD_LENGTH } from "@/features/auth/schemas";
 
 export const ChangePasswordFormSchema = z
@@ -23,4 +24,14 @@ export const ChangePasswordFormSchema = z
 
 export const ChangeEmailFormSchema = z.object({
     email: EmailSchema,
+});
+
+export const PROFILE_TABS = ["calendar", "reservations", "security", "account"] as const;
+
+export const ProfileTabSchema = z.enum(PROFILE_TABS).catch("calendar");
+
+export const MyReservationsQuerySchema = z.object({
+    page: pageParam,
+    when: textParam,
+    status: textParam,
 });
