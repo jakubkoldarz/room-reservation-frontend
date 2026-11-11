@@ -28,6 +28,7 @@ export const RoomListQuerySchema = z.object({
     day: textParam,
     from: textParam,
     to: textParam,
+    sort: textParam,
 });
 
 export const RoomFormSchema = schemas.RoomRequestDto.omit({

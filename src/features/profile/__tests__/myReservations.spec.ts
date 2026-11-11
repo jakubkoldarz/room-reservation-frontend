@@ -3,7 +3,7 @@ import { groupPermissions } from "../utils/permissions";
 import { hasStarted, myReservationAction, toMyReservationQueries } from "../utils/myReservations";
 
 const NOW = new Date(2026, 10, 11, 14, 0);
-const QUERY = { page: 1, when: "", status: "" };
+const QUERY = { page: 1, when: "", status: "", sort: "" };
 
 describe("toMyReservationQueries", () => {
     it("domyślnie pokazuje dzisiejsze i przyszłe rezerwacje", () => {

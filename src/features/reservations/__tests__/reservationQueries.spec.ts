@@ -14,6 +14,7 @@ function query(overrides: Partial<ReservationListQuery> = {}): ReservationListQu
         createdBy: "",
         approvedBy: "",
         canceledBy: "",
+        sort: "",
         ...overrides,
     };
 }

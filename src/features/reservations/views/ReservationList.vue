@@ -17,6 +17,7 @@ import type { ApiResult } from "@/api/apiCall";
 import { useListQuery } from "@/composables/useListQuery";
 import { usePagedList } from "@/composables/usePagedList";
 import { usePermissions } from "@/composables/usePermissions";
+import { useListSort } from "@/composables/useListSort";
 import { useVisibleColumns } from "@/composables/useVisibleColumns";
 import { Permission } from "@/features/auth/constants/permissions";
 import { useAllBuildings } from "@/features/buildings/composables/useAllBuildings";
@@ -37,6 +38,7 @@ import ErrorText from "@/features/shared/ErrorText.vue";
 import IconButton from "@/features/shared/IconButton.vue";
 import TextLink from "@/features/shared/TextLink.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
+import { toSortQueries } from "@/features/table/utils/sort";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { useAllUsers } from "@/features/users/composables/useAllUsers";
 import ReservationStatusChip from "../components/ReservationStatusChip.vue";
@@ -62,11 +64,11 @@ const canReject = hasPermission(Permission.ReservationReject);
 const canCancel = hasPermission(Permission.ReservationForceCancel);
 
 const columns = useVisibleColumns(() => [
-    { key: "when", label: "Date", width: 200, align: "left" },
-    { key: "room", label: "Room", width: 210, align: "left" },
-    { key: "bookedBy", label: "Booked by", width: 200, align: "left" },
+    { key: "when", label: "Date", width: 200, align: "left", sortKey: "date" },
+    { key: "room", label: "Room", width: 210, align: "left", sortKey: "room" },
+    { key: "bookedBy", label: "Booked by", width: 200, align: "left", sortKey: "createdBy" },
     { key: "purpose", label: "Purpose", align: "left" },
-    { key: "status", label: "Status", width: 180, align: "left" },
+    { key: "status", label: "Status", width: 180, align: "left", sortKey: "status" },
     {
         key: "actions",
         width: 110,
@@ -80,6 +82,13 @@ const { rooms } = useAllRooms();
 const { users } = useAllUsers();
 
 const { query, setFilter, setFilters, clampPage } = useListQuery(ReservationListQuerySchema);
+
+const { sort, toggleSort } = useListSort(
+    () => query.value.sort,
+    (value) => setFilter("sort", value),
+    columns,
+    { by: "date", direction: "desc" },
+);
 
 const statusOptions = RESERVATION_STATES.map((state) => ({
     value: state,
@@ -166,7 +175,10 @@ const moreFiltersState = useMoreFilters(moreFilters, query, setFilters);
 const { activeCount: activeMoreFilters, isOpen: showMoreFilters } = moreFiltersState;
 
 const { data, isLoading, error, reload } = usePagedList(
-    (q) => apiClient.getReservations({ queries: toReservationQueries(q, PAGE_SIZE) }),
+    (q) =>
+        apiClient.getReservations({
+            queries: { ...toReservationQueries(q, PAGE_SIZE), ...toSortQueries(sort.value) },
+        }),
     query,
 );
 
@@ -327,6 +339,8 @@ async function forceCancel(item: ReservationListItem): Promise<void> {
                 :row-key="reservationKey"
                 :is-loading="isLoading"
                 :skeleton-rows="PAGE_SIZE"
+                :sort
+                @sort="toggleSort"
             >
                 <template #cell-when="{ row }">
                     <span class="text-text block truncate font-medium">

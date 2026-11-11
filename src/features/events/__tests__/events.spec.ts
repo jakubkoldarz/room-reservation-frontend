@@ -15,6 +15,7 @@ function query(overrides: Partial<EventListQuery> = {}): EventListQuery {
         building: "",
         room: "",
         type: "",
+        sort: "",
         ...overrides,
     };
 }

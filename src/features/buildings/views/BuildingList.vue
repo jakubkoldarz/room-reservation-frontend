@@ -16,6 +16,7 @@ import { apiErrorMessage } from "@/api/errors";
 import { pageParam, textParam, useListQuery } from "@/composables/useListQuery";
 import { usePagedList } from "@/composables/usePagedList";
 import { usePermissions } from "@/composables/usePermissions";
+import { useListSort } from "@/composables/useListSort";
 import { useVisibleColumns } from "@/composables/useVisibleColumns";
 import { Permission } from "@/features/auth/constants/permissions";
 import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
@@ -32,6 +33,7 @@ import IconButton from "@/features/shared/IconButton.vue";
 import LinkButton from "@/features/shared/LinkButton.vue";
 import TextLink from "@/features/shared/TextLink.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
+import { toSortQueries } from "@/features/table/utils/sort";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { buildingRoutes } from "../routes";
 import { useBuildingsStore } from "../stores/useBuildingsStore";
@@ -43,9 +45,9 @@ const PAGE_SIZE = 25;
 const { hasPermission } = usePermissions();
 
 const columns = useVisibleColumns(() => [
-    { key: "name", label: "Building", align: "left" },
-    { key: "location", label: "Address", width: 320, align: "left" },
-    { key: "floors", label: "Floors", width: 140, align: "left" },
+    { key: "name", label: "Building", align: "left", sortKey: "name" },
+    { key: "location", label: "Address", width: 320, align: "left", sortKey: "city" },
+    { key: "floors", label: "Floors", width: 140, align: "left", sortKey: "floors" },
     {
         key: "delete",
         width: 65,
@@ -73,7 +75,15 @@ const { query, setFilter, setFilters, clampPage } = useListQuery(
         identifier: textParam,
         street: textParam,
         postalCode: textParam,
+        sort: textParam,
     }),
+);
+
+const { sort, toggleSort } = useListSort(
+    () => query.value.sort,
+    (value) => setFilter("sort", value),
+    columns,
+    { by: "name", direction: "asc" },
 );
 
 const moreFiltersState = useMoreFilters(moreFilters, query, setFilters);
@@ -88,6 +98,7 @@ const { data, isLoading, error, reload } = usePagedList(
                 Identifier: q.identifier.trim() || undefined,
                 Street: q.street.trim() || undefined,
                 PostalCode: q.postalCode.trim() || undefined,
+                ...toSortQueries(sort.value),
                 Page: q.page,
                 PageSize: PAGE_SIZE,
             },
@@ -179,6 +190,8 @@ async function deleteBuilding(building: Building): Promise<void> {
                 row-key="id"
                 :is-loading="isLoading"
                 :skeleton-rows="PAGE_SIZE"
+                :sort
+                @sort="toggleSort"
             >
                 <template #cell-name="{ row }">
                     <TextLink

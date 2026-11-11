@@ -6,6 +6,7 @@ import apiClient from "@/api/client";
 import { apiCall, type ApiResult } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
 import { useListQuery } from "@/composables/useListQuery";
+import { useListSort } from "@/composables/useListSort";
 import { usePagedList } from "@/composables/usePagedList";
 import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
 import { defineFilters, type Filter } from "@/features/filters/types";
@@ -32,6 +33,7 @@ import IconButton from "@/features/shared/IconButton.vue";
 import TextLink from "@/features/shared/TextLink.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
 import type { Column } from "@/features/table/types";
+import { toSortQueries } from "@/features/table/utils/sort";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { MyReservationsQuerySchema } from "../schemas";
 import { myReservationAction, toMyReservationQueries } from "../utils/myReservations";
@@ -39,15 +41,25 @@ import { myReservationAction, toMyReservationQueries } from "../utils/myReservat
 const PAGE_SIZE = 20;
 
 const columns: Column[] = [
-    { key: "when", label: "Date", width: 200, align: "left" },
-    { key: "room", label: "Room", width: 220, align: "left" },
+    { key: "when", label: "Date", width: 200, align: "left", sortKey: "date" },
+    { key: "room", label: "Room", width: 220, align: "left", sortKey: "room" },
     { key: "purpose", label: "Purpose", align: "left" },
-    { key: "status", label: "Status", width: 190, align: "left" },
+    { key: "status", label: "Status", width: 190, align: "left", sortKey: "status" },
     { key: "actions", width: 70, align: "center" },
 ];
 
 const now = useNow({ scheduler: (tick) => useIntervalFn(tick, 60_000) });
 const { query, setFilter, clampPage } = useListQuery(MyReservationsQuerySchema);
+
+const { sort, toggleSort } = useListSort(
+    () => query.value.sort,
+    (value) => setFilter("sort", value),
+    columns,
+    () => ({
+        by: "date",
+        direction: query.value.when === "past" || query.value.when === "all" ? "desc" : "asc",
+    }),
+);
 
 const filters = defineFilters([
     {
@@ -76,7 +88,10 @@ const filters = defineFilters([
 const { data, isLoading, error, reload } = usePagedList(
     (q) =>
         apiClient.getReservationsmine({
-            queries: toMyReservationQueries(q, PAGE_SIZE, new Date()),
+            queries: {
+                ...toMyReservationQueries(q, PAGE_SIZE, new Date()),
+                ...toSortQueries(sort.value),
+            },
         }),
     query,
 );
@@ -209,6 +224,8 @@ async function cancel(item: ReservationListItem): Promise<void> {
             :row-key="reservationKey"
             :is-loading="isLoading"
             :skeleton-rows="PAGE_SIZE"
+            :sort
+            @sort="toggleSort"
         >
             <template #cell-when="{ row }">
                 <span class="text-text block truncate font-medium">

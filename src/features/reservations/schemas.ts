@@ -12,6 +12,7 @@ export const ReservationListQuerySchema = z.object({
     createdBy: textParam,
     approvedBy: textParam,
     canceledBy: textParam,
+    sort: textParam,
 });
 
 export const PURPOSE_MAX_LENGTH = 100;

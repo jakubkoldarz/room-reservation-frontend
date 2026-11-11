@@ -10,6 +10,7 @@ export const EventListQuerySchema = z.object({
     building: textParam,
     room: textParam,
     type: textParam,
+    sort: textParam,
 });
 
 export const EVENT_NAME_MAX_LENGTH = 100;

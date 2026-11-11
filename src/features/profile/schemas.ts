@@ -34,4 +34,5 @@ export const MyReservationsQuerySchema = z.object({
     page: pageParam,
     when: textParam,
     status: textParam,
+    sort: textParam,
 });

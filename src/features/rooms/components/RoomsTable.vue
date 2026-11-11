@@ -22,6 +22,7 @@ import { useDate } from "@/composables/useDate";
 import { useListQuery } from "@/composables/useListQuery";
 import { usePagedList } from "@/composables/usePagedList";
 import { usePermissions } from "@/composables/usePermissions";
+import { useListSort } from "@/composables/useListSort";
 import { useVisibleColumns } from "@/composables/useVisibleColumns";
 import { Permission } from "@/features/auth/constants/permissions";
 import OpenStatusLabel from "@/features/availabilities/components/OpenStatusLabel.vue";
@@ -45,6 +46,7 @@ import IconButton from "@/features/shared/IconButton.vue";
 import LinkButton from "@/features/shared/LinkButton.vue";
 import TextLink from "@/features/shared/TextLink.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
+import { toSortQueries } from "@/features/table/utils/sort";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { useRoomDestination } from "../composables/useRoomDestination";
 import { roomRoutes } from "../routes";
@@ -74,16 +76,24 @@ const isBuildingScoped = computed(() => props.buildingId !== undefined);
 const { hasPermission } = usePermissions();
 
 const columns = useVisibleColumns(() => [
-    { key: "room", label: "Room", align: "left" },
+    { key: "room", label: "Room", align: "left", sortKey: "identifier" },
     {
         key: "building",
         label: "Building",
         width: 240,
         align: "left",
+        sortKey: "building",
         visible: !isBuildingScoped.value,
     },
-    { key: "floor", label: "Floor", width: 150, align: "left", visible: isBuildingScoped.value },
-    { key: "capacity", label: "Capacity", width: 130, align: "left" },
+    {
+        key: "floor",
+        label: "Floor",
+        width: 150,
+        align: "left",
+        sortKey: "floor",
+        visible: isBuildingScoped.value,
+    },
+    { key: "capacity", label: "Capacity", width: 130, align: "left", sortKey: "capacity" },
     { key: "equipment", label: "Equipment", width: 175, align: "left" },
     { key: "openDays", label: "Open days", width: 190, align: "left" },
     { key: "approval", label: "Booking", width: 90, align: "center" },
@@ -147,6 +157,13 @@ const moreFilters = computed(() =>
 
 const { query, setFilter, setFilters, clampPage } = useListQuery(RoomListQuerySchema);
 
+const { sort, toggleSort } = useListSort(
+    () => query.value.sort,
+    (value) => setFilter("sort", value),
+    columns,
+    { by: "identifier", direction: "asc" },
+);
+
 const moreFiltersId = computed(() =>
     isBuildingScoped.value ? "building-room-more-filters" : "room-more-filters",
 );
@@ -160,7 +177,10 @@ const scopedQuery = computed(() => ({
 }));
 
 const { data, isLoading, error, reload } = usePagedList(
-    (q) => apiClient.getRooms({ queries: toRoomQueries(q, props.pageSize) }),
+    (q) =>
+        apiClient.getRooms({
+            queries: { ...toRoomQueries(q, props.pageSize), ...toSortQueries(sort.value) },
+        }),
     scopedQuery,
 );
 
@@ -283,6 +303,8 @@ async function deleteRoom(room: BasicRoom): Promise<void> {
             :row-key="roomKey"
             :is-loading="isLoading"
             :skeleton-rows="pageSize"
+            :sort
+            @sort="toggleSort"
         >
             <template #cell-room="{ row }">
                 <TextLink

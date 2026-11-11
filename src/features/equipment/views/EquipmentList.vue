@@ -8,6 +8,7 @@ import { apiErrorMessage } from "@/api/errors";
 import { pageParam, textParam, useListQuery } from "@/composables/useListQuery";
 import { usePagedList } from "@/composables/usePagedList";
 import { usePermissions } from "@/composables/usePermissions";
+import { useListSort } from "@/composables/useListSort";
 import { useVisibleColumns } from "@/composables/useVisibleColumns";
 import { Permission } from "@/features/auth/constants/permissions";
 import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
@@ -21,6 +22,7 @@ import IconButton from "@/features/shared/IconButton.vue";
 import LinkButton from "@/features/shared/LinkButton.vue";
 import TextLink from "@/features/shared/TextLink.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
+import { toSortQueries } from "@/features/table/utils/sort";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { iconFor } from "../icons";
 import { equipmentRoutes } from "../routes";
@@ -31,7 +33,7 @@ const PAGE_SIZE = 25;
 const { hasPermission } = usePermissions();
 
 const columns = useVisibleColumns(() => [
-    { key: "name", label: "Equipment", align: "left" },
+    { key: "name", label: "Equipment", align: "left", sortKey: "name" },
     {
         key: "delete",
         width: 65,
@@ -43,13 +45,25 @@ const columns = useVisibleColumns(() => [
 const filters = defineFilters([{ key: "name", type: "text", placeholder: "Equipment" }]);
 
 const { query, setFilter, clampPage } = useListQuery(
-    z.object({ page: pageParam, name: textParam }),
+    z.object({ page: pageParam, name: textParam, sort: textParam }),
+);
+
+const { sort, toggleSort } = useListSort(
+    () => query.value.sort,
+    (value) => setFilter("sort", value),
+    columns,
+    { by: "name", direction: "asc" },
 );
 
 const { data, isLoading, error, reload } = usePagedList(
     (q) =>
         apiClient.getEquipment({
-            queries: { Name: q.name.trim() || undefined, Page: q.page, PageSize: PAGE_SIZE },
+            queries: {
+                Name: q.name.trim() || undefined,
+                ...toSortQueries(sort.value),
+                Page: q.page,
+                PageSize: PAGE_SIZE,
+            },
         }),
     query,
 );
@@ -121,6 +135,8 @@ async function deleteEquipment(equipment: Equipment): Promise<void> {
                 row-key="id"
                 :is-loading="isLoading"
                 :skeleton-rows="PAGE_SIZE"
+                :sort
+                @sort="toggleSort"
             >
                 <template #cell-name="{ row }">
                     <span class="inline-flex max-w-full items-center gap-3 align-middle">
