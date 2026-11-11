@@ -22,6 +22,7 @@ import { useDate } from "@/composables/useDate";
 import { useListQuery } from "@/composables/useListQuery";
 import { usePagedList } from "@/composables/usePagedList";
 import { usePermissions } from "@/composables/usePermissions";
+import { useListSort } from "@/composables/useListSort";
 import { useVisibleColumns } from "@/composables/useVisibleColumns";
 import { Permission } from "@/features/auth/constants/permissions";
 import OpenStatusLabel from "@/features/availabilities/components/OpenStatusLabel.vue";
@@ -45,13 +46,19 @@ import IconButton from "@/features/shared/IconButton.vue";
 import LinkButton from "@/features/shared/LinkButton.vue";
 import TextLink from "@/features/shared/TextLink.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
+import { toSortQueries } from "@/features/table/utils/sort";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { useRoomDestination } from "../composables/useRoomDestination";
 import { roomRoutes } from "../routes";
 import { RoomListQuerySchema } from "../schemas";
 import { useRoomsStore } from "../stores/useRoomsStore";
 import type { BasicRoom, RoomListItem } from "../types";
-import { isConflict } from "../utils/conflicts";
+import {
+    isConflict,
+    reservationConflictItems,
+    reservationConflicts,
+    reservationsAffectedMessage,
+} from "../utils/conflicts";
 import {
     approvalLabel,
     approvalShortLabel,
@@ -74,16 +81,24 @@ const isBuildingScoped = computed(() => props.buildingId !== undefined);
 const { hasPermission } = usePermissions();
 
 const columns = useVisibleColumns(() => [
-    { key: "room", label: "Room", align: "left" },
+    { key: "room", label: "Room", align: "left", sortKey: "identifier" },
     {
         key: "building",
         label: "Building",
         width: 240,
         align: "left",
+        sortKey: "building",
         visible: !isBuildingScoped.value,
     },
-    { key: "floor", label: "Floor", width: 150, align: "left", visible: isBuildingScoped.value },
-    { key: "capacity", label: "Capacity", width: 130, align: "left" },
+    {
+        key: "floor",
+        label: "Floor",
+        width: 150,
+        align: "left",
+        sortKey: "floor",
+        visible: isBuildingScoped.value,
+    },
+    { key: "capacity", label: "Capacity", width: 130, align: "left", sortKey: "capacity" },
     { key: "equipment", label: "Equipment", width: 175, align: "left" },
     { key: "openDays", label: "Open days", width: 190, align: "left" },
     { key: "approval", label: "Booking", width: 90, align: "center" },
@@ -147,6 +162,13 @@ const moreFilters = computed(() =>
 
 const { query, setFilter, setFilters, clampPage } = useListQuery(RoomListQuerySchema);
 
+const { sort, toggleSort } = useListSort(
+    () => query.value.sort,
+    (value) => setFilter("sort", value),
+    columns,
+    { by: "identifier", direction: "asc" },
+);
+
 const moreFiltersId = computed(() =>
     isBuildingScoped.value ? "building-room-more-filters" : "room-more-filters",
 );
@@ -160,7 +182,10 @@ const scopedQuery = computed(() => ({
 }));
 
 const { data, isLoading, error, reload } = usePagedList(
-    (q) => apiClient.getRooms({ queries: toRoomQueries(q, props.pageSize) }),
+    (q) =>
+        apiClient.getRooms({
+            queries: { ...toRoomQueries(q, props.pageSize), ...toSortQueries(sort.value) },
+        }),
     scopedQuery,
 );
 
@@ -188,8 +213,17 @@ const { roomLink } = useRoomDestination();
 async function deleteRoom(room: BasicRoom): Promise<void> {
     const confirmed = await confirm({
         title: "Delete room?",
-        message: `"${room.identifier}" will be permanently deleted. This cannot be undone.`,
-        confirmText: "Delete",
+        message: `You are about to delete room "${room.identifier}".`,
+        warning: {
+            title: "This permanently removes all data of this room:",
+            points: [
+                "its details, opening hours and equipment",
+                "its whole reservation history, including past, rejected and canceled reservations",
+                "its place in events that include it",
+            ],
+            note: "This can't be undone. Please continue only if you are sure this data is no longer needed.",
+        },
+        confirmText: "Delete room",
         danger: true,
     });
     if (!confirmed) return;
@@ -204,9 +238,14 @@ async function deleteRoom(room: BasicRoom): Promise<void> {
 
     let result = await remove(false);
     if (!result.ok && isConflict(result.error)) {
+        const reservations = reservationConflicts(result.error);
         const forced = await confirm({
             title: "Delete room anyway?",
-            message: `"${room.identifier}" has upcoming reservations. Deleting it anyway will cancel them and notify their owners.`,
+            message:
+                reservations.length > 0
+                    ? `"${room.identifier}" still has upcoming reservations. ${reservationsAffectedMessage(reservations.length)}`
+                    : `"${room.identifier}" still has upcoming reservations. They will be canceled and their owners notified.`,
+            items: reservationConflictItems(reservations, () => room.identifier),
             confirmText: "Delete anyway",
             danger: true,
         });
@@ -283,6 +322,8 @@ async function deleteRoom(room: BasicRoom): Promise<void> {
             :row-key="roomKey"
             :is-loading="isLoading"
             :skeleton-rows="pageSize"
+            :sort
+            @sort="toggleSort"
         >
             <template #cell-room="{ row }">
                 <TextLink

@@ -4,6 +4,7 @@ import {
     BuildingOfficeIcon,
     CalendarDaysIcon,
     CheckIcon,
+    ClockIcon,
     NoSymbolIcon,
     RectangleStackIcon,
     TagIcon,
@@ -17,6 +18,7 @@ import type { ApiResult } from "@/api/apiCall";
 import { useListQuery } from "@/composables/useListQuery";
 import { usePagedList } from "@/composables/usePagedList";
 import { usePermissions } from "@/composables/usePermissions";
+import { useListSort } from "@/composables/useListSort";
 import { useVisibleColumns } from "@/composables/useVisibleColumns";
 import { Permission } from "@/features/auth/constants/permissions";
 import { useAllBuildings } from "@/features/buildings/composables/useAllBuildings";
@@ -37,6 +39,7 @@ import ErrorText from "@/features/shared/ErrorText.vue";
 import IconButton from "@/features/shared/IconButton.vue";
 import TextLink from "@/features/shared/TextLink.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
+import { toSortQueries } from "@/features/table/utils/sort";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { useAllUsers } from "@/features/users/composables/useAllUsers";
 import ReservationStatusChip from "../components/ReservationStatusChip.vue";
@@ -47,7 +50,12 @@ import {
     formatReservationDate,
     formatReservationTime,
 } from "../utils/reservationDetails";
-import { RESERVATION_STATES, toReservationQueries } from "../utils/reservationQueries";
+import {
+    isPastFirst,
+    RESERVATION_PERIOD_OPTIONS,
+    RESERVATION_STATES,
+    toReservationQueries,
+} from "../utils/reservationQueries";
 import {
     formatUserName,
     getReservationState,
@@ -62,11 +70,11 @@ const canReject = hasPermission(Permission.ReservationReject);
 const canCancel = hasPermission(Permission.ReservationForceCancel);
 
 const columns = useVisibleColumns(() => [
-    { key: "when", label: "Date", width: 200, align: "left" },
-    { key: "room", label: "Room", width: 210, align: "left" },
-    { key: "bookedBy", label: "Booked by", width: 200, align: "left" },
+    { key: "when", label: "Date", width: 200, align: "left", sortKey: "date" },
+    { key: "room", label: "Room", width: 210, align: "left", sortKey: "room" },
+    { key: "bookedBy", label: "Booked by", width: 200, align: "left", sortKey: "createdBy" },
     { key: "purpose", label: "Purpose", align: "left" },
-    { key: "status", label: "Status", width: 180, align: "left" },
+    { key: "status", label: "Status", width: 180, align: "left", sortKey: "status" },
     {
         key: "actions",
         width: 110,
@@ -80,6 +88,16 @@ const { rooms } = useAllRooms();
 const { users } = useAllUsers();
 
 const { query, setFilter, setFilters, clampPage } = useListQuery(ReservationListQuerySchema);
+
+const { sort, toggleSort } = useListSort(
+    () => query.value.sort,
+    (value) => setFilter("sort", value),
+    columns,
+    () => ({
+        by: "date",
+        direction: isPastFirst(query.value.when) && !query.value.date ? "desc" : "asc",
+    }),
+);
 
 const statusOptions = RESERVATION_STATES.map((state) => ({
     value: state,
@@ -99,6 +117,13 @@ const roomOptions = computed(() =>
 
 const filters = computed(() =>
     defineFilters([
+        {
+            key: "when",
+            type: "select",
+            placeholder: "Period",
+            icon: ClockIcon,
+            values: RESERVATION_PERIOD_OPTIONS,
+        } satisfies Filter<"when">,
         {
             key: "status",
             type: "select",
@@ -166,12 +191,25 @@ const moreFiltersState = useMoreFilters(moreFilters, query, setFilters);
 const { activeCount: activeMoreFilters, isOpen: showMoreFilters } = moreFiltersState;
 
 const { data, isLoading, error, reload } = usePagedList(
-    (q) => apiClient.getReservations({ queries: toReservationQueries(q, PAGE_SIZE) }),
+    (q) =>
+        apiClient.getReservations({
+            queries: {
+                ...toReservationQueries(q, PAGE_SIZE, new Date()),
+                ...toSortQueries(sort.value),
+            },
+        }),
     query,
 );
 
 watch(data, (page) => {
     if (page) void clampPage(page.totalPages);
+});
+
+const periodNotice = computed(() => {
+    if (query.value.date) return null;
+    if (query.value.when === "past") return "Showing reservations that have already passed.";
+    if (query.value.when === "all") return null;
+    return "Showing today's and upcoming reservations.";
 });
 
 function reservationKey(item: ReservationListItem): string {
@@ -319,6 +357,13 @@ async function forceCancel(item: ReservationListItem): Promise<void> {
                 @clear="moreFiltersState.clear"
             />
 
+            <p
+                v-if="periodNotice"
+                class="border-border bg-background text-text-muted border-b px-4 py-2 text-sm"
+            >
+                {{ periodNotice }}
+            </p>
+
             <ErrorText v-if="error" :error="apiErrorMessage(error)" class="mt-4" />
 
             <DataTable
@@ -327,6 +372,8 @@ async function forceCancel(item: ReservationListItem): Promise<void> {
                 :row-key="reservationKey"
                 :is-loading="isLoading"
                 :skeleton-rows="PAGE_SIZE"
+                :sort
+                @sort="toggleSort"
             >
                 <template #cell-when="{ row }">
                     <span class="text-text block truncate font-medium">

@@ -16,6 +16,7 @@ function query(overrides: Partial<RoomListQuery> = {}): RoomListQuery {
         day: "",
         from: "",
         to: "",
+        sort: "",
         ...overrides,
     };
 }

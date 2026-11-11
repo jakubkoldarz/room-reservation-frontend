@@ -92,9 +92,16 @@ function select(option: SelectOption): void {
     close();
 }
 
-function clear(): void {
+function reset(): void {
     model.value = "";
-    close();
+    text.value = "";
+}
+
+function clear(): void {
+    reset();
+    filterText.value = "";
+    highlighted.value = -1;
+    isOpen.value = true;
     input.value?.focus();
 }
 
@@ -130,7 +137,7 @@ function onEnter(): void {
 
 function onEscape(): void {
     if (isOpen.value) close();
-    else if (model.value) clear();
+    else if (model.value) reset();
 }
 </script>
 
@@ -169,6 +176,7 @@ function onEscape(): void {
                     hasIcon ? 'pl-8' : 'pl-2',
                 ]"
                 @focus="onFocus"
+                @click="open"
                 @blur="onBlur"
                 @input="onInput"
                 @keydown.down.prevent="move(1)"

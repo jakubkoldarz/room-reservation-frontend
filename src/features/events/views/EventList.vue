@@ -15,6 +15,7 @@ import { apiErrorMessage } from "@/api/errors";
 import { useListQuery } from "@/composables/useListQuery";
 import { usePagedList } from "@/composables/usePagedList";
 import { usePermissions } from "@/composables/usePermissions";
+import { useListSort } from "@/composables/useListSort";
 import { useVisibleColumns } from "@/composables/useVisibleColumns";
 import { Permission } from "@/features/auth/constants/permissions";
 import { useAllBuildings } from "@/features/buildings/composables/useAllBuildings";
@@ -41,6 +42,7 @@ import IconButton from "@/features/shared/IconButton.vue";
 import LinkButton from "@/features/shared/LinkButton.vue";
 import TextLink from "@/features/shared/TextLink.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
+import { toSortQueries } from "@/features/table/utils/sort";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { toIsoDate } from "@/utils/isoDate";
 import { eventRoutes } from "../routes";
@@ -55,8 +57,8 @@ const VISIBLE_ROOMS = 3;
 const { hasPermission } = usePermissions();
 
 const columns = useVisibleColumns(() => [
-    { key: "name", label: "Event", align: "left" },
-    { key: "dates", label: "Dates", width: 250, align: "left" },
+    { key: "name", label: "Event", align: "left", sortKey: "name" },
+    { key: "dates", label: "Dates", width: 250, align: "left", sortKey: "startDate" },
     { key: "hours", label: "Opening hours", width: 150, align: "left" },
     { key: "rooms", label: "Rooms", width: 240, align: "left" },
     {
@@ -78,6 +80,16 @@ const { rooms } = useAllRooms();
 const { roomLink } = useRoomDestination();
 
 const { query, setFilter, setFilters, clampPage } = useListQuery(EventListQuerySchema);
+
+const { sort, toggleSort } = useListSort(
+    () => query.value.sort,
+    (value) => setFilter("sort", value),
+    columns,
+    () => ({
+        by: "startDate",
+        direction: query.value.when === "past" && !query.value.date ? "desc" : "asc",
+    }),
+);
 
 const roomOptions = computed(() =>
     rooms.value
@@ -147,7 +159,10 @@ const moreFiltersState = useMoreFilters(moreFilters, query, setFilters);
 const { activeCount: activeMoreFilters, isOpen: showMoreFilters } = moreFiltersState;
 
 const { data, isLoading, error, reload } = usePagedList(
-    (q) => apiClient.getEvents({ queries: toEventQueries(q, PAGE_SIZE, new Date()) }),
+    (q) =>
+        apiClient.getEvents({
+            queries: { ...toEventQueries(q, PAGE_SIZE, new Date()), ...toSortQueries(sort.value) },
+        }),
     query,
 );
 
@@ -271,6 +286,8 @@ const periodNotice = computed(() => {
                 row-key="id"
                 :is-loading="isLoading"
                 :skeleton-rows="PAGE_SIZE"
+                :sort
+                @sort="toggleSort"
             >
                 <template #cell-name="{ row }">
                     <TextLink

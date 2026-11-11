@@ -37,8 +37,8 @@ const PermissionResponseDto = z.object({ id: z.string().uuid(), name: z.string()
 const PagedResponseDtoOfPermissionResponseDto = z.object({ items: z.array(PermissionResponseDto), totalCount: z.number().int(), page: z.number().int(), pageSize: z.number().int(), totalPages: z.number().int(), hasNextPage: z.boolean() });
 const ReservationActorResponseDto = z.object({ at: z.string().datetime({ offset: true }), by: BasicUserResponseDto });
 const ReservationResponseDto = z.object({ id: z.string().uuid(), createdBy: ReservationActorResponseDto, approvedBy: z.union([z.null(), ReservationActorResponseDto]).optional(), canceledBy: z.union([z.null(), ReservationActorResponseDto]).optional(), rejectedBy: z.union([z.null(), ReservationActorResponseDto]).optional(), date: z.string(), startTime: z.string(), endTime: z.string(), purpose: z.union([z.null(), z.string()]).optional(), reason: z.union([z.null(), z.string()]).optional(), status: z.string().optional() });
-const UpdateReservationRequestDto = z.object({ startTime: z.string(), endTime: z.string(), purpose: z.union([z.null(), z.string()]).optional() });
 const ReservationListItemResponseDto = z.object({ reservationInfo: ReservationResponseDto, roomInfo: BasicRoomResponseDto, buildingInfo: BasicBuildingResponseDto });
+const UpdateReservationRequestDto = z.object({ startTime: z.string(), endTime: z.string(), purpose: z.union([z.null(), z.string()]).optional() });
 const PagedResponseDtoOfReservationListItemResponseDto = z.object({ items: z.array(ReservationListItemResponseDto), totalCount: z.number().int(), page: z.number().int(), pageSize: z.number().int(), totalPages: z.number().int(), hasNextPage: z.boolean() });
 const CreateReservationRequestDto = z.object({ roomId: z.string().uuid(), date: z.string(), startTime: z.string(), endTime: z.string(), purpose: z.union([z.null(), z.string()]).optional() });
 const ReservationReasonRequestDto = z.object({ reason: z.union([z.null(), z.string()]) }).partial();
@@ -87,8 +87,8 @@ export const schemas = {
 	PagedResponseDtoOfPermissionResponseDto,
 	ReservationActorResponseDto,
 	ReservationResponseDto,
-	UpdateReservationRequestDto,
 	ReservationListItemResponseDto,
+	UpdateReservationRequestDto,
 	PagedResponseDtoOfReservationListItemResponseDto,
 	CreateReservationRequestDto,
 	ReservationReasonRequestDto,
@@ -374,6 +374,16 @@ const endpoints = makeApi([
 				type: "Query",
 				schema: z.number().int().gte(1).lte(100).optional()
 			},
+			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
+			},
 		],
 		response: PagedResponseDtoOfBasicBuildingResponseDto,
 	},
@@ -458,6 +468,16 @@ const endpoints = makeApi([
 				name: "PageSize",
 				type: "Query",
 				schema: z.number().int().gte(1).lte(100).optional()
+			},
+			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
 			},
 		],
 		response: PagedResponseDtoOfEquipmentResponseDto,
@@ -569,6 +589,16 @@ const endpoints = makeApi([
 				type: "Query",
 				schema: z.number().int().gte(1).lte(100).optional()
 			},
+			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
+			},
 		],
 		response: PagedResponseDtoOfEventResponseDto,
 	},
@@ -669,6 +699,16 @@ const endpoints = makeApi([
 				type: "Query",
 				schema: z.number().int().gte(1).lte(100).optional()
 			},
+			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
+			},
 		],
 		response: PagedResponseDtoOfPermissionResponseDto,
 	},
@@ -733,6 +773,16 @@ const endpoints = makeApi([
 				type: "Query",
 				schema: z.number().int().gte(1).lte(100).optional()
 			},
+			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
+			},
 		],
 		response: PagedResponseDtoOfReservationListItemResponseDto,
 	},
@@ -767,7 +817,7 @@ const endpoints = makeApi([
 				schema: z.string().uuid()
 			},
 		],
-		response: ReservationResponseDto,
+		response: ReservationListItemResponseDto,
 	},
 	{
 		method: "delete",
@@ -965,6 +1015,16 @@ const endpoints = makeApi([
 				schema: z.number().int().gte(1).lte(100).optional()
 			},
 			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
+			},
+			{
 				name: "userId",
 				type: "Query",
 				schema: z.string().uuid().optional()
@@ -992,6 +1052,16 @@ const endpoints = makeApi([
 				name: "PageSize",
 				type: "Query",
 				schema: z.number().int().gte(1).lte(100).optional()
+			},
+			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
 			},
 		],
 		response: PagedResponseDtoOfRoleResponseDto,
@@ -1147,6 +1217,16 @@ const endpoints = makeApi([
 				type: "Query",
 				schema: z.number().int().gte(1).lte(100).optional()
 			},
+			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
+			},
 		],
 		response: PagedResponseDtoOfRoomListItemResponseDto,
 	},
@@ -1256,6 +1336,16 @@ const endpoints = makeApi([
 				name: "PageSize",
 				type: "Query",
 				schema: z.number().int().gte(1).lte(100).optional()
+			},
+			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
 			},
 		],
 		response: PagedResponseDtoOfBasicUserResponseDto,

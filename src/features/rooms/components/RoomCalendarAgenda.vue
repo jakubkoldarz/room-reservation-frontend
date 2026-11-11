@@ -2,14 +2,38 @@
 import ReservationDetails from "@/features/reservations/components/ReservationDetails.vue";
 import Badge from "@/features/shared/Badge.vue";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
-import type { CalendarDay } from "../types";
+import type { CalendarBlock, CalendarDay } from "../types";
 import { minutesToHm, overrideLabel } from "../utils/calendar";
 import { BLOCK_CLASSES, blockKindLabel } from "../utils/calendarStyles";
 
-const { days, showOpeningHours = true } = defineProps<{
+const {
+    days,
+    showOpeningHours = true,
+    isActionable,
+} = defineProps<{
     days: readonly CalendarDay[];
     showOpeningHours?: boolean;
+    isActionable?: (block: CalendarBlock) => boolean;
 }>();
+
+const emit = defineEmits<{
+    open: [block: CalendarBlock, anchor: HTMLElement];
+}>();
+
+function blockActionable(block: CalendarBlock): boolean {
+    return isActionable?.(block) ?? false;
+}
+
+function openBlock(block: CalendarBlock, event: Event): void {
+    if (!blockActionable(block)) return;
+    emit("open", block, event.currentTarget as HTMLElement);
+}
+
+function onBlockKeydown(block: CalendarBlock, event: KeyboardEvent): void {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    openBlock(block, event);
+}
 
 function dayLabel(date: Date): string {
     return new Intl.DateTimeFormat("en-GB", {
@@ -56,8 +80,19 @@ function openingHours(day: CalendarDay): string {
                 >
                     <BaseTooltip
                         variant="card"
-                        class="flex w-full cursor-default gap-3 rounded border-l-4 px-3 py-1.5 text-sm"
-                        :class="BLOCK_CLASSES[block.kind]"
+                        :clickable="blockActionable(block)"
+                        :role="blockActionable(block) ? 'button' : undefined"
+                        :tabindex="blockActionable(block) ? 0 : undefined"
+                        :aria-haspopup="blockActionable(block) ? 'menu' : undefined"
+                        class="flex w-full gap-3 rounded border-l-4 px-3 py-1.5 text-sm"
+                        :class="[
+                            BLOCK_CLASSES[block.kind],
+                            blockActionable(block)
+                                ? 'focus-visible:ring-primary cursor-pointer outline-none hover:brightness-95 focus-visible:ring-2'
+                                : 'cursor-default',
+                        ]"
+                        @click="openBlock(block, $event)"
+                        @keydown="onBlockKeydown(block, $event)"
                     >
                         <span class="w-24 shrink-0 font-semibold">{{ block.time }}</span>
                         <span class="flex min-w-0 flex-col">

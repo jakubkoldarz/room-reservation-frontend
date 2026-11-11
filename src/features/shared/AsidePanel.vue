@@ -3,7 +3,13 @@ import { usePermissions } from "@/composables/usePermissions";
 import { Permission } from "../auth/constants/permissions";
 import LinkButton from "./LinkButton.vue";
 import { dashboardRoutes } from "../dashboard/routes";
-import { CalendarDaysIcon, HomeIcon, RectangleGroupIcon, StarIcon } from "@heroicons/vue/24/solid";
+import {
+    CalendarDaysIcon,
+    ClipboardDocumentListIcon,
+    HomeIcon,
+    RectangleGroupIcon,
+    StarIcon,
+} from "@heroicons/vue/24/solid";
 import { useBuildingsStore } from "../buildings/stores/useBuildingsStore.ts";
 import AsideList from "./AsideList.vue";
 import { useRoute } from "vue-router";
@@ -12,6 +18,7 @@ import { watchDebounced } from "@vueuse/core";
 import { buildingRoutes } from "../buildings/routes.ts";
 import { equipmentRoutes } from "../equipment/routes.ts";
 import { eventRoutes } from "../events/routes.ts";
+import { profileRoutes } from "../profile/routes.ts";
 import { reservationRoutes } from "../reservations/routes.ts";
 import { roomRoutes } from "../rooms/routes.ts";
 import { useRoomsStore } from "../rooms/stores/useRoomsStore.ts";
@@ -22,6 +29,11 @@ const buildingsStore = useBuildingsStore();
 const roomsStore = useRoomsStore();
 const { roomLink } = useRoomDestination();
 const route = useRoute();
+
+const myReservationsLink = { name: profileRoutes.view.name, query: { tab: "reservations" } };
+const isMyReservationsActive = computed(
+    () => route.name === profileRoutes.view.name && route.query.tab === "reservations",
+);
 
 const buildingItems = computed(() => {
     const canView = hasPermission(Permission.BuildingView);
@@ -117,6 +129,10 @@ watchDebounced(
                 <LinkButton :to="dashboardRoutes.dashboard">
                     <HomeIcon />
                     Dashboard
+                </LinkButton>
+                <LinkButton :to="myReservationsLink" :active="isMyReservationsActive">
+                    <ClipboardDocumentListIcon />
+                    My reservations
                 </LinkButton>
                 <LinkButton
                     v-if="hasPermission(Permission.ReservationList)"

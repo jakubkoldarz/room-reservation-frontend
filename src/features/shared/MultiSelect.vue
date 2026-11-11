@@ -90,7 +90,9 @@ function toggle(option: SelectOption): void {
 
 function clear(): void {
     model.value = [];
-    close();
+    filterText.value = "";
+    highlighted.value = options.length > 0 ? 0 : -1;
+    isOpen.value = true;
     input.value?.focus();
 }
 
@@ -115,7 +117,7 @@ function onEnter(): void {
 
 function onEscape(): void {
     if (isOpen.value) close();
-    else if (model.value.length > 0) clear();
+    else if (model.value.length > 0) model.value = [];
 }
 </script>
 
@@ -154,6 +156,7 @@ function onEscape(): void {
                     hasIcon ? 'pl-8' : 'pl-2',
                 ]"
                 @focus="open"
+                @click="open"
                 @blur="close"
                 @input="onInput"
                 @keydown.down.prevent="move(1)"

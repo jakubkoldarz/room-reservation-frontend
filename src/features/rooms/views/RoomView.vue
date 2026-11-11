@@ -9,17 +9,23 @@ import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
 import { usePermissions } from "@/composables/usePermissions";
 import { Permission } from "@/features/auth/constants/permissions";
+import { useAuthStore } from "@/features/auth/stores/useAuthStore";
 import { slotsForDate } from "@/features/availabilities/utils/schedule";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import ReservationCreateDialog from "@/features/reservations/components/ReservationCreateDialog.vue";
+import { useOwnReservationActions } from "@/features/reservations/composables/useOwnReservationActions";
 import type { ReservationDraft, ReservationRoom } from "@/features/reservations/types";
+import {
+    isOwnReservation,
+    ownReservationActions,
+} from "@/features/reservations/utils/reservationActions";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import { toIsoDate } from "@/utils/isoDate";
 import RoomCalendar from "../components/RoomCalendar.vue";
 import RoomInfoPanel from "../components/RoomInfoPanel.vue";
 import { useCalendarWeek } from "../composables/useCalendarWeek";
-import type { CalendarSelection, RoomSummary } from "../types";
+import type { CalendarBlock, CalendarSelection, RoomSummary } from "../types";
 import { buildCalendarDays, hourRange, minutesToHm } from "../utils/calendar";
 
 const route = useRoute();
@@ -78,6 +84,22 @@ const days = computed(() =>
         roomOf: () => reservationRoom.value,
     }),
 );
+
+const authStore = useAuthStore();
+const { withdraw, cancel } = useOwnReservationActions();
+
+function blockActions(block: CalendarBlock) {
+    if (!isOwnReservation(block.reservation, authStore.user?.userInfo.id)) return [];
+    return ownReservationActions(block.kind, block.reservation, now.value);
+}
+
+async function onWithdraw(block: CalendarBlock): Promise<void> {
+    if (await withdraw(block.reservation, reservationRoom.value.name)) await refresh();
+}
+
+async function onCancel(block: CalendarBlock): Promise<void> {
+    if (await cancel(block.reservation, reservationRoom.value.name)) await refresh();
+}
 const hours = computed(() => hourRange(room.value?.availabilities ?? [], days.value));
 
 const { hasPermission } = usePermissions();
@@ -159,11 +181,14 @@ async function onCreated(): Promise<void> {
                     :is-loading
                     :selectable="canReserve"
                     :selection
+                    :block-actions="blockActions"
                     class="min-w-0 flex-1 @5xl:order-1"
                     @previous="showPreviousWeek"
                     @next="showNextWeek"
                     @today="showCurrentWeek"
                     @select="onSelect"
+                    @withdraw="onWithdraw"
+                    @cancel="onCancel"
                 >
                     <template #actions>
                         <BaseTooltip v-if="canReserve" text="New reservation" class="@3xl:hidden">
