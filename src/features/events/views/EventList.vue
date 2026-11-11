@@ -334,7 +334,12 @@ const periodNotice = computed(() => {
                 </template>
 
                 <template #cell-delete="{ row }">
-                    <IconButton type="danger" aria-label="Delete event" @click="deleteEvent(row)">
+                    <IconButton
+                        v-if="eventPeriod(row, todayIso) !== 'past'"
+                        type="danger"
+                        aria-label="Delete event"
+                        @click="deleteEvent(row)"
+                    >
                         <TrashIcon class="size-4" />
                     </IconButton>
                 </template>
