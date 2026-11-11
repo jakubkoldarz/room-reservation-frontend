@@ -11,6 +11,7 @@ import { computed, onMounted, watch } from "vue";
 import { watchDebounced } from "@vueuse/core";
 import { buildingRoutes } from "../buildings/routes.ts";
 import { equipmentRoutes } from "../equipment/routes.ts";
+import { eventRoutes } from "../events/routes.ts";
 import { reservationRoutes } from "../reservations/routes.ts";
 import { roomRoutes } from "../rooms/routes.ts";
 import { useRoomsStore } from "../rooms/stores/useRoomsStore.ts";
@@ -131,7 +132,7 @@ watchDebounced(
                     <RectangleGroupIcon />
                     Equipment
                 </LinkButton>
-                <LinkButton v-if="hasPermission(Permission.EventList)" :to="equipmentRoutes.list">
+                <LinkButton v-if="hasPermission(Permission.EventList)" :to="eventRoutes.list">
                     <StarIcon />
                     Events
                 </LinkButton>

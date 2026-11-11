@@ -10,6 +10,7 @@ import {
     PencilSquareIcon,
     Square3Stack3DIcon,
     UsersIcon,
+    PlusIcon,
 } from "@heroicons/vue/24/solid";
 import { usePermissions } from "@/composables/usePermissions";
 import { Permission } from "@/features/auth/constants/permissions";
@@ -18,12 +19,16 @@ import { DAYS_MONDAY_FIRST, formatHours } from "@/features/availabilities/utils/
 import { buildingRoutes } from "@/features/buildings/routes";
 import { formatAddress } from "@/features/buildings/utils/formatAddres";
 import { iconFor } from "@/features/equipment/icons";
+import { eventRoutes } from "@/features/events/routes";
+import { eventHours, formatEventDates } from "@/features/events/utils/eventFormat";
 import BaseButton from "@/features/shared/BaseButton.vue";
 import Container from "@/features/shared/Container.vue";
+import PlainButton from "@/features/shared/PlainButton.vue";
 import Skeleton from "@/features/shared/Skeleton.vue";
 import TextLink from "@/features/shared/TextLink.vue";
 import { roomRoutes } from "../routes";
 import type { RoomSummary } from "../types";
+import { BLOCK_CLASSES } from "../utils/calendarStyles";
 import {
     approvalDescription,
     approvalShortLabel,
@@ -57,6 +62,21 @@ const openingHours = computed(() =>
         isToday: dayOfWeek === now.getDay(),
     })),
 );
+
+const VISIBLE_EVENTS = 3;
+
+const sortedEvents = computed(() =>
+    [...(room?.events ?? [])].sort((a, b) => a.startDate.localeCompare(b.startDate)),
+);
+const visibleEvents = computed(() => sortedEvents.value.slice(0, VISIBLE_EVENTS));
+const hiddenEventsCount = computed(() => sortedEvents.value.length - visibleEvents.value.length);
+const showEvents = computed(
+    () => sortedEvents.value.length > 0 || hasPermission(Permission.EventAdd),
+);
+
+function addEvent(): void {
+    if (info.value) router.push({ name: eventRoutes.add.name, query: { roomId: info.value.id } });
+}
 
 function goToEdit(): void {
     if (info.value) router.push({ name: roomRoutes.edit.name, params: { roomId: info.value.id } });
@@ -156,6 +176,51 @@ function goToEdit(): void {
                         <span v-else :class="{ 'text-text-muted': !row.isToday }">Closed</span>
                     </li>
                 </ul>
+            </section>
+
+            <section v-if="showEvents" class="flex flex-col gap-2">
+                <div class="flex items-center justify-between gap-2">
+                    <h2 class="text-text-muted text-xs font-semibold uppercase">Upcoming events</h2>
+                    <PlainButton
+                        v-if="hasPermission(Permission.EventAdd)"
+                        type="button"
+                        class="text-xs"
+                        @click="addEvent"
+                    >
+                        <PlusIcon class="size-4" /> Add event
+                    </PlainButton>
+                </div>
+                <ul v-if="visibleEvents.length > 0" class="flex flex-col gap-1.5">
+                    <li
+                        v-for="event in visibleEvents"
+                        :key="event.id"
+                        class="flex flex-col rounded border-l-4 px-2.5 py-1.5"
+                        :class="event.isClosed ? BLOCK_CLASSES.closed : BLOCK_CLASSES.event"
+                    >
+                        <TextLink
+                            v-if="hasPermission(Permission.EventEdit)"
+                            :to="{ name: eventRoutes.edit.name, params: { eventId: event.id } }"
+                            class="truncate text-sm"
+                        >
+                            {{ event.name }}
+                        </TextLink>
+                        <span v-else class="text-text truncate text-sm font-medium">
+                            {{ event.name }}
+                        </span>
+                        <span class="text-text-muted text-xs">
+                            {{ formatEventDates(event) }} ·
+                            {{ event.isClosed ? "Room closed" : eventHours(event) }}
+                        </span>
+                    </li>
+                </ul>
+                <p v-else class="text-text-muted text-sm">No upcoming events</p>
+                <TextLink
+                    v-if="hiddenEventsCount > 0 && hasPermission(Permission.EventList)"
+                    :to="{ name: eventRoutes.list.name, query: { room: room.details.roomInfo.id } }"
+                    class="self-start text-xs"
+                >
+                    +{{ hiddenEventsCount }} more
+                </TextLink>
             </section>
 
             <BaseButton

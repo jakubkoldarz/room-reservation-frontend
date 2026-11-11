@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ApiError } from "@/api/errors";
 import {
     isConflict,
+    reservationConflictItems,
     reservationConflicts,
     reservationsAffectedMessage,
     roomConflicts,
@@ -67,5 +68,35 @@ describe("reservationsAffectedMessage", () => {
             "1 upcoming reservation will be canceled and its owner notified.",
         );
         expect(reservationsAffectedMessage(3)).toContain("3 upcoming reservations");
+    });
+});
+
+describe("reservationConflictItems", () => {
+    it("sortuje po dacie i godzinie, dokleja salę i status", () => {
+        const items = reservationConflictItems(
+            [
+                {
+                    reservationId: "b",
+                    date: "2026-11-12",
+                    startTime: "13:00:00",
+                    endTime: "14:00:00",
+                    roomId: "r2",
+                    status: "PENDING",
+                },
+                {
+                    reservationId: "a",
+                    date: "2026-11-10",
+                    startTime: "09:00:00",
+                    endTime: "10:30:00",
+                    roomId: "r1",
+                    status: "APPROVED",
+                },
+            ],
+            (id) => (id === "r1" ? "A-101" : undefined),
+        );
+        expect(items).toEqual([
+            { primary: "A-101 · Tue, 10 Nov 2026, 09:00–10:30", secondary: "Confirmed" },
+            { primary: "Thu, 12 Nov 2026, 13:00–14:00", secondary: "Waiting for approval" },
+        ]);
     });
 });

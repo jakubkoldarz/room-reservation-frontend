@@ -12,7 +12,9 @@ import {
     MapPinIcon,
     PencilSquareIcon,
     PlusIcon,
+    StarIcon,
 } from "@heroicons/vue/24/solid";
+import { eventRoutes } from "@/features/events/routes";
 import { roomRoutes } from "@/features/rooms/routes";
 import { buildingRoutes } from "../routes";
 
@@ -29,6 +31,10 @@ const props = defineProps<{
 
 function gotoEdit() {
     router.push({ name: buildingRoutes.edit.name, params: { buildingId: props.buildingId } });
+}
+
+function gotoAddEvent() {
+    router.push({ name: eventRoutes.add.name, query: { buildingId: props.buildingId } });
 }
 
 function gotoAddRoom() {
@@ -70,7 +76,11 @@ function gotoAddRoom() {
                 </p>
             </div>
             <div
-                v-if="hasPermission(Permission.BuildingEdit) || hasPermission(Permission.RoomAdd)"
+                v-if="
+                    hasPermission(Permission.BuildingEdit) ||
+                    hasPermission(Permission.RoomAdd) ||
+                    hasPermission(Permission.EventAdd)
+                "
                 class="mt-4 flex flex-wrap gap-2"
             >
                 <OutlineButton
@@ -87,6 +97,13 @@ function gotoAddRoom() {
                 >
                     <PlusIcon class="size-5" /> Add Room
                 </BaseButton>
+                <OutlineButton
+                    v-if="hasPermission(Permission.EventAdd)"
+                    class="rounded-lg py-1"
+                    @click="gotoAddEvent"
+                >
+                    <StarIcon class="size-5" /> Add event
+                </OutlineButton>
             </div>
         </template>
     </Container>

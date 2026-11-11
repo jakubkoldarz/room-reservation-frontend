@@ -5,6 +5,7 @@ import { onboardingRouteName } from "@/features/auth/utils/onboarding";
 import { buildingRoutes } from "@/features/buildings/routes";
 import { dashboardRoutes } from "@/features/dashboard/routes";
 import { equipmentRoutes } from "@/features/equipment/routes";
+import { eventRoutes } from "@/features/events/routes";
 import { profileRoutes } from "@/features/profile/routes";
 import { reservationRoutes } from "@/features/reservations/routes";
 import { roomRoutes } from "@/features/rooms/routes";
@@ -24,6 +25,7 @@ const routes: RouteRecordRaw[] = [
     ...Object.values(roomRoutes),
     ...Object.values(profileRoutes),
     ...Object.values(reservationRoutes),
+    ...Object.values(eventRoutes),
 ];
 
 const router = createRouter({
