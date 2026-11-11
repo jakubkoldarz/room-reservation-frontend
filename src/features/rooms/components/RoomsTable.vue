@@ -53,7 +53,12 @@ import { roomRoutes } from "../routes";
 import { RoomListQuerySchema } from "../schemas";
 import { useRoomsStore } from "../stores/useRoomsStore";
 import type { BasicRoom, RoomListItem } from "../types";
-import { isConflict } from "../utils/conflicts";
+import {
+    isConflict,
+    reservationConflictItems,
+    reservationConflicts,
+    reservationsAffectedMessage,
+} from "../utils/conflicts";
 import {
     approvalLabel,
     approvalShortLabel,
@@ -208,8 +213,17 @@ const { roomLink } = useRoomDestination();
 async function deleteRoom(room: BasicRoom): Promise<void> {
     const confirmed = await confirm({
         title: "Delete room?",
-        message: `"${room.identifier}" will be permanently deleted. This cannot be undone.`,
-        confirmText: "Delete",
+        message: `You are about to delete room "${room.identifier}".`,
+        warning: {
+            title: "This permanently removes all data of this room:",
+            points: [
+                "its details, opening hours and equipment",
+                "its whole reservation history, including past, rejected and canceled reservations",
+                "its place in events that include it",
+            ],
+            note: "This can't be undone. Please continue only if you are sure this data is no longer needed.",
+        },
+        confirmText: "Delete room",
         danger: true,
     });
     if (!confirmed) return;
@@ -224,9 +238,14 @@ async function deleteRoom(room: BasicRoom): Promise<void> {
 
     let result = await remove(false);
     if (!result.ok && isConflict(result.error)) {
+        const reservations = reservationConflicts(result.error);
         const forced = await confirm({
             title: "Delete room anyway?",
-            message: `"${room.identifier}" has upcoming reservations. Deleting it anyway will cancel them and notify their owners.`,
+            message:
+                reservations.length > 0
+                    ? `"${room.identifier}" still has upcoming reservations. ${reservationsAffectedMessage(reservations.length)}`
+                    : `"${room.identifier}" still has upcoming reservations. They will be canceled and their owners notified.`,
+            items: reservationConflictItems(reservations, () => room.identifier),
             confirmText: "Delete anyway",
             danger: true,
         });

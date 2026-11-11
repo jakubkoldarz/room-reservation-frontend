@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ExclamationTriangleIcon } from "@heroicons/vue/24/solid";
 import { ref, useId, useTemplateRef, watch } from "vue";
 import OutlineButton from "@/features/shared/OutlineButton.vue";
 import { useConfirmDialogState } from "../composables/useConfirm";
@@ -27,6 +28,23 @@ watch(pending, (current) => {
         <div v-if="pending" class="flex flex-col gap-4 p-4 sm:p-6">
             <h2 :id="titleId" class="text-lg font-semibold">{{ pending.options.title }}</h2>
             <p class="text-text-muted text-sm">{{ pending.options.message }}</p>
+
+            <div
+                v-if="pending.options.warning"
+                role="alert"
+                class="border-danger/30 bg-danger/5 text-danger flex gap-3 rounded border border-l-4 px-3 py-2.5 text-sm"
+            >
+                <ExclamationTriangleIcon class="mt-0.5 size-5 shrink-0" />
+                <div class="flex min-w-0 flex-col gap-1.5">
+                    <p class="font-semibold">{{ pending.options.warning.title }}</p>
+                    <ul class="list-disc space-y-0.5 pl-4">
+                        <li v-for="point in pending.options.warning.points" :key="point">
+                            {{ point }}
+                        </li>
+                    </ul>
+                    <p v-if="pending.options.warning.note">{{ pending.options.warning.note }}</p>
+                </div>
+            </div>
 
             <ul
                 v-if="pending.options.items?.length"

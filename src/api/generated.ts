@@ -374,6 +374,16 @@ const endpoints = makeApi([
 				type: "Query",
 				schema: z.number().int().gte(1).lte(100).optional()
 			},
+			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
+			},
 		],
 		response: PagedResponseDtoOfBasicBuildingResponseDto,
 	},
@@ -458,6 +468,16 @@ const endpoints = makeApi([
 				name: "PageSize",
 				type: "Query",
 				schema: z.number().int().gte(1).lte(100).optional()
+			},
+			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
 			},
 		],
 		response: PagedResponseDtoOfEquipmentResponseDto,
@@ -569,6 +589,16 @@ const endpoints = makeApi([
 				type: "Query",
 				schema: z.number().int().gte(1).lte(100).optional()
 			},
+			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
+			},
 		],
 		response: PagedResponseDtoOfEventResponseDto,
 	},
@@ -669,6 +699,16 @@ const endpoints = makeApi([
 				type: "Query",
 				schema: z.number().int().gte(1).lte(100).optional()
 			},
+			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
+			},
 		],
 		response: PagedResponseDtoOfPermissionResponseDto,
 	},
@@ -732,6 +772,16 @@ const endpoints = makeApi([
 				name: "PageSize",
 				type: "Query",
 				schema: z.number().int().gte(1).lte(100).optional()
+			},
+			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
 			},
 		],
 		response: PagedResponseDtoOfReservationListItemResponseDto,
@@ -965,6 +1015,16 @@ const endpoints = makeApi([
 				schema: z.number().int().gte(1).lte(100).optional()
 			},
 			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
+			},
+			{
 				name: "userId",
 				type: "Query",
 				schema: z.string().uuid().optional()
@@ -992,6 +1052,16 @@ const endpoints = makeApi([
 				name: "PageSize",
 				type: "Query",
 				schema: z.number().int().gte(1).lte(100).optional()
+			},
+			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
 			},
 		],
 		response: PagedResponseDtoOfRoleResponseDto,
@@ -1147,6 +1217,16 @@ const endpoints = makeApi([
 				type: "Query",
 				schema: z.number().int().gte(1).lte(100).optional()
 			},
+			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
+			},
 		],
 		response: PagedResponseDtoOfRoomListItemResponseDto,
 	},
@@ -1256,6 +1336,16 @@ const endpoints = makeApi([
 				name: "PageSize",
 				type: "Query",
 				schema: z.number().int().gte(1).lte(100).optional()
+			},
+			{
+				name: "SortBy",
+				type: "Query",
+				schema: z.string().max(50).optional()
+			},
+			{
+				name: "SortDirection",
+				type: "Query",
+				schema: z.string().regex(/^(asc|desc)$/).optional()
 			},
 		],
 		response: PagedResponseDtoOfBasicUserResponseDto,

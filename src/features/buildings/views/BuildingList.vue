@@ -27,6 +27,7 @@ import { defineFilters } from "@/features/filters/types";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { useConfirm } from "@/features/modal/composables/useConfirm";
 import PagerBlock from "@/features/pager/components/PagerBlock.vue";
+import { isConflict } from "@/features/rooms/utils/conflicts";
 import Container from "@/features/shared/Container.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import IconButton from "@/features/shared/IconButton.vue";
@@ -117,8 +118,13 @@ const buildingsStore = useBuildingsStore();
 async function deleteBuilding(building: Building): Promise<void> {
     const confirmed = await confirm({
         title: "Delete building?",
-        message: `"${building.name}" will be permanently deleted. This cannot be undone.`,
-        confirmText: "Delete",
+        message: `You are about to delete building "${building.name}". A building can be deleted only when it has no rooms.`,
+        warning: {
+            title: "This permanently removes all data of this building:",
+            points: ["its name, address and other details", "its opening hours"],
+            note: "This can't be undone. Please continue only if you are sure this data is no longer needed.",
+        },
+        confirmText: "Delete building",
         danger: true,
     });
     if (!confirmed) return;
@@ -126,6 +132,13 @@ async function deleteBuilding(building: Building): Promise<void> {
     const result = await apiCall(() =>
         apiClient.deleteBuildingsBuildingId(undefined, { params: { buildingId: building.id } }),
     );
+    if (!result.ok && isConflict(result.error)) {
+        toasts.pushError({
+            title: "Building still has rooms",
+            message: `Move the rooms of "${building.name}" to another building or delete them first.`,
+        });
+        return;
+    }
     if (!result.ok) {
         toasts.pushError({
             title: "Failed to delete building",
