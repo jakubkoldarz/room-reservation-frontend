@@ -12,8 +12,9 @@ import { createEventFormSchema } from "../schemas";
 import type { EventForm, EventInfo } from "../types";
 import { eventDayCount } from "../utils/eventFormat";
 
-const { event = null } = defineProps<{
+const { event = null, readonly = false } = defineProps<{
     event?: EventInfo | null;
+    readonly?: boolean;
 }>();
 
 const { handleSubmit, errors, defineField, setErrors, values } = useForm({
@@ -52,6 +53,10 @@ const TYPES = [
             "The rooms are open only in the hours below, even on days they are normally closed.",
     },
 ] as const;
+
+const visibleTypes = computed(() =>
+    readonly ? TYPES.filter((type) => type.value === isClosed.value) : TYPES,
+);
 
 const dayCount = computed(() => {
     if (!values.startDate || !values.endDate || values.endDate < values.startDate) return null;
@@ -97,7 +102,9 @@ defineExpose({ submit, showServerErrors });
             v-model="name"
             v-bind="nameAttrs"
             label="Name"
-            is-required
+            :readonly
+            :is-required="!readonly"
+            :class="{ 'bg-background cursor-default': readonly }"
             :error-message="errors.name"
         />
 
@@ -107,7 +114,9 @@ defineExpose({ submit, showServerErrors });
                 v-bind="startDateAttrs"
                 type="date"
                 label="From"
-                is-required
+                :readonly
+                :is-required="!readonly"
+                :class="{ 'bg-background cursor-default': readonly }"
                 :min="earliestStart"
                 :error-message="errors.startDate"
                 @update:model-value="onStartDate"
@@ -117,7 +126,9 @@ defineExpose({ submit, showServerErrors });
                 v-bind="endDateAttrs"
                 type="date"
                 label="To"
-                is-required
+                :readonly
+                :is-required="!readonly"
+                :class="{ 'bg-background cursor-default': readonly }"
                 :min="startDate || today"
                 :error-message="errors.endDate"
             />
@@ -129,14 +140,16 @@ defineExpose({ submit, showServerErrors });
         <div
             role="radiogroup"
             aria-label="Event type"
+            :aria-readonly="readonly"
             class="grid grid-cols-1 gap-2 @md:grid-cols-2"
         >
             <button
-                v-for="type in TYPES"
+                v-for="type in visibleTypes"
                 :key="type.title"
                 type="button"
                 role="radio"
                 :aria-checked="isClosed === type.value"
+                :disabled="readonly"
                 class="focus-visible:ring-primary flex items-start gap-3 rounded-lg border p-3 text-left transition-colors outline-none focus-visible:ring-2"
                 :class="
                     isClosed === type.value
@@ -169,7 +182,9 @@ defineExpose({ submit, showServerErrors });
                 type="time"
                 label="Open from"
                 step="900"
-                is-required
+                :readonly
+                :is-required="!readonly"
+                :class="{ 'bg-background cursor-default': readonly }"
                 :error-message="errors.startTime"
             />
             <BaseInput
@@ -178,7 +193,9 @@ defineExpose({ submit, showServerErrors });
                 type="time"
                 label="Open until"
                 step="900"
-                is-required
+                :readonly
+                :is-required="!readonly"
+                :class="{ 'bg-background cursor-default': readonly }"
                 :error-message="errors.endTime"
             />
         </div>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { CheckIcon, XMarkIcon } from "@heroicons/vue/24/solid";
+import { ArrowLeftIcon, CheckIcon, XMarkIcon } from "@heroicons/vue/24/solid";
 import Badge from "./Badge.vue";
 import BaseButton from "./BaseButton.vue";
 import Container from "./Container.vue";
@@ -13,7 +13,7 @@ const {
     isLoading = false,
     isSaving = false,
 } = defineProps<{
-    mode: "create" | "edit";
+    mode: "create" | "edit" | "view";
     title?: string;
     isLoading?: boolean;
     isSaving?: boolean;
@@ -25,14 +25,21 @@ const emit = defineEmits<{
 }>();
 
 const isCreate = computed(() => mode === "create");
+const isView = computed(() => mode === "view");
+
+const BADGES = {
+    create: { type: "success", label: "Creating" },
+    edit: { type: "warning", label: "Editing" },
+    view: { type: "default", label: "Viewing" },
+} as const;
 </script>
 
 <template>
     <Container class="py-3 sm:sticky sm:top-0 sm:z-10 sm:py-3">
         <div class="flex items-center justify-between gap-4">
             <div class="flex min-w-0 flex-1 items-center gap-2">
-                <Badge :type="isCreate ? 'success' : 'warning'" class="shrink-0">
-                    {{ isCreate ? "Creating" : "Editing" }}
+                <Badge :type="BADGES[mode].type" class="shrink-0">
+                    {{ BADGES[mode].label }}
                 </Badge>
                 <Skeleton v-if="isLoading" class="w-40" />
                 <h1 v-else-if="title" class="min-w-0 truncate font-bold sm:text-lg" :title>
@@ -44,6 +51,14 @@ const isCreate = computed(() => mode === "create");
                 class="bg-surface border-border fixed inset-x-0 bottom-0 z-20 flex gap-2 border-t p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgb(0_0_0/0.06)] sm:static sm:z-auto sm:shrink-0 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none"
             >
                 <OutlineButton
+                    v-if="isView"
+                    class="flex-1 justify-center rounded-lg py-2! sm:flex-none sm:py-1!"
+                    @click="emit('cancel')"
+                >
+                    <ArrowLeftIcon class="size-5" /> Back
+                </OutlineButton>
+                <OutlineButton
+                    v-else
                     class="flex-1 justify-center rounded-lg py-2! sm:flex-none sm:py-1!"
                     :disabled="isSaving"
                     @click="emit('cancel')"
@@ -51,6 +66,7 @@ const isCreate = computed(() => mode === "create");
                     <XMarkIcon class="size-5" /> Cancel
                 </OutlineButton>
                 <BaseButton
+                    v-if="!isView"
                     class="flex-1 justify-center rounded-lg py-2! sm:flex-none sm:py-1!"
                     :is-loading="isSaving"
                     :disabled="isLoading"

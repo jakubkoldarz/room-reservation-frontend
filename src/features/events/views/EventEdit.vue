@@ -11,12 +11,14 @@ import Container from "@/features/shared/Container.vue";
 import FormHeader from "@/features/shared/FormHeader.vue";
 import Skeleton from "@/features/shared/Skeleton.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
+import { toIsoDate } from "@/utils/isoDate";
 import EditEvent from "../components/EditEvent.vue";
 import EventRoomsPicker from "../components/EventRoomsPicker.vue";
 import { useEventSave } from "../composables/useEventSave";
 import { eventRoutes } from "../routes";
 import type { EventInfo } from "../types";
 import { overlapMessage, toEventRequest } from "../utils/eventConflicts";
+import { eventPeriod } from "../utils/eventFormat";
 
 const route = useRoute();
 const router = useRouter();
@@ -34,6 +36,10 @@ const event = shallowRef<EventInfo | null>(null);
 const isLoading = ref(false);
 const roomIds = ref<string[]>([]);
 const roomsError = ref<string>();
+
+const isPast = computed(
+    () => !!event.value && eventPeriod(event.value, toIsoDate(new Date())) === "past",
+);
 
 const roomNames = computed(
     () =>
@@ -121,7 +127,7 @@ async function handleSave(): Promise<void> {
     <AsideNavbarLayout>
         <div class="flex flex-col gap-4 pb-20">
             <FormHeader
-                mode="edit"
+                :mode="isPast ? 'view' : 'edit'"
                 :title="event?.name"
                 :is-loading
                 :is-saving
@@ -129,12 +135,19 @@ async function handleSave(): Promise<void> {
                 @save="handleSave"
             />
             <template v-if="event">
-                <EditEvent ref="form" :key="event.id" :event />
+                <p
+                    v-if="isPast"
+                    class="border-border bg-surface text-text-muted rounded-lg border px-4 py-2 text-sm"
+                >
+                    This event has already ended, so it can't be changed.
+                </p>
+                <EditEvent ref="form" :key="event.id" :event :readonly="isPast" />
                 <EventRoomsPicker
                     v-model="roomIds"
                     :rooms
                     :is-loading="isRoomsLoading"
                     :error="roomsError"
+                    :readonly="isPast"
                 />
             </template>
             <template v-else-if="isLoading">

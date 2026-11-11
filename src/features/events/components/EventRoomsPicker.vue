@@ -15,10 +15,12 @@ const {
     rooms,
     isLoading = false,
     error,
+    readonly = false,
 } = defineProps<{
     rooms: readonly RoomListItem[];
     isLoading?: boolean;
     error?: string;
+    readonly?: boolean;
 }>();
 
 const selectedIds = defineModel<string[]>({ default: () => [] });
@@ -26,7 +28,11 @@ const selectedIds = defineModel<string[]>({ default: () => [] });
 const search = ref("");
 const expanded = ref<Set<string>>(new Set());
 
-const groups = computed(() => groupRoomsByBuilding(rooms, search.value));
+const visibleRooms = computed(() =>
+    readonly ? rooms.filter((room) => selectedIds.value.includes(room.roomInfo.id)) : rooms,
+);
+
+const groups = computed(() => groupRoomsByBuilding(visibleRooms.value, search.value));
 const isSearching = computed(() => search.value.trim() !== "");
 
 function isExpanded(group: BuildingRoomGroup): boolean {
@@ -64,7 +70,7 @@ function toggleRoom(roomId: string): void {
 watch(
     () => `${rooms.length}:${selectedIds.value.length > 0}`,
     () => {
-        const withSelection = groupRoomsByBuilding(rooms)
+        const withSelection = groupRoomsByBuilding(visibleRooms.value)
             .filter((group) => selectedCount(group) > 0)
             .map((group) => group.id);
         if (withSelection.length > 0)
@@ -74,7 +80,8 @@ watch(
 );
 
 const selectedBuildings = computed(
-    () => groupRoomsByBuilding(rooms).filter((group) => selectedCount(group) > 0).length,
+    () =>
+        groupRoomsByBuilding(visibleRooms.value).filter((group) => selectedCount(group) > 0).length,
 );
 </script>
 
@@ -93,7 +100,7 @@ const selectedBuildings = computed(
                     </template>
                 </span>
                 <PlainButton
-                    v-if="selectedIds.length > 0"
+                    v-if="!readonly && selectedIds.length > 0"
                     type="button"
                     class="text-xs"
                     @click="selectedIds = []"
@@ -101,7 +108,8 @@ const selectedBuildings = computed(
                     Clear
                 </PlainButton>
             </div>
-            <p class="text-text-muted text-sm">
+            <p v-if="readonly" class="text-text-muted text-sm">The event applies to these rooms.</p>
+            <p v-else class="text-text-muted text-sm">
                 Select whole buildings or single rooms. The event applies to every selected room.
             </p>
             <hr class="border-border mt-2" />
@@ -126,6 +134,7 @@ const selectedBuildings = computed(
             >
                 <div class="flex items-center gap-3 px-3 py-2">
                     <input
+                        v-if="!readonly"
                         type="checkbox"
                         class="accent-primary size-4 shrink-0 cursor-pointer"
                         :checked="stateOf(group) === 'all'"
@@ -166,6 +175,7 @@ const selectedBuildings = computed(
                         :key="room.id"
                         type="button"
                         :aria-pressed="selectedIds.includes(room.id)"
+                        :disabled="readonly"
                         class="focus-visible:ring-primary flex items-center gap-2 rounded-lg border px-3 py-1.5 text-left transition-colors outline-none focus-visible:ring-2"
                         :class="
                             selectedIds.includes(room.id)
@@ -196,8 +206,8 @@ const selectedBuildings = computed(
             </li>
         </ul>
 
-        <p v-if="!isLoading && rooms.length === 0" class="text-text-muted text-sm">
-            No rooms available.
+        <p v-if="!isLoading && visibleRooms.length === 0" class="text-text-muted text-sm">
+            {{ readonly ? "No rooms." : "No rooms available." }}
         </p>
         <p v-else-if="!isLoading && groups.length === 0" class="text-text-muted text-sm">
             No rooms or buildings match "{{ search }}".
