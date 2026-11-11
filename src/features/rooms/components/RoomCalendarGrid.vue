@@ -3,7 +3,7 @@ import { computed, ref } from "vue";
 import ReservationDetails from "@/features/reservations/components/ReservationDetails.vue";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
 import { toIsoDate } from "@/utils/isoDate";
-import type { CalendarDay, CalendarSelection, MinuteRange } from "../types";
+import type { CalendarBlock, CalendarDay, CalendarSelection, MinuteRange } from "../types";
 import { blockLines, minutesToHm, overrideLabel } from "../utils/calendar";
 import { BLOCK_CLASSES, CLOSED_HOURS_BACKGROUND } from "../utils/calendarStyles";
 import {
@@ -22,6 +22,7 @@ const {
     isLoading = false,
     selectable = false,
     selection = null,
+    isActionable,
 } = defineProps<{
     days: readonly CalendarDay[];
     hours: { start: number; end: number };
@@ -30,11 +31,28 @@ const {
     isLoading?: boolean;
     selectable?: boolean;
     selection?: CalendarSelection | null;
+    isActionable?: (block: CalendarBlock) => boolean;
 }>();
 
 const emit = defineEmits<{
     select: [selection: CalendarSelection];
+    open: [block: CalendarBlock, anchor: HTMLElement];
 }>();
+
+function blockActionable(block: CalendarBlock): boolean {
+    return isActionable?.(block) ?? false;
+}
+
+function openBlock(block: CalendarBlock, event: Event): void {
+    if (!blockActionable(block)) return;
+    emit("open", block, event.currentTarget as HTMLElement);
+}
+
+function onBlockKeydown(block: CalendarBlock, event: KeyboardEvent): void {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    openBlock(block, event);
+}
 
 const BODY_HEIGHT = 480;
 
@@ -259,9 +277,20 @@ function weekday(date: Date): string {
                     :key="block.id"
                     variant="card"
                     data-calendar-block
-                    class="absolute cursor-default flex-col overflow-hidden rounded border-l-4 px-1.5 py-0.5 text-xs"
-                    :class="BLOCK_CLASSES[block.kind]"
+                    :clickable="blockActionable(block)"
+                    :role="blockActionable(block) ? 'button' : undefined"
+                    :tabindex="blockActionable(block) ? 0 : undefined"
+                    :aria-haspopup="blockActionable(block) ? 'menu' : undefined"
+                    class="absolute flex-col overflow-hidden rounded border-l-4 px-1.5 py-0.5 text-xs"
+                    :class="[
+                        BLOCK_CLASSES[block.kind],
+                        blockActionable(block)
+                            ? 'focus-visible:ring-primary cursor-pointer outline-none hover:brightness-95 focus-visible:ring-2'
+                            : 'cursor-default',
+                    ]"
                     :style="blockStyle(block)"
+                    @click="openBlock(block, $event)"
+                    @keydown="onBlockKeydown(block, $event)"
                 >
                     <span
                         v-for="(line, index) in blockLines(block, lineCapacity(block))"

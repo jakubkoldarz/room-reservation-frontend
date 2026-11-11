@@ -5,6 +5,7 @@ export const REASON_MAX_LENGTH = 100;
 
 export const ReservationListQuerySchema = z.object({
     page: pageParam,
+    when: textParam,
     status: textParam,
     date: textParam,
     building: textParam,

@@ -4,6 +4,7 @@ import {
     BuildingOfficeIcon,
     CalendarDaysIcon,
     CheckIcon,
+    ClockIcon,
     NoSymbolIcon,
     RectangleStackIcon,
     TagIcon,
@@ -49,7 +50,12 @@ import {
     formatReservationDate,
     formatReservationTime,
 } from "../utils/reservationDetails";
-import { RESERVATION_STATES, toReservationQueries } from "../utils/reservationQueries";
+import {
+    isPastFirst,
+    RESERVATION_PERIOD_OPTIONS,
+    RESERVATION_STATES,
+    toReservationQueries,
+} from "../utils/reservationQueries";
 import {
     formatUserName,
     getReservationState,
@@ -87,7 +93,10 @@ const { sort, toggleSort } = useListSort(
     () => query.value.sort,
     (value) => setFilter("sort", value),
     columns,
-    { by: "date", direction: "desc" },
+    () => ({
+        by: "date",
+        direction: isPastFirst(query.value.when) && !query.value.date ? "desc" : "asc",
+    }),
 );
 
 const statusOptions = RESERVATION_STATES.map((state) => ({
@@ -108,6 +117,13 @@ const roomOptions = computed(() =>
 
 const filters = computed(() =>
     defineFilters([
+        {
+            key: "when",
+            type: "select",
+            placeholder: "Period",
+            icon: ClockIcon,
+            values: RESERVATION_PERIOD_OPTIONS,
+        } satisfies Filter<"when">,
         {
             key: "status",
             type: "select",
@@ -177,13 +193,23 @@ const { activeCount: activeMoreFilters, isOpen: showMoreFilters } = moreFiltersS
 const { data, isLoading, error, reload } = usePagedList(
     (q) =>
         apiClient.getReservations({
-            queries: { ...toReservationQueries(q, PAGE_SIZE), ...toSortQueries(sort.value) },
+            queries: {
+                ...toReservationQueries(q, PAGE_SIZE, new Date()),
+                ...toSortQueries(sort.value),
+            },
         }),
     query,
 );
 
 watch(data, (page) => {
     if (page) void clampPage(page.totalPages);
+});
+
+const periodNotice = computed(() => {
+    if (query.value.date) return null;
+    if (query.value.when === "past") return "Showing reservations that have already passed.";
+    if (query.value.when === "all") return null;
+    return "Showing today's and upcoming reservations.";
 });
 
 function reservationKey(item: ReservationListItem): string {
@@ -330,6 +356,13 @@ async function forceCancel(item: ReservationListItem): Promise<void> {
                 @change="setFilter"
                 @clear="moreFiltersState.clear"
             />
+
+            <p
+                v-if="periodNotice"
+                class="border-border bg-background text-text-muted border-b px-4 py-2 text-sm"
+            >
+                {{ periodNotice }}
+            </p>
 
             <ErrorText v-if="error" :error="apiErrorMessage(error)" class="mt-4" />
 

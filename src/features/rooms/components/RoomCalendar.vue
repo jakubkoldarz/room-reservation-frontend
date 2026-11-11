@@ -4,8 +4,10 @@ import Container from "@/features/shared/Container.vue";
 import IconButton from "@/features/shared/IconButton.vue";
 import OutlineButton from "@/features/shared/OutlineButton.vue";
 import Skeleton from "@/features/shared/Skeleton.vue";
-import { computed } from "vue";
-import type { CalendarBlockKind, CalendarDay, CalendarSelection } from "../types";
+import { computed, shallowRef, watch } from "vue";
+import ReservationActionsMenu from "@/features/reservations/components/ReservationActionsMenu.vue";
+import type { ReservationAction } from "@/features/reservations/types";
+import type { CalendarBlock, CalendarBlockKind, CalendarDay, CalendarSelection } from "../types";
 import {
     BLOCK_CLASSES,
     CLOSED_HOURS_BACKGROUND,
@@ -28,6 +30,7 @@ const {
     selectable = false,
     selection = null,
     legendKinds = ROOM_LEGEND_KINDS,
+    blockActions,
 } = defineProps<{
     days: readonly CalendarDay[];
     hours: { start: number; end: number };
@@ -41,6 +44,7 @@ const {
     selectable?: boolean;
     selection?: CalendarSelection | null;
     legendKinds?: readonly CalendarBlockKind[];
+    blockActions?: (block: CalendarBlock) => ReservationAction[];
 }>();
 
 defineSlots<{
@@ -54,7 +58,40 @@ const emit = defineEmits<{
     next: [];
     today: [];
     select: [selection: CalendarSelection];
+    withdraw: [block: CalendarBlock];
+    cancel: [block: CalendarBlock];
 }>();
+
+const openMenu = shallowRef<{
+    block: CalendarBlock;
+    anchor: HTMLElement;
+    actions: ReservationAction[];
+} | null>(null);
+
+function isActionable(block: CalendarBlock): boolean {
+    return (blockActions?.(block).length ?? 0) > 0;
+}
+
+function onOpen(block: CalendarBlock, anchor: HTMLElement): void {
+    if (openMenu.value?.block.id === block.id) {
+        openMenu.value = null;
+        return;
+    }
+    openMenu.value = { block, anchor, actions: blockActions?.(block) ?? [] };
+}
+
+function onMenuAction(action: "withdraw" | "cancel"): void {
+    const block = openMenu.value?.block;
+    openMenu.value = null;
+    if (!block) return;
+    if (action === "withdraw") emit("withdraw", block);
+    else emit("cancel", block);
+}
+
+watch(
+    () => days,
+    () => (openMenu.value = null),
+);
 </script>
 
 <template>
@@ -106,13 +143,35 @@ const emit = defineEmits<{
                 :is-loading
                 :selectable
                 :selection
+                :is-actionable="isActionable"
                 @select="emit('select', $event)"
+                @open="onOpen"
             />
         </div>
         <div v-if="isLoading" class="flex animate-pulse flex-col gap-3 p-4 @3xl:hidden">
             <Skeleton v-for="n in 7" :key="n" class="w-full" />
         </div>
-        <RoomCalendarAgenda v-else :days :show-opening-hours class="@3xl:hidden" />
+        <RoomCalendarAgenda
+            v-else
+            :days
+            :show-opening-hours
+            :is-actionable="isActionable"
+            class="@3xl:hidden"
+            @open="onOpen"
+        />
+
+        <ReservationActionsMenu
+            v-if="openMenu"
+            :key="openMenu.block.id"
+            :anchor="openMenu.anchor"
+            :reservation="openMenu.block.reservation"
+            :state="openMenu.block.kind"
+            :room-name="openMenu.block.room?.name ?? openMenu.block.title"
+            :actions="openMenu.actions"
+            @close="openMenu = null"
+            @withdraw="onMenuAction('withdraw')"
+            @cancel="onMenuAction('cancel')"
+        />
 
         <ul
             class="border-border text-text-muted flex flex-wrap gap-x-4 gap-y-2 border-t p-4 text-xs"

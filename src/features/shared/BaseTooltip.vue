@@ -8,10 +8,12 @@ const {
     text = "",
     delay = 80,
     variant = "dark",
+    clickable = false,
 } = defineProps<{
     text?: string;
     delay?: number;
     variant?: "dark" | "card";
+    clickable?: boolean;
 }>();
 
 defineSlots<{
@@ -70,7 +72,7 @@ function onPointerLeave(event: PointerEvent): void {
 }
 
 function onTap(event: PointerEvent): void {
-    if (event.pointerType === "mouse") return;
+    if (event.pointerType === "mouse" || clickable) return;
     if (isVisible.value) return hide();
     show(0);
     autoHideTimer = window.setTimeout(hide, TOUCH_VISIBLE_MS);
@@ -111,6 +113,7 @@ onBeforeUnmount(clearTimers);
         @pointerenter="onPointerEnter"
         @pointerleave="onPointerLeave"
         @pointerup="onTap"
+        @click="clickable && hide()"
         @focusin="show()"
         @focusout="hide"
     >

@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { parseIsoDate } from "@/features/rooms/utils/calendar";
+import { addDays, parseIsoDate } from "@/features/rooms/utils/calendar";
+import { toIsoDate } from "@/utils/isoDate";
 import type { ReservationListQuery, ReservationState } from "../types";
 
 const STATUS_CODES: Record<ReservationState, number> = {
@@ -25,10 +26,31 @@ export function reservationStatusCode(value: string): number | undefined {
     return isReservationState(value) ? STATUS_CODES[value] : undefined;
 }
 
-export function toReservationQueries(query: ReservationListQuery, pageSize: number) {
+export const RESERVATION_PERIOD_OPTIONS = [
+    { value: "upcoming", label: "Today and upcoming" },
+    { value: "past", label: "Past" },
+    { value: "all", label: "All" },
+];
+
+export function reservationPeriodRange(
+    when: string,
+    today: Date,
+): { DateFrom?: string; DateTo?: string } {
+    if (when === "past") return { DateTo: toIsoDate(addDays(today, -1)) };
+    if (when === "all") return {};
+    return { DateFrom: toIsoDate(today) };
+}
+
+export function isPastFirst(when: string): boolean {
+    return when === "past" || when === "all";
+}
+
+export function toReservationQueries(query: ReservationListQuery, pageSize: number, today: Date) {
+    const date = parseIsoDate(query.date) ? query.date : undefined;
     return {
         Status: reservationStatusCode(query.status),
-        Date: parseIsoDate(query.date) ? query.date : undefined,
+        Date: date,
+        ...(date ? {} : reservationPeriodRange(query.when, today)),
         BuildingId: uuidOrUndefined(query.building),
         RoomId: uuidOrUndefined(query.room),
         CreatedById: uuidOrUndefined(query.createdBy),

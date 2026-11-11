@@ -19,8 +19,6 @@ export type ProfileTab = (typeof PROFILE_TABS)[number];
 
 export type MyReservationsQuery = z.infer<typeof MyReservationsQuerySchema>;
 
-export type MyReservationAction = "edit" | "withdraw" | "cancel";
-
 export type PermissionGroup = {
     area: string;
     actions: string[];

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { groupPermissions } from "../utils/permissions";
-import { hasStarted, myReservationActions, toMyReservationQueries } from "../utils/myReservations";
+import { toMyReservationQueries } from "../utils/myReservations";
 
 const NOW = new Date(2026, 10, 11, 14, 0);
 const QUERY = { page: 1, when: "", status: "", sort: "" };
@@ -27,33 +27,6 @@ describe("toMyReservationQueries", () => {
     it("zamienia status na kod enuma i pomija śmieci z URL", () => {
         expect(toMyReservationQueries({ ...QUERY, status: "canceled" }, 25, NOW).Status).toBe(3);
         expect(toMyReservationQueries({ ...QUERY, status: "abc" }, 25, NOW).Status).toBeUndefined();
-    });
-});
-
-describe("hasStarted", () => {
-    it("porównuje datę, a dla dzisiejszej godzinę początku", () => {
-        expect(hasStarted({ date: "2026-11-10", startTime: "18:00:00" }, NOW)).toBe(true);
-        expect(hasStarted({ date: "2026-11-11", startTime: "13:30:00" }, NOW)).toBe(true);
-        expect(hasStarted({ date: "2026-11-11", startTime: "14:00:00" }, NOW)).toBe(true);
-        expect(hasStarted({ date: "2026-11-11", startTime: "14:15:00" }, NOW)).toBe(false);
-        expect(hasStarted({ date: "2026-11-12", startTime: "08:00:00" }, NOW)).toBe(false);
-    });
-});
-
-describe("myReservationActions", () => {
-    const later = { date: "2026-11-12", startTime: "10:00:00" };
-
-    it("oczekującą można edytować i wycofać, potwierdzoną edytować i anulować", () => {
-        expect(myReservationActions("pending", later, NOW)).toEqual(["edit", "withdraw"]);
-        expect(myReservationActions("approved", later, NOW)).toEqual(["edit", "cancel"]);
-    });
-
-    it("brak akcji dla odrzuconych, anulowanych i już rozpoczętych", () => {
-        expect(myReservationActions("rejected", later, NOW)).toEqual([]);
-        expect(myReservationActions("canceled", later, NOW)).toEqual([]);
-        expect(
-            myReservationActions("approved", { date: "2026-11-11", startTime: "09:00:00" }, NOW),
-        ).toEqual([]);
     });
 });
 

@@ -26,6 +26,8 @@ export type ReservationDraft = {
     endTime: string;
 };
 
+export type ReservationAction = "edit" | "withdraw" | "cancel";
+
 export type ReservationTimeRange = {
     startTime: string;
     endTime: string;

@@ -13,7 +13,6 @@ import { slotsForDate } from "@/features/availabilities/utils/schedule";
 import NumberCircle from "@/features/buildings/components/NumberCircle.vue";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { profileRoutes } from "@/features/profile/routes";
-import { myReservationActions } from "@/features/profile/utils/myReservations";
 import type { RoomSummary } from "@/features/rooms/types";
 import { parseIsoDate } from "@/features/rooms/utils/calendar";
 import Container from "@/features/shared/Container.vue";
@@ -24,6 +23,7 @@ import EditReservation from "../components/EditReservation.vue";
 import ReservationDayTimeline from "../components/ReservationDayTimeline.vue";
 import type { ReservationListItem, ReservationTimeRange } from "../types";
 import { formatReservationDate } from "../utils/reservationDetails";
+import { isOwnReservation, ownReservationActions } from "../utils/reservationActions";
 import { editTimeProblem, formatSlots } from "../utils/reservationEdit";
 import { getReservationState } from "../utils/reservationState";
 
@@ -96,13 +96,13 @@ const state = computed(() =>
 
 const lockedReason = computed(() => {
     if (!item.value || !state.value) return null;
-    if (item.value.reservationInfo.createdBy.by.id !== authStore.user?.userInfo.id) {
+    if (!isOwnReservation(item.value.reservationInfo, authStore.user?.userInfo.id)) {
         return "You can change only your own reservations.";
     }
     if (state.value === "rejected" || state.value === "canceled") {
         return `This reservation was ${state.value}, so it can't be changed.`;
     }
-    if (myReservationActions(state.value, item.value.reservationInfo, now.value).length === 0) {
+    if (ownReservationActions(state.value, item.value.reservationInfo, now.value).length === 0) {
         return "This reservation has already started, so it can't be changed.";
     }
     return null;

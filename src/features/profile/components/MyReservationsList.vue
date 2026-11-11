@@ -7,9 +7,8 @@ import {
     TrashIcon,
 } from "@heroicons/vue/24/solid";
 import { useIntervalFn, useNow } from "@vueuse/core";
-import { computed, ref, watch } from "vue";
+import { computed, watch } from "vue";
 import apiClient from "@/api/client";
-import { apiCall, type ApiResult } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
 import { useListQuery } from "@/composables/useListQuery";
 import { useListSort } from "@/composables/useListSort";
@@ -18,17 +17,21 @@ import { usePagedList } from "@/composables/usePagedList";
 import { Permission } from "@/features/auth/constants/permissions";
 import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
 import { defineFilters, type Filter } from "@/features/filters/types";
-import { useConfirm, usePrompt } from "@/features/modal/composables/useConfirm";
 import PagerBlock from "@/features/pager/components/PagerBlock.vue";
 import ReservationStatusChip from "@/features/reservations/components/ReservationStatusChip.vue";
+import { useOwnReservationActions } from "@/features/reservations/composables/useOwnReservationActions";
 import { reservationRoutes } from "@/features/reservations/routes";
-import { REASON_MAX_LENGTH } from "@/features/reservations/schemas";
 import type { ReservationListItem } from "@/features/reservations/types";
+import { ownReservationActions } from "@/features/reservations/utils/reservationActions";
 import {
     formatReservationDate,
     formatReservationTime,
 } from "@/features/reservations/utils/reservationDetails";
-import { RESERVATION_STATES } from "@/features/reservations/utils/reservationQueries";
+import {
+    isPastFirst,
+    RESERVATION_PERIOD_OPTIONS,
+    RESERVATION_STATES,
+} from "@/features/reservations/utils/reservationQueries";
 import {
     getReservationState,
     reservationStateLabel,
@@ -43,9 +46,8 @@ import TextLink from "@/features/shared/TextLink.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
 import type { Column } from "@/features/table/types";
 import { toSortQueries } from "@/features/table/utils/sort";
-import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { MyReservationsQuerySchema } from "../schemas";
-import { myReservationActions, toMyReservationQueries } from "../utils/myReservations";
+import { toMyReservationQueries } from "../utils/myReservations";
 
 const PAGE_SIZE = 20;
 
@@ -68,7 +70,7 @@ const { sort, toggleSort } = useListSort(
     columns,
     () => ({
         by: "date",
-        direction: query.value.when === "past" || query.value.when === "all" ? "desc" : "asc",
+        direction: isPastFirst(query.value.when) ? "desc" : "asc",
     }),
 );
 
@@ -78,11 +80,7 @@ const filters = defineFilters([
         type: "select",
         placeholder: "Period",
         icon: ClockIcon,
-        values: [
-            { value: "upcoming", label: "Today and upcoming" },
-            { value: "past", label: "Past" },
-            { value: "all", label: "All" },
-        ],
+        values: RESERVATION_PERIOD_OPTIONS,
     } satisfies Filter<"when">,
     {
         key: "status",
@@ -128,7 +126,7 @@ function stateOf(item: ReservationListItem) {
 const canOpenReservation = hasPermission(Permission.ReservationView);
 
 function actionsOf(item: ReservationListItem) {
-    return myReservationActions(stateOf(item), item.reservationInfo, now.value);
+    return ownReservationActions(stateOf(item), item.reservationInfo, now.value);
 }
 
 function editLink(item: ReservationListItem) {
@@ -138,80 +136,19 @@ function editLink(item: ReservationListItem) {
     };
 }
 
-function summary(item: ReservationListItem): string {
-    return `${item.roomInfo.identifier}, ${formatReservationDate(item.reservationInfo.date)}, ${formatReservationTime(item.reservationInfo)}.`;
-}
-
 const { roomLink } = useRoomDestination();
-const toasts = useToastsStore();
-const confirm = useConfirm();
-const prompt = usePrompt();
-const busyId = ref<string | null>(null);
-
-async function runAction(
-    item: ReservationListItem,
-    action: () => Promise<ApiResult<unknown>>,
-    success: { title: string; message: string },
-    failureTitle: string,
-): Promise<void> {
-    busyId.value = item.reservationInfo.id;
-    const result = await action();
-    busyId.value = null;
-
-    if (!result.ok) {
-        toasts.pushError({ title: failureTitle, message: apiErrorMessage(result.error) });
-        return;
-    }
-    toasts.pushSuccess(success);
-    await reload();
-}
+const {
+    busyId,
+    withdraw: withdrawReservation,
+    cancel: cancelReservation,
+} = useOwnReservationActions();
 
 async function withdraw(item: ReservationListItem): Promise<void> {
-    const confirmed = await confirm({
-        title: "Withdraw request?",
-        message: `${summary(item)} The request will be removed.`,
-        confirmText: "Withdraw",
-        cancelText: "Keep",
-        danger: true,
-    });
-    if (!confirmed) return;
-
-    const params = { reservationId: item.reservationInfo.id };
-    await runAction(
-        item,
-        () => apiCall(() => apiClient.deleteReservationsReservationId(undefined, { params })),
-        {
-            title: "Request withdrawn",
-            message: `Request for ${item.roomInfo.identifier} was withdrawn.`,
-        },
-        "Failed to withdraw",
-    );
+    if (await withdrawReservation(item.reservationInfo, item.roomInfo.identifier)) await reload();
 }
 
 async function cancel(item: ReservationListItem): Promise<void> {
-    const reason = await prompt({
-        title: "Cancel reservation?",
-        message: summary(item),
-        confirmText: "Cancel reservation",
-        cancelText: "Keep",
-        danger: true,
-        input: { label: "Reason (optional)", maxLength: REASON_MAX_LENGTH },
-    });
-    if (reason === null) return;
-
-    const params = { reservationId: item.reservationInfo.id };
-    await runAction(
-        item,
-        () =>
-            apiCall(() =>
-                apiClient.postReservationsReservationIdcancel(
-                    { reason: reason || null },
-                    { params },
-                ),
-            ),
-        { title: "Canceled", message: `Reservation of ${item.roomInfo.identifier} was canceled.` },
-        "Failed to cancel",
-    );
+    if (await cancelReservation(item.reservationInfo, item.roomInfo.identifier)) await reload();
 }
 </script>
 

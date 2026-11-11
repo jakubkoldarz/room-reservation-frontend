@@ -45,5 +45,5 @@ export function useMyReservations(weekStart: Readonly<Ref<Date>>) {
         { immediate: true },
     );
 
-    return { items, isLoading, error };
+    return { items, isLoading, error, reload: () => load(weekStart.value) };
 }
