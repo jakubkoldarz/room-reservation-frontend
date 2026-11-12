@@ -59,9 +59,15 @@ const BODY_HEIGHT = 480;
 const rangeStart = computed(() => hours.start * 60);
 const rangeEnd = computed(() => hours.end * 60);
 const hourHeight = computed(() => BODY_HEIGHT / (hours.end - hours.start));
-const hourMarks = computed(() =>
-    Array.from({ length: hours.end - hours.start + 1 }, (_, index) => hours.start + index),
-);
+const hourMarks = computed(() => {
+    const marks: number[] = [];
+    for (let hour = hours.start; hour <= hours.end; hour++) {
+        marks.push(hour);
+    }
+    return marks;
+});
+const hourRows = computed(() => hourMarks.value.slice(0, -1));
+const innerHourMarks = computed(() => hourMarks.value.slice(1, -1));
 const hasAllDay = computed(() => !isLoading && days.some((day) => day.allDay.length > 0));
 const nowMinutes = computed(() => now.getHours() * 60 + now.getMinutes());
 
@@ -226,7 +232,7 @@ function weekday(date: Date): string {
 
         <div class="relative" :style="{ height: `${BODY_HEIGHT}px` }">
             <span
-                v-for="hour in hourMarks.slice(0, -1)"
+                v-for="hour in hourRows"
                 :key="hour"
                 class="text-text-muted absolute right-2 mt-0.5 text-[10px] leading-none"
                 :style="{ top: hourTop(hour) }"
@@ -266,7 +272,7 @@ function weekday(date: Date): string {
                 ></div>
 
                 <div
-                    v-for="hour in hourMarks.slice(1, -1)"
+                    v-for="hour in innerHourMarks"
                     :key="hour"
                     class="border-border/60 pointer-events-none absolute inset-x-0 border-t"
                     :style="{ top: hourTop(hour) }"

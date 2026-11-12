@@ -40,14 +40,24 @@ const highlighted = ref(-1);
 
 const selectedSet = computed(() => new Set(model.value));
 
-const summary = computed(() =>
-    options
-        .filter((option) => selectedSet.value.has(option.value))
-        .map((option) => option.label)
-        .join(", "),
-);
+const summary = computed(() => {
+    const labels: string[] = [];
+    for (const option of options) {
+        if (selectedSet.value.has(option.value)) labels.push(option.label);
+    }
+    return labels.join(", ");
+});
 
-const text = computed(() => (isOpen.value ? filterText.value : summary.value));
+const text = computed(() => {
+    if (isOpen.value) return filterText.value;
+    return summary.value;
+});
+
+const inputPlaceholder = computed(() => {
+    if (floatingLabel) return " ";
+    if (isOpen.value) return "Search...";
+    return placeholder ?? " ";
+});
 
 const filtered = computed(() => {
     const needle = filterText.value.trim().toLowerCase();
@@ -55,9 +65,10 @@ const filtered = computed(() => {
     return options.filter((option) => option.label.toLowerCase().includes(needle));
 });
 
-const activeDescendant = computed(() =>
-    isOpen.value && highlighted.value >= 0 ? optionId(highlighted.value) : undefined,
-);
+const activeDescendant = computed(() => {
+    if (!isOpen.value || highlighted.value < 0) return undefined;
+    return optionId(highlighted.value);
+});
 
 watch(highlighted, async (index) => {
     if (index < 0) return;
@@ -83,9 +94,11 @@ function close(): void {
 }
 
 function toggle(option: SelectOption): void {
-    model.value = selectedSet.value.has(option.value)
-        ? model.value.filter((value) => value !== option.value)
-        : [...model.value, option.value];
+    if (selectedSet.value.has(option.value)) {
+        model.value = model.value.filter((value) => value !== option.value);
+    } else {
+        model.value = [...model.value, option.value];
+    }
 }
 
 function clear(): void {
@@ -104,10 +117,17 @@ function onInput(event: Event): void {
 }
 
 function move(step: number): void {
-    if (!isOpen.value) return open();
+    if (!isOpen.value) {
+        open();
+        return;
+    }
     const count = filtered.value.length;
     if (count === 0) return;
-    highlighted.value = (highlighted.value + step + count) % count;
+
+    let next = highlighted.value + step;
+    if (next >= count) next = 0;
+    if (next < 0) next = count - 1;
+    highlighted.value = next;
 }
 
 function onEnter(): void {
@@ -116,8 +136,11 @@ function onEnter(): void {
 }
 
 function onEscape(): void {
-    if (isOpen.value) close();
-    else if (model.value.length > 0) model.value = [];
+    if (isOpen.value) {
+        close();
+    } else if (model.value.length > 0) {
+        model.value = [];
+    }
 }
 </script>
 
@@ -142,7 +165,7 @@ function onEscape(): void {
                 role="combobox"
                 autocomplete="off"
                 spellcheck="false"
-                :placeholder="floatingLabel ? ' ' : isOpen ? 'Search...' : (placeholder ?? ' ')"
+                :placeholder="inputPlaceholder"
                 aria-autocomplete="list"
                 aria-multiselectable="true"
                 :aria-expanded="isOpen"

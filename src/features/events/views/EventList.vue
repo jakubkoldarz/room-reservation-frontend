@@ -78,6 +78,18 @@ const { buildings } = useAllBuildings();
 const { rooms } = useAllRooms();
 const { roomLink } = useRoomDestination();
 
+function shownRooms(event: EventInfo) {
+    return event.rooms.slice(0, VISIBLE_ROOMS);
+}
+
+function hiddenRoomNames(event: EventInfo): string {
+    const names: string[] = [];
+    for (const room of event.rooms.slice(VISIBLE_ROOMS)) {
+        names.push(room.identifier);
+    }
+    return names.join(", ");
+}
+
 const { query, setFilter, setFilters, clampPage } = useListQuery(EventListQuerySchema);
 
 const { sort, toggleSort } = useListSort(
@@ -324,7 +336,7 @@ const periodNotice = computed(() => {
 
             <template #cell-rooms="{ row }">
                 <span class="inline-flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <template v-for="room in row.rooms.slice(0, VISIBLE_ROOMS)" :key="room.id">
+                    <template v-for="room in shownRooms(row)" :key="room.id">
                         <TextLink v-if="roomLink(room.id)" :to="roomLink(room.id)!">
                             {{ room.identifier }}
                         </TextLink>
@@ -332,12 +344,7 @@ const periodNotice = computed(() => {
                     </template>
                     <BaseTooltip
                         v-if="row.rooms.length > VISIBLE_ROOMS"
-                        :text="
-                            row.rooms
-                                .slice(VISIBLE_ROOMS)
-                                .map((room) => room.identifier)
-                                .join(', ')
-                        "
+                        :text="hiddenRoomNames(row)"
                     >
                         <span class="text-text-muted cursor-help text-xs">
                             +{{ row.rooms.length - VISIBLE_ROOMS }} more

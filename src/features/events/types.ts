@@ -10,11 +10,17 @@ export type EventPeriod = "upcoming" | "ongoing" | "past";
 export type EventForm = z.infer<typeof EventFormSchema>;
 export type ConflictingEvent = z.infer<typeof ConflictingEventSchema>;
 
+export type GroupedRoom = {
+    id: string;
+    identifier: string;
+    floor: number;
+};
+
 export type BuildingRoomGroup = {
     id: string;
     name: string;
     address: string;
-    rooms: { id: string; identifier: string; floor: number }[];
+    rooms: GroupedRoom[];
 };
 
 export type EventSaveOutcome =

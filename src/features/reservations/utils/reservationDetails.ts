@@ -39,9 +39,16 @@ export function formatActionTime(at: string): string {
     return actionTimeFormat.format(new Date(at));
 }
 
-function actorRow(label: string, actor: Actor | null | undefined): ReservationDetailRow[] {
-    if (!actor) return [];
-    return [{ label, value: `${formatUserName(actor.by)}, ${formatActionTime(actor.at)}` }];
+function addActorRow(
+    rows: ReservationDetailRow[],
+    label: string,
+    actor: Actor | null | undefined,
+): void {
+    if (!actor) return;
+
+    const name = formatUserName(actor.by);
+    const time = formatActionTime(actor.at);
+    rows.push({ label, value: `${name}, ${time}` });
 }
 
 const REASON_LABELS: Record<ReservationState, string> = {
@@ -56,16 +63,29 @@ export function reservationDetailRows(
     state: ReservationState,
     room: ReservationRoom | null,
 ): ReservationDetailRow[] {
-    return [
-        { label: "Date", value: formatReservationDate(reservation.date) },
-        { label: "Time", value: formatReservationTime(reservation) },
-        ...(room ? [{ label: "Room", value: room.name }] : []),
-        ...(room?.building ? [{ label: "Building", value: room.building }] : []),
-        ...actorRow("Booked by", reservation.createdBy),
-        ...actorRow("Approved by", reservation.approvedBy),
-        ...actorRow("Rejected by", reservation.rejectedBy),
-        ...actorRow("Canceled by", reservation.canceledBy),
-        ...(reservation.purpose ? [{ label: "Purpose", value: reservation.purpose }] : []),
-        ...(reservation.reason ? [{ label: REASON_LABELS[state], value: reservation.reason }] : []),
-    ];
+    const rows: ReservationDetailRow[] = [];
+
+    rows.push({ label: "Date", value: formatReservationDate(reservation.date) });
+    rows.push({ label: "Time", value: formatReservationTime(reservation) });
+
+    if (room) {
+        rows.push({ label: "Room", value: room.name });
+    }
+    if (room && room.building) {
+        rows.push({ label: "Building", value: room.building });
+    }
+
+    addActorRow(rows, "Booked by", reservation.createdBy);
+    addActorRow(rows, "Approved by", reservation.approvedBy);
+    addActorRow(rows, "Rejected by", reservation.rejectedBy);
+    addActorRow(rows, "Canceled by", reservation.canceledBy);
+
+    if (reservation.purpose) {
+        rows.push({ label: "Purpose", value: reservation.purpose });
+    }
+    if (reservation.reason) {
+        rows.push({ label: REASON_LABELS[state], value: reservation.reason });
+    }
+
+    return rows;
 }

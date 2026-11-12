@@ -29,14 +29,20 @@ const TABS: { key: ProfileTab; label: string; icon: Component }[] = [
 
 const tabButtons = useTemplateRef<HTMLButtonElement[]>("tabButtons");
 
-const fullName = computed(() =>
-    [user.userInfo.firstname, user.userInfo.lastname].filter(Boolean).join(" "),
-);
+const fullName = computed(() => {
+    const parts: string[] = [];
+    if (user.userInfo.firstname) parts.push(user.userInfo.firstname);
+    if (user.userInfo.lastname) parts.push(user.userInfo.lastname);
+    return parts.join(" ");
+});
 
-const initials = computed(() =>
-    [user.userInfo.firstname, user.userInfo.lastname]
-        .map((part) => part?.trim().charAt(0).toUpperCase() ?? "")
-        .join(""),
+function firstLetter(name: string | null | undefined): string {
+    if (!name) return "";
+    return name.trim().charAt(0).toUpperCase();
+}
+
+const initials = computed(
+    () => firstLetter(user.userInfo.firstname) + firstLetter(user.userInfo.lastname),
 );
 
 function focusTab(index: number): void {

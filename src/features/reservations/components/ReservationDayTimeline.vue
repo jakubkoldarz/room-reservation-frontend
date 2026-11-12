@@ -23,41 +23,57 @@ const {
 const DEFAULT_START = 8 * 60;
 const DEFAULT_END = 18 * 60;
 
-function isValidRange(range: ReservationTimeRange | null): range is ReservationTimeRange {
-    return !!range && toMinutes(range.startTime) < toMinutes(range.endTime);
-}
+const shownSelection = computed(() => {
+    if (!selection) return null;
 
-const shownSelection = computed(() => (isValidRange(selection) ? selection : null));
+    const isValidRange = toMinutes(selection.startTime) < toMinutes(selection.endTime);
+    if (!isValidRange) return null;
+    return selection;
+});
 const showOriginal = computed(
     () => !shownSelection.value || !isSameTimeRange(shownSelection.value, original),
 );
 
 const bounds = computed(() => {
-    const ranges = [
-        ...slots,
-        ...busy,
-        original,
-        ...(shownSelection.value ? [shownSelection.value] : []),
-    ];
-    const points = ranges.flatMap((range) => [
-        toMinutes(range.startTime),
-        toMinutes(range.endTime),
-    ]);
-    const start = Math.floor(Math.min(DEFAULT_START, ...points) / 60) * 60;
-    const end = Math.ceil(Math.max(DEFAULT_END, ...points) / 60) * 60;
+    const ranges: ReservationTimeRange[] = [...slots, ...busy, original];
+    if (shownSelection.value) ranges.push(shownSelection.value);
+
+    let earliest = DEFAULT_START;
+    let latest = DEFAULT_END;
+    for (const range of ranges) {
+        const rangeStart = toMinutes(range.startTime);
+        const rangeEnd = toMinutes(range.endTime);
+        earliest = Math.min(earliest, rangeStart, rangeEnd);
+        latest = Math.max(latest, rangeStart, rangeEnd);
+    }
+
+    const start = Math.floor(earliest / 60) * 60;
+    const end = Math.ceil(latest / 60) * 60;
     return { start, end, span: end - start };
 });
 
 const hours = computed(() => {
-    const first = bounds.value.start / 60;
-    const count = bounds.value.span / 60;
-    const step = count > 12 ? 2 : 1;
-    return Array.from({ length: count + 1 }, (_, index) => first + index).map((hour) => ({
-        hour,
-        left: ((hour * 60 - bounds.value.start) / bounds.value.span) * 100,
-        labelled: (hour - first) % step === 0,
-    }));
+    const firstHour = bounds.value.start / 60;
+    const lastHour = bounds.value.end / 60;
+
+    let labelEvery = 1;
+    if (lastHour - firstHour > 12) labelEvery = 2;
+
+    const marks = [];
+    for (let hour = firstHour; hour <= lastHour; hour++) {
+        const minutesFromStart = hour * 60 - bounds.value.start;
+        const hoursFromStart = hour - firstHour;
+        marks.push({
+            hour,
+            left: (minutesFromStart / bounds.value.span) * 100,
+            labelled: hoursFromStart % labelEvery === 0,
+        });
+    }
+    return marks;
 });
+
+const innerTicks = computed(() => hours.value.slice(1, -1));
+const labelledHours = computed(() => hours.value.filter((mark) => mark.labelled));
 
 function place(range: ReservationTimeRange) {
     const start = toMinutes(range.startTime);
@@ -88,7 +104,7 @@ function label(range: ReservationTimeRange): string {
             ></div>
 
             <div
-                v-for="tick in hours.slice(1, -1)"
+                v-for="tick in innerTicks"
                 :key="`tick-${tick.hour}`"
                 class="bg-border/70 absolute inset-y-0 w-px"
                 :style="{ left: `${tick.left}%` }"
@@ -125,7 +141,7 @@ function label(range: ReservationTimeRange): string {
 
         <div class="text-text-muted relative h-4 text-[10px] tabular-nums" aria-hidden="true">
             <span
-                v-for="tick in hours.filter((item) => item.labelled)"
+                v-for="tick in labelledHours"
                 :key="`label-${tick.hour}`"
                 class="absolute -translate-x-1/2 first:translate-x-0 last:-translate-x-full"
                 :style="{ left: `${tick.left}%` }"

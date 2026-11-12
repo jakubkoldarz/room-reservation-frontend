@@ -5,6 +5,7 @@ import { BarsArrowDownIcon, BarsArrowUpIcon, InboxIcon } from "@heroicons/vue/24
 import ComboBox from "@/features/shared/ComboBox.vue";
 import IconButton from "@/features/shared/IconButton.vue";
 import Skeleton from "@/features/shared/Skeleton.vue";
+import type { SelectOption } from "@/features/shared/types";
 import type { Column, SortState } from "../types";
 
 const {
@@ -39,14 +40,19 @@ const showRows = computed(() => !isLoading && items.length > 0);
 const dataColumns = computed(() => columns.filter((col) => col.label));
 const actionColumns = computed(() => columns.filter((col) => !col.label));
 
-const sortOptions = computed(() =>
-    columns.flatMap((col) =>
-        col.sortKey && col.label ? [{ value: col.sortKey, label: col.label }] : [],
-    ),
-);
+const sortOptions = computed(() => {
+    const options: SelectOption[] = [];
+    for (const col of columns) {
+        if (col.sortKey && col.label) {
+            options.push({ value: col.sortKey, label: col.label });
+        }
+    }
+    return options;
+});
 
 function isSortedBy(col: Column): boolean {
-    return !!sort && !!col.sortKey && sort.by === col.sortKey;
+    if (!sort || !col.sortKey) return false;
+    return sort.by === col.sortKey;
 }
 
 function ariaSort(col: Column) {

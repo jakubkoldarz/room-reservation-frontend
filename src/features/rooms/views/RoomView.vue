@@ -51,8 +51,11 @@ async function load(id: string | null): Promise<void> {
     const result = await apiCall(() => apiClient.getRoomsRoomId({ params: { roomId: id } }));
     isLoading.value = false;
 
-    if (result.ok) room.value = result.data;
-    else loadError.value = apiErrorMessage(result.error);
+    if (result.ok) {
+        room.value = result.data;
+    } else {
+        loadError.value = apiErrorMessage(result.error);
+    }
 }
 
 watch(roomId, load, { immediate: true });

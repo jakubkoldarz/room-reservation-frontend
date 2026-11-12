@@ -71,8 +71,13 @@ function onSelect(key: K, value: string): void {
     send(key, value);
 }
 
+function onMultiSelect(key: K, selected: string[]): void {
+    onSelect(key, selected.join(","));
+}
+
 function toList(value: string | undefined): string[] {
-    return value ? value.split(",") : [];
+    if (!value) return [];
+    return value.split(",");
 }
 </script>
 
@@ -96,7 +101,7 @@ function toList(value: string | undefined): string[] {
                 floating-label
                 has-icon
                 :model-value="draft[filter.key] ?? ''"
-                @update:model-value="(value) => onText(filter.key, value)"
+                @update:model-value="onText(filter.key, $event)"
             >
                 <template #icon> <component :is="filter.icon ?? MagnifyingGlassIcon" /> </template>
             </BaseInput>
@@ -108,7 +113,7 @@ function toList(value: string | undefined): string[] {
                 floating-label
                 has-icon
                 :model-value="draft[filter.key] ?? ''"
-                @update:model-value="(value) => onSelect(filter.key, value)"
+                @update:model-value="onSelect(filter.key, $event)"
             >
                 <template #icon> <component :is="filter.icon ?? MagnifyingGlassIcon" /> </template>
             </ComboBox>
@@ -120,7 +125,7 @@ function toList(value: string | undefined): string[] {
                 floating-label
                 has-icon
                 :model-value="toList(draft[filter.key])"
-                @update:model-value="(value) => onSelect(filter.key, value.join(','))"
+                @update:model-value="onMultiSelect(filter.key, $event)"
             >
                 <template #icon> <component :is="filter.icon ?? MagnifyingGlassIcon" /> </template>
             </MultiSelect>

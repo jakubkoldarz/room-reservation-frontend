@@ -5,7 +5,9 @@ export function usePermissions() {
     const authStore = useAuthStore();
 
     function hasPermission(permission: Permission): boolean {
-        return authStore?.user?.roleInfo?.permissions?.includes(permission) ?? false;
+        const user = authStore.user;
+        if (!user) return false;
+        return user.roleInfo.permissions.includes(permission);
     }
 
     return { hasPermission };

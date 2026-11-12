@@ -56,8 +56,11 @@ export function toApiError(err: unknown): ApiError {
         const fieldErrors: Record<string, string[]> = {};
         const formErrors: string[] = [];
         for (const [key, messages] of Object.entries(problem.errors)) {
-            if (isFormLevelKey(key)) formErrors.push(...messages);
-            else fieldErrors[toFieldPath(key)] = messages;
+            if (isFormLevelKey(key)) {
+                formErrors.push(...messages);
+            } else {
+                fieldErrors[toFieldPath(key)] = messages;
+            }
         }
         return { kind: "validation", fieldErrors, formErrors };
     }

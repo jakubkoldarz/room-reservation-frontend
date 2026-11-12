@@ -43,9 +43,13 @@ watch(
     { immediate: true },
 );
 
-const roomNames = computed(
-    () => new Map(rooms.value.map((room) => [room.roomInfo.id, room.roomInfo.identifier])),
-);
+const roomNames = computed(() => {
+    const names = new Map<string, string>();
+    for (const room of rooms.value) {
+        names.set(room.roomInfo.id, room.roomInfo.identifier);
+    }
+    return names;
+});
 const { save, isSaving } = useEventSave(() => roomNames.value);
 
 function goToList() {

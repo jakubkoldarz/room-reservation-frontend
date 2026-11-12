@@ -24,60 +24,83 @@ export function useGlobalSearch() {
     const buildings = shallowRef<Page<Building> | null>(null);
     const isSearching = ref(false);
     const error = ref<string | null>(null);
-    let inFlight: AbortController | null = null;
+    let currentRequest: AbortController | null = null;
+
+    function cancelCurrentRequest(): void {
+        if (currentRequest) currentRequest.abort();
+        currentRequest = null;
+    }
 
     function clearResults(): void {
-        inFlight?.abort();
-        inFlight = null;
+        cancelCurrentRequest();
         rooms.value = null;
         buildings.value = null;
         error.value = null;
         isSearching.value = false;
     }
 
+    async function findRooms(text: string, signal: AbortSignal) {
+        if (!canSearchRooms) return null;
+
+        const queries = { Identifier: text, PageSize: ROOM_LIMIT };
+        return await apiCall(() => apiClient.getRooms({ queries, signal }));
+    }
+
+    async function findBuildings(text: string, signal: AbortSignal) {
+        if (!canSearchBuildings) return null;
+
+        const queries = { Name: text, PageSize: BUILDING_LIMIT };
+        return await apiCall(() => apiClient.getBuildings({ queries, signal }));
+    }
+
     async function search(text: string): Promise<void> {
-        inFlight?.abort();
-        const controller = new AbortController();
-        inFlight = controller;
+        cancelCurrentRequest();
+        const request = new AbortController();
+        currentRequest = request;
 
         const [roomResult, buildingResult] = await Promise.all([
-            canSearchRooms
-                ? apiCall(() =>
-                      apiClient.getRooms({
-                          queries: { Identifier: text, PageSize: ROOM_LIMIT },
-                          signal: controller.signal,
-                      }),
-                  )
-                : null,
-            canSearchBuildings
-                ? apiCall(() =>
-                      apiClient.getBuildings({
-                          queries: { Name: text, PageSize: BUILDING_LIMIT },
-                          signal: controller.signal,
-                      }),
-                  )
-                : null,
+            findRooms(text, request.signal),
+            findBuildings(text, request.signal),
         ]);
-        if (inFlight !== controller) return;
 
-        inFlight = null;
+        const wasReplacedByNewerSearch = currentRequest !== request;
+        if (wasReplacedByNewerSearch) return;
+
+        currentRequest = null;
         isSearching.value = false;
-        rooms.value = roomResult?.ok ? roomResult.data : null;
-        buildings.value = buildingResult?.ok ? buildingResult.data : null;
+        rooms.value = null;
+        buildings.value = null;
+        error.value = null;
 
-        const failure = [roomResult, buildingResult].find((result) => result && !result.ok);
-        error.value = failure && !failure.ok ? apiErrorMessage(failure.error) : null;
+        if (roomResult) {
+            if (roomResult.ok) {
+                rooms.value = roomResult.data;
+            } else {
+                error.value = apiErrorMessage(roomResult.error);
+            }
+        }
+
+        if (buildingResult) {
+            if (buildingResult.ok) {
+                buildings.value = buildingResult.data;
+            } else {
+                error.value = apiErrorMessage(buildingResult.error);
+            }
+        }
     }
 
     watch(term, (text) => {
-        if (text) isSearching.value = true;
-        else clearResults();
+        if (text === "") {
+            clearResults();
+        } else {
+            isSearching.value = true;
+        }
     });
 
     watchDebounced(
         term,
         async (text) => {
-            if (text) await search(text);
+            if (text !== "") await search(text);
         },
         { debounce: DEBOUNCE_MS },
     );

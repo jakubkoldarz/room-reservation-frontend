@@ -29,5 +29,10 @@ export function reservationStateLabel(state: ReservationState): string {
 }
 
 export function formatUserName(user: User): string {
-    return [user.firstname, user.lastname].filter(Boolean).join(" ") || "Unknown user";
+    const parts: string[] = [];
+    if (user.firstname) parts.push(user.firstname);
+    if (user.lastname) parts.push(user.lastname);
+
+    if (parts.length === 0) return "Unknown user";
+    return parts.join(" ");
 }

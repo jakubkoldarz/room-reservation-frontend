@@ -1,18 +1,26 @@
 import type { Column, SortState } from "../types";
 
 export function sortKeys(columns: readonly Column[]): string[] {
-    return columns.flatMap((column) => (column.sortKey ? [column.sortKey] : []));
+    const keys: string[] = [];
+    for (const column of columns) {
+        if (column.sortKey) keys.push(column.sortKey);
+    }
+    return keys;
 }
 
 export function parseSort(value: string, allowed: readonly string[]): SortState | null {
     const descending = value.startsWith("-");
-    const by = descending ? value.slice(1) : value;
+    let by = value;
+    if (descending) by = value.slice(1);
+
     if (!allowed.includes(by)) return null;
-    return { by, direction: descending ? "desc" : "asc" };
+    if (descending) return { by, direction: "desc" };
+    return { by, direction: "asc" };
 }
 
 export function formatSort(sort: SortState): string {
-    return sort.direction === "desc" ? `-${sort.by}` : sort.by;
+    if (sort.direction === "desc") return `-${sort.by}`;
+    return sort.by;
 }
 
 export function isSameSort(a: SortState, b: SortState): boolean {
@@ -20,8 +28,9 @@ export function isSameSort(a: SortState, b: SortState): boolean {
 }
 
 export function nextSort(current: SortState, by: string): SortState {
-    if (current.by !== by) return { by, direction: "asc" };
-    return { by, direction: current.direction === "asc" ? "desc" : "asc" };
+    const isSameColumn = current.by === by;
+    if (isSameColumn && current.direction === "asc") return { by, direction: "desc" };
+    return { by, direction: "asc" };
 }
 
 export function toSortQueries(sort: SortState) {

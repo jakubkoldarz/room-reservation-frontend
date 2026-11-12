@@ -34,6 +34,10 @@ const defaultBuildingId = computed(() => {
 });
 
 const selectedBuildingId = ref("");
+
+function onBuildingChange(buildingId: string): void {
+    selectedBuildingId.value = buildingId;
+}
 const equipmentIds = ref<string[]>([]);
 const equipmentError = ref<string>();
 const availabilities = ref<Availability[]>([]);
@@ -94,7 +98,7 @@ async function handleSave(): Promise<void> {
             ref="form"
             :buildings
             :default-building-id="defaultBuildingId"
-            @building-change="(id) => (selectedBuildingId = id)"
+            @building-change="onBuildingChange"
         >
             Set details of the room. Please fill in all required fields.
         </EditRoom>

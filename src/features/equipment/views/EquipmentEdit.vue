@@ -41,8 +41,11 @@ async function load(id: string | null): Promise<void> {
     );
     isLoading.value = false;
 
-    if (result.ok) equipment.value = result.data;
-    else loadError.value = apiErrorMessage(result.error);
+    if (result.ok) {
+        equipment.value = result.data;
+    } else {
+        loadError.value = apiErrorMessage(result.error);
+    }
 }
 
 watch(equipmentId, load, { immediate: true });

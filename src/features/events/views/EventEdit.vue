@@ -40,13 +40,18 @@ const isPast = computed(
     () => !!event.value && eventPeriod(event.value, toIsoDate(new Date())) === "past",
 );
 
-const roomNames = computed(
-    () =>
-        new Map([
-            ...(event.value?.rooms ?? []).map((room) => [room.id, room.identifier] as const),
-            ...rooms.value.map((room) => [room.roomInfo.id, room.roomInfo.identifier] as const),
-        ]),
-);
+const roomNames = computed(() => {
+    const names = new Map<string, string>();
+    if (event.value) {
+        for (const room of event.value.rooms) {
+            names.set(room.id, room.identifier);
+        }
+    }
+    for (const room of rooms.value) {
+        names.set(room.roomInfo.id, room.roomInfo.identifier);
+    }
+    return names;
+});
 const { save, isSaving } = useEventSave(() => roomNames.value);
 
 function goToList() {

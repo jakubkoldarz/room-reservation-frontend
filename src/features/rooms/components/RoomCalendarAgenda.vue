@@ -21,7 +21,22 @@ const emit = defineEmits<{
 }>();
 
 function blockActionable(block: CalendarBlock): boolean {
-    return isActionable?.(block) ?? false;
+    if (!isActionable) return false;
+    return isActionable(block);
+}
+
+function compareByStart(a: CalendarBlock, b: CalendarBlock): number {
+    return a.start - b.start;
+}
+
+function sortedBlocks(day: CalendarDay): CalendarBlock[] {
+    return [...day.blocks].sort(compareByStart);
+}
+
+function blockSummary(block: CalendarBlock): string {
+    const kind = blockKindLabel(block.kind);
+    if (block.detail === "") return kind;
+    return `${kind} · ${block.detail}`;
 }
 
 function openBlock(block: CalendarBlock, event: Event): void {
@@ -74,10 +89,7 @@ function openingHours(day: CalendarDay): string {
                 >
                     {{ overrideLabel(item) }}
                 </li>
-                <li
-                    v-for="block in [...day.blocks].sort((a, b) => a.start - b.start)"
-                    :key="block.id"
-                >
+                <li v-for="block in sortedBlocks(day)" :key="block.id">
                     <BaseTooltip
                         variant="card"
                         :clickable="blockActionable(block)"
@@ -98,11 +110,7 @@ function openingHours(day: CalendarDay): string {
                         <span class="flex min-w-0 flex-col">
                             <span class="truncate font-medium">{{ block.title }}</span>
                             <span class="truncate text-xs opacity-80">
-                                {{
-                                    [blockKindLabel(block.kind), block.detail]
-                                        .filter(Boolean)
-                                        .join(" · ")
-                                }}
+                                {{ blockSummary(block) }}
                             </span>
                         </span>
                         <template #content>

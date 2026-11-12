@@ -192,6 +192,14 @@ const { data, isLoading, error, reload } = usePagedList(
 const now = useNow({ scheduler: (tick) => useIntervalFn(tick, 60_000) });
 const highlightDay = computed(() => (query.value.day === "" ? undefined : Number(query.value.day)));
 
+function equipmentNames(room: RoomListItem): string {
+    const names: string[] = [];
+    for (const item of room.equipment) {
+        names.push(item.name);
+    }
+    return names.join(", ");
+}
+
 function roomKey(item: RoomListItem): string {
     return item.roomInfo.id;
 }
@@ -384,7 +392,7 @@ async function deleteRoom(room: BasicRoom): Promise<void> {
                     </BaseTooltip>
                 </span>
                 <span v-if="row.equipment.length > 0" class="@3xl:hidden">
-                    {{ row.equipment.map((item) => item.name).join(", ") }}
+                    {{ equipmentNames(row) }}
                 </span>
                 <span v-else class="text-text-muted/70 text-xs">None</span>
             </template>

@@ -48,6 +48,10 @@ const isLoading = ref(false);
 const isSaving = ref(false);
 
 const selectedBuildingId = ref("");
+
+function onBuildingChange(buildingId: string): void {
+    selectedBuildingId.value = buildingId;
+}
 const equipmentIds = ref<string[]>([]);
 const equipmentError = ref<string>();
 const availabilities = ref<Availability[]>([]);
@@ -171,7 +175,7 @@ async function handleSave(): Promise<void> {
                 :buildings
                 :room="room?.details ?? null"
                 :is-loading
-                @building-change="(id) => (selectedBuildingId = id)"
+                @building-change="onBuildingChange"
             >
                 Edit details of the room. Please fill in all required fields.
             </EditRoom>

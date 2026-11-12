@@ -18,13 +18,17 @@ export function toMinutes(time: string): number {
     return Number(hours) * 60 + Number(minutes);
 }
 
+function compareByStartTime(a: Availability, b: Availability): number {
+    return toMinutes(a.startTime) - toMinutes(b.startTime);
+}
+
 export function slotsForDay(
     availabilities: readonly Availability[],
     dayOfWeek: number,
 ): Availability[] {
-    return availabilities
-        .filter((slot) => slot.dayOfWeek === dayOfWeek)
-        .sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
+    const slots = availabilities.filter((slot) => slot.dayOfWeek === dayOfWeek);
+    slots.sort(compareByStartTime);
+    return slots;
 }
 
 export function eventOn(events: readonly EventInfo[], iso: string): EventInfo | undefined {
@@ -44,9 +48,11 @@ export function slotsForDate(
 }
 
 function slotRanges(availabilities: readonly Availability[], dayOfWeek: number): string[] {
-    return slotsForDay(availabilities, dayOfWeek).map(
-        (slot) => `${formatHm(slot.startTime)}–${formatHm(slot.endTime)}`,
-    );
+    const ranges: string[] = [];
+    for (const slot of slotsForDay(availabilities, dayOfWeek)) {
+        ranges.push(`${formatHm(slot.startTime)}–${formatHm(slot.endTime)}`);
+    }
+    return ranges;
 }
 
 export function formatHours(availabilities: readonly Availability[], dayOfWeek: number): string {
@@ -54,31 +60,42 @@ export function formatHours(availabilities: readonly Availability[], dayOfWeek: 
 }
 
 export function describeDay(availabilities: readonly Availability[], dayOfWeek: number): string {
-    return `${DAY_NAMES[dayOfWeek]}: ${formatHours(availabilities, dayOfWeek) || "closed"}`;
-}
-
-export function groupWeek(availabilities: readonly Availability[]): WeekHoursGroup[] {
-    const groups: { first: number; last: number; key: string; ranges: string[] }[] = [];
-    let previousKey = "";
-
-    for (const dayOfWeek of DAYS_MONDAY_FIRST) {
-        const ranges = slotRanges(availabilities, dayOfWeek);
-        const key = ranges.join(", ");
-        const current = groups[groups.length - 1];
-        if (key && key === previousKey && current) current.last = dayOfWeek;
-        else if (key) groups.push({ first: dayOfWeek, last: dayOfWeek, key, ranges });
-        previousKey = key;
-    }
-
-    return groups.map(({ first, last, key, ranges }) => ({
-        key: `${first}-${key}`,
-        days: first === last ? shortDay(first) : `${shortDay(first)}–${shortDay(last)}`,
-        ranges,
-    }));
+    let hours = formatHours(availabilities, dayOfWeek);
+    if (hours === "") hours = "closed";
+    return `${DAY_NAMES[dayOfWeek]}: ${hours}`;
 }
 
 function shortDay(dayOfWeek: number): string {
     return DAY_NAMES[dayOfWeek].slice(0, 3);
+}
+
+export function groupWeek(availabilities: readonly Availability[]): WeekHoursGroup[] {
+    const groups: { first: number; last: number; hours: string; ranges: string[] }[] = [];
+    let previousHours = "";
+
+    for (const dayOfWeek of DAYS_MONDAY_FIRST) {
+        const ranges = slotRanges(availabilities, dayOfWeek);
+        const hours = ranges.join(", ");
+        const lastGroup = groups[groups.length - 1];
+        const isOpen = hours !== "";
+
+        if (isOpen && lastGroup && hours === previousHours) {
+            lastGroup.last = dayOfWeek;
+        } else if (isOpen) {
+            groups.push({ first: dayOfWeek, last: dayOfWeek, hours, ranges });
+        }
+        previousHours = hours;
+    }
+
+    const result: WeekHoursGroup[] = [];
+    for (const group of groups) {
+        let days = shortDay(group.first);
+        if (group.first !== group.last) {
+            days = `${shortDay(group.first)}–${shortDay(group.last)}`;
+        }
+        result.push({ key: `${group.first}-${group.hours}`, days, ranges: group.ranges });
+    }
+    return result;
 }
 
 export function getOpenStatus(
@@ -86,27 +103,29 @@ export function getOpenStatus(
     now: Date,
     events: readonly EventInfo[] = [],
 ): OpenStatus {
-    const minutes = now.getHours() * 60 + now.getMinutes();
-    const dateAhead = (days: number) =>
-        new Date(now.getFullYear(), now.getMonth(), now.getDate() + days);
+    const minutesNow = now.getHours() * 60 + now.getMinutes();
 
     for (const slot of slotsForDate(availabilities, now, events)) {
-        if (toMinutes(slot.startTime) <= minutes && minutes < toMinutes(slot.endTime)) {
+        const hasOpened = toMinutes(slot.startTime) <= minutesNow;
+        const hasClosed = toMinutes(slot.endTime) <= minutesNow;
+        if (hasOpened && !hasClosed) {
             return { kind: "open", until: formatHm(slot.endTime) };
         }
     }
 
     for (let daysAhead = 0; daysAhead <= OPEN_STATUS_SEARCH_DAYS; daysAhead++) {
-        const date = dateAhead(daysAhead);
-        const next = slotsForDate(availabilities, date, events).find(
-            (slot) => daysAhead > 0 || toMinutes(slot.startTime) > minutes,
-        );
-        if (next) {
+        const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysAhead);
+        const isToday = daysAhead === 0;
+
+        for (const slot of slotsForDate(availabilities, date, events)) {
+            const alreadyStarted = isToday && toMinutes(slot.startTime) <= minutesNow;
+            if (alreadyStarted) continue;
+
             return {
                 kind: "opens",
                 dayOfWeek: date.getDay(),
                 daysAhead,
-                at: formatHm(next.startTime),
+                at: formatHm(slot.startTime),
             };
         }
     }
@@ -114,22 +133,20 @@ export function getOpenStatus(
     return { kind: "never" };
 }
 
+function describeOpeningDay(daysAhead: number, dayOfWeek: number): string {
+    if (daysAhead === 0) return "today";
+    if (daysAhead === 1) return "tomorrow";
+    if (daysAhead < 7) return shortDay(dayOfWeek);
+    return `in ${daysAhead} days`;
+}
+
 export function describeOpenStatus(status: OpenStatus): string {
-    switch (status.kind) {
-        case "open":
-            return `Open now · until ${status.until}`;
-        case "opens": {
-            const when =
-                status.daysAhead === 0
-                    ? "today"
-                    : status.daysAhead === 1
-                      ? "tomorrow"
-                      : status.daysAhead < 7
-                        ? shortDay(status.dayOfWeek)
-                        : `in ${status.daysAhead} days`;
-            return `Closed · opens ${when} ${status.at}`;
-        }
-        case "never":
-            return "No opening hours";
+    if (status.kind === "open") {
+        return `Open now · until ${status.until}`;
     }
+    if (status.kind === "opens") {
+        const when = describeOpeningDay(status.daysAhead, status.dayOfWeek);
+        return `Closed · opens ${when} ${status.at}`;
+    }
+    return "No opening hours";
 }

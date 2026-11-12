@@ -4,6 +4,7 @@ import { computed, nextTick, ref, useId, useTemplateRef, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useGlobalSearch } from "../composables/useGlobalSearch";
 import { useSearchLinks } from "../composables/useSearchLinks";
+import type { SearchItem } from "../types";
 import { buildSearchGroups } from "../utils/searchGroups";
 
 const route = useRoute();
@@ -18,46 +19,77 @@ const inputId = useId();
 const listboxId = `${inputId}-results`;
 
 const isOpen = ref(false);
-const highlighted = ref(-1);
+const highlightedIndex = ref(-1);
 
 const placeholder = computed(() => {
     if (canSearchRooms && canSearchBuildings) return "Search rooms and buildings...";
-    return canSearchRooms ? "Search rooms..." : "Search buildings...";
+    if (canSearchRooms) return "Search rooms...";
+    return "Search buildings...";
 });
 
-const groups = computed(() => {
-    let index = 0;
-    return buildSearchGroups({
+const groups = computed(() =>
+    buildSearchGroups({
         term: term.value,
         rooms: rooms.value,
         buildings: buildings.value,
         links,
-    }).map((group) => ({
-        ...group,
-        items: group.items.map((item) => ({ item, index: index++ })),
-    }));
-});
-
-const options = computed(() => groups.value.flatMap((group) => group.items));
-const isPanelVisible = computed(() => isOpen.value && term.value !== "");
-const activeDescendant = computed(() =>
-    isPanelVisible.value && highlighted.value >= 0 ? optionId(highlighted.value) : undefined,
+    }),
 );
 
-watch([term, options], () => {
-    highlighted.value = -1;
+const options = computed(() => {
+    const items: SearchItem[] = [];
+    for (const group of groups.value) {
+        for (const item of group.items) {
+            items.push(item);
+        }
+    }
+    return items;
 });
 
-watch(highlighted, async (index) => {
-    if (index < 0) return;
+const highlightedOption = computed(() => {
+    if (highlightedIndex.value < 0) return null;
+    return options.value[highlightedIndex.value] ?? null;
+});
+
+const isPanelVisible = computed(() => isOpen.value && term.value !== "");
+
+const activeDescendant = computed(() => {
+    if (!isPanelVisible.value || !highlightedOption.value) return undefined;
+    return optionId(highlightedOption.value);
+});
+
+const emptyMessage = computed(() => {
+    if (isSearching.value) return "Searching...";
+    return `No results for “${term.value}”`;
+});
+
+watch([term, options], () => {
+    highlightedIndex.value = -1;
+});
+
+watch(highlightedOption, async (item) => {
+    if (!item) return;
     await nextTick();
-    document.getElementById(optionId(index))?.scrollIntoView({ block: "nearest" });
+    const element = document.getElementById(optionId(item));
+    if (element) element.scrollIntoView({ block: "nearest" });
 });
 
 watch(() => route.fullPath, clear);
 
-function optionId(index: number): string {
-    return `${inputId}-option-${index}`;
+function optionId(item: SearchItem): string {
+    return `${inputId}-option-${item.id}`;
+}
+
+function isHighlighted(item: SearchItem): boolean {
+    return highlightedOption.value === item;
+}
+
+function highlight(item: SearchItem): void {
+    highlightedIndex.value = options.value.indexOf(item);
+}
+
+function open(): void {
+    isOpen.value = true;
 }
 
 function clear(): void {
@@ -65,44 +97,59 @@ function clear(): void {
     isOpen.value = false;
 }
 
+function focusInput(): void {
+    if (input.value) input.value.focus();
+}
+
+function blurInput(): void {
+    if (input.value) input.value.blur();
+}
+
 function move(step: number): void {
     isOpen.value = true;
     const count = options.value.length;
     if (count === 0) return;
-    highlighted.value =
-        highlighted.value < 0 && step < 0 ? count - 1 : (highlighted.value + step + count) % count;
+
+    let next = highlightedIndex.value + step;
+    if (next >= count) next = 0;
+    if (next < 0) next = count - 1;
+    highlightedIndex.value = next;
 }
 
 async function onEnter(): Promise<void> {
-    if (!term.value) return;
-    const target =
-        options.value[highlighted.value]?.item.to ??
-        (canSearchRooms ? links.roomList(term.value) : links.buildingList(term.value));
+    if (term.value === "") return;
+
+    let target = links.buildingList(term.value);
+    if (canSearchRooms) target = links.roomList(term.value);
+    if (highlightedOption.value) target = highlightedOption.value.to;
+
     clear();
-    input.value?.blur();
+    blurInput();
     await router.push(target);
 }
 
 function onEscape(): void {
-    if (isPanelVisible.value) isOpen.value = false;
-    else if (query.value) clear();
-    else input.value?.blur();
+    if (isPanelVisible.value) {
+        isOpen.value = false;
+    } else if (query.value !== "") {
+        clear();
+    } else {
+        blurInput();
+    }
 }
 
 function onFocusOut(event: FocusEvent): void {
-    if (event.relatedTarget instanceof Node && root.value?.contains(event.relatedTarget)) return;
+    const nextFocused = event.relatedTarget;
+    if (root.value && nextFocused instanceof Node && root.value.contains(nextFocused)) return;
     isOpen.value = false;
 }
 
 function clearAndFocus(): void {
     clear();
-    input.value?.focus();
+    focusInput();
 }
 
-defineExpose({
-    focus: () => input.value?.focus(),
-    clear,
-});
+defineExpose({ focus: focusInput, clear });
 </script>
 
 <template>
@@ -125,8 +172,8 @@ defineExpose({
             :aria-activedescendant="activeDescendant"
             :placeholder
             class="border-border-secondary bg-secondary-hover text-text-secondary placeholder:text-text-muted-secondary focus-visible:ring-primary w-full rounded-md border py-1 pr-2 pl-8 text-sm outline-none focus-visible:ring-2 sm:pr-8"
-            @focus="isOpen = true"
-            @input="isOpen = true"
+            @focus="open"
+            @input="open"
             @keydown.down.prevent="move(1)"
             @keydown.up.prevent="move(-1)"
             @keydown.enter.prevent="onEnter"
@@ -154,7 +201,7 @@ defineExpose({
         >
             <p v-if="error" class="text-danger px-3.5 py-3 text-sm">{{ error }}</p>
             <p v-else-if="options.length === 0" class="text-text-muted px-3.5 py-3 text-sm">
-                {{ isSearching ? "Searching..." : `No results for “${term}”` }}
+                {{ emptyMessage }}
             </p>
 
             <div
@@ -169,16 +216,16 @@ defineExpose({
                     {{ group.label }}
                 </p>
                 <RouterLink
-                    v-for="{ item, index } in group.items"
-                    :id="optionId(index)"
+                    v-for="item in group.items"
+                    :id="optionId(item)"
                     :key="item.id"
                     :to="item.to"
                     role="option"
                     tabindex="-1"
-                    :aria-selected="index === highlighted"
+                    :aria-selected="isHighlighted(item)"
                     class="flex flex-col rounded px-2.5 py-1.5 outline-none"
-                    :class="{ 'bg-primary/10': index === highlighted }"
-                    @mouseenter="highlighted = index"
+                    :class="{ 'bg-primary/10': isHighlighted(item) }"
+                    @mouseenter="highlight(item)"
                     @click="clear"
                 >
                     <span

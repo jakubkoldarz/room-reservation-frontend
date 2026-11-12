@@ -17,16 +17,15 @@ const emit = defineEmits<{
 defineSlots<{
     hint?(): unknown;
 }>();
+
+function onChange(key: K, value: string): void {
+    emit("change", key, value);
+}
 </script>
 
 <template>
     <div :id class="border-border bg-background/50 flex flex-col gap-3 border-b p-4">
-        <FiltersPanel
-            layout="grid"
-            :filters
-            :values
-            @change="(key, value) => emit('change', key, value)"
-        />
+        <FiltersPanel layout="grid" :filters :values @change="onChange" />
         <div class="flex flex-wrap items-center justify-between gap-2">
             <p class="text-text-muted text-xs">
                 <slot name="hint" />

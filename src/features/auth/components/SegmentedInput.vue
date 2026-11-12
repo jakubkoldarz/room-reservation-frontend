@@ -26,7 +26,11 @@ const inputRefs = ref<HTMLInputElement[]>([]);
 
 function toDigits(code: string): string[] {
     const clean = code.replace(/\D/g, "").slice(0, segments);
-    return Array.from({ length: segments }, (_, index) => clean[index] ?? "");
+    const result: string[] = [];
+    for (let index = 0; index < segments; index++) {
+        result.push(clean[index] ?? "");
+    }
+    return result;
 }
 
 watch(codeModel, (code) => {

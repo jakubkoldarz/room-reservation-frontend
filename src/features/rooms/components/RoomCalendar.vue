@@ -68,24 +68,33 @@ const openMenu = shallowRef<{
     actions: ReservationAction[];
 } | null>(null);
 
+function actionsOf(block: CalendarBlock): ReservationAction[] {
+    if (!blockActions) return [];
+    return blockActions(block);
+}
+
 function isActionable(block: CalendarBlock): boolean {
-    return (blockActions?.(block).length ?? 0) > 0;
+    return actionsOf(block).length > 0;
 }
 
 function onOpen(block: CalendarBlock, anchor: HTMLElement): void {
-    if (openMenu.value?.block.id === block.id) {
+    const isAlreadyOpen = openMenu.value !== null && openMenu.value.block.id === block.id;
+    if (isAlreadyOpen) {
         openMenu.value = null;
         return;
     }
-    openMenu.value = { block, anchor, actions: blockActions?.(block) ?? [] };
+    openMenu.value = { block, anchor, actions: actionsOf(block) };
 }
 
 function onMenuAction(action: "withdraw" | "cancel"): void {
-    const block = openMenu.value?.block;
+    if (!openMenu.value) return;
+    const block = openMenu.value.block;
     openMenu.value = null;
-    if (!block) return;
-    if (action === "withdraw") emit("withdraw", block);
-    else emit("cancel", block);
+    if (action === "withdraw") {
+        emit("withdraw", block);
+    } else {
+        emit("cancel", block);
+    }
 }
 
 watch(

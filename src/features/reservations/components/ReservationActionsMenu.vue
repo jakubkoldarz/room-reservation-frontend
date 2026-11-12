@@ -43,7 +43,8 @@ const editLink = computed(() => ({
 }));
 
 function items(): HTMLElement[] {
-    return [...(menu.value?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])];
+    if (!menu.value) return [];
+    return [...menu.value.querySelectorAll<HTMLElement>('[role="menuitem"]')];
 }
 
 function updatePosition(): void {
@@ -69,8 +70,11 @@ function close(returnFocus = false): void {
 }
 
 function choose(action: "withdraw" | "cancel"): void {
-    if (action === "withdraw") emit("withdraw");
-    else emit("cancel");
+    if (action === "withdraw") {
+        emit("withdraw");
+    } else {
+        emit("cancel");
+    }
 }
 
 function onKeydown(event: KeyboardEvent): void {
