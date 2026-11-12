@@ -74,12 +74,14 @@ const showEvents = computed(
     () => sortedEvents.value.length > 0 || hasPermission(Permission.EventAdd),
 );
 
-function addEvent(): void {
-    if (info.value) router.push({ name: eventRoutes.add.name, query: { roomId: info.value.id } });
+async function addEvent(): Promise<void> {
+    if (info.value)
+        await router.push({ name: eventRoutes.add.name, query: { roomId: info.value.id } });
 }
 
-function goToEdit(): void {
-    if (info.value) router.push({ name: roomRoutes.edit.name, params: { roomId: info.value.id } });
+async function goToEdit(): Promise<void> {
+    if (info.value)
+        await router.push({ name: roomRoutes.edit.name, params: { roomId: info.value.id } });
 }
 </script>
 

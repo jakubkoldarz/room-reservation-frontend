@@ -5,7 +5,6 @@ import { z } from "zod";
 import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
-import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { useAllRooms } from "@/features/rooms/composables/useAllRooms";
 import Container from "@/features/shared/Container.vue";
 import FormHeader from "@/features/shared/FormHeader.vue";
@@ -124,38 +123,36 @@ async function handleSave(): Promise<void> {
 </script>
 
 <template>
-    <AsideNavbarLayout>
-        <div class="flex flex-col gap-4 pb-20">
-            <FormHeader
-                :mode="isPast ? 'view' : 'edit'"
-                :title="event?.name"
-                :is-loading
-                :is-saving
-                @cancel="goToList"
-                @save="handleSave"
+    <div class="flex flex-col gap-4 pb-20">
+        <FormHeader
+            :mode="isPast ? 'view' : 'edit'"
+            :title="event?.name"
+            :is-loading
+            :is-saving
+            @cancel="goToList"
+            @save="handleSave"
+        />
+        <template v-if="event">
+            <p
+                v-if="isPast"
+                class="border-border bg-surface text-text-muted rounded-lg border px-4 py-2 text-sm"
+            >
+                This event has already ended, so it can't be changed.
+            </p>
+            <EditEvent ref="form" :key="event.id" :event :readonly="isPast" />
+            <EventRoomsPicker
+                v-model="roomIds"
+                :rooms
+                :is-loading="isRoomsLoading"
+                :error="roomsError"
+                :readonly="isPast"
             />
-            <template v-if="event">
-                <p
-                    v-if="isPast"
-                    class="border-border bg-surface text-text-muted rounded-lg border px-4 py-2 text-sm"
-                >
-                    This event has already ended, so it can't be changed.
-                </p>
-                <EditEvent ref="form" :key="event.id" :event :readonly="isPast" />
-                <EventRoomsPicker
-                    v-model="roomIds"
-                    :rooms
-                    :is-loading="isRoomsLoading"
-                    :error="roomsError"
-                    :readonly="isPast"
-                />
-            </template>
-            <template v-else-if="isLoading">
-                <Container v-for="n in 2" :key="n" class="flex animate-pulse flex-col gap-3">
-                    <Skeleton class="w-1/3" />
-                    <Skeleton v-for="line in 4" :key="line" class="w-full" />
-                </Container>
-            </template>
-        </div>
-    </AsideNavbarLayout>
+        </template>
+        <template v-else-if="isLoading">
+            <Container v-for="n in 2" :key="n" class="flex animate-pulse flex-col gap-3">
+                <Skeleton class="w-1/3" />
+                <Skeleton v-for="line in 4" :key="line" class="w-full" />
+            </Container>
+        </template>
+    </div>
 </template>

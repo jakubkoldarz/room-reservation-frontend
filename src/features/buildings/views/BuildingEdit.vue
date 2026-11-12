@@ -3,7 +3,6 @@ import { roomConflicts } from "@/features/rooms/utils/conflicts";
 import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
 import apiClient from "@/api/client";
-import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import FormHeader from "@/features/shared/FormHeader.vue";
@@ -67,8 +66,8 @@ async function handleSave() {
 
     if (response.ok) {
         toastsStore.pushSuccess({ message: "Building updated successfully" });
-        buildingsStore.fetchBuildings();
-        gotoBuildingView();
+        await buildingsStore.fetchBuildings();
+        await gotoBuildingView();
         return;
     }
     if (response.error.kind === "validation") {
@@ -84,34 +83,32 @@ async function handleSave() {
     });
 }
 
-function gotoBuildingView() {
-    router.push(destinationFor(buildingId.value));
+async function gotoBuildingView() {
+    await router.push(destinationFor(buildingId.value));
 }
 </script>
 
 <template>
-    <AsideNavbarLayout>
-        <div class="flex flex-col gap-4 pb-20">
-            <FormHeader
-                mode="edit"
-                :is-saving
-                :title="building?.buildingInfo.name"
-                :is-loading="isLoading"
-                @save="handleSave"
-                @cancel="gotoBuildingView"
-            />
-            <EditInfo ref="editRef" :building="building?.buildingInfo" :is-loading="isLoading" />
-            <AvailabilitiesEdit v-model="availabilitiesModel" :is-loading="isLoading">
-                <div class="flex items-center gap-2">
-                    <NumberCircle>2</NumberCircle>
-                    <h2 class="text-lg font-semibold">Building availabilities</h2>
-                </div>
-                <p class="text-text-muted text-sm">
-                    Edit the building's availabilities. Availabilities define the time slots when
-                    the building is open for reservations.
-                </p>
-                <hr class="border-border my-2" />
-            </AvailabilitiesEdit>
-        </div>
-    </AsideNavbarLayout>
+    <div class="flex flex-col gap-4 pb-20">
+        <FormHeader
+            mode="edit"
+            :is-saving
+            :title="building?.buildingInfo.name"
+            :is-loading="isLoading"
+            @save="handleSave"
+            @cancel="gotoBuildingView"
+        />
+        <EditInfo ref="editRef" :building="building?.buildingInfo" :is-loading="isLoading" />
+        <AvailabilitiesEdit v-model="availabilitiesModel" :is-loading="isLoading">
+            <div class="flex items-center gap-2">
+                <NumberCircle>2</NumberCircle>
+                <h2 class="text-lg font-semibold">Building availabilities</h2>
+            </div>
+            <p class="text-text-muted text-sm">
+                Edit the building's availabilities. Availabilities define the time slots when the
+                building is open for reservations.
+            </p>
+            <hr class="border-border my-2" />
+        </AvailabilitiesEdit>
+    </div>
 </template>

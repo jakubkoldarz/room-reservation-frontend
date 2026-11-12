@@ -32,12 +32,13 @@ const emit = defineEmits<{
 const isSearchbarActive = ref(false);
 const searchbarRef = ref<InstanceType<typeof Searchbar>>();
 
-function onSearchbarClick() {
+async function onSearchbarClick() {
     isSearchbarActive.value = !isSearchbarActive.value;
     if (isSearchbarActive.value) {
-        nextTick(() => searchbarRef.value?.focus());
         searchbarModel.value = "";
         emit("searchbarFocus");
+        await nextTick();
+        searchbarRef.value?.focus();
     }
 }
 

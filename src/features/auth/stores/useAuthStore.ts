@@ -13,10 +13,11 @@ export const useAuthStore = defineStore("auth", {
     state: () => ({
         jwtToken: null as string | null,
         user: null as UserDetails | null,
+        isTwoFactorReminderDismissed: false,
     }),
 
     persist: {
-        pick: ["jwtToken"],
+        pick: ["jwtToken", "isTwoFactorReminderDismissed"],
     },
 
     getters: {
@@ -27,7 +28,12 @@ export const useAuthStore = defineStore("auth", {
     actions: {
         async login(jwtToken: string) {
             this.jwtToken = jwtToken;
+            this.isTwoFactorReminderDismissed = false;
             await this.init();
+        },
+
+        dismissTwoFactorReminder() {
+            this.isTwoFactorReminderDismissed = true;
         },
 
         async logout() {

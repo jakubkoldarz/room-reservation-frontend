@@ -61,9 +61,9 @@ const flushText = useDebounceFn(
     () => debounce,
 );
 
-function onText(key: K, value: string | number | null | undefined): void {
+async function onText(key: K, value: string | number | null | undefined): Promise<void> {
     draft.value = { ...draft.value, [key]: String(value ?? "") };
-    void flushText();
+    await flushText();
 }
 
 function onSelect(key: K, value: string): void {

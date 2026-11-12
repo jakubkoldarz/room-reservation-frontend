@@ -20,9 +20,9 @@ const { building } = defineProps<{
 }>();
 
 const { copy, isSupported } = useClipboard();
-function copyBuildingId() {
+async function copyBuildingId() {
     if (!isSupported.value || !building?.id) return;
-    copy(building.id);
+    await copy(building.id);
     idLabel.value = "Text Copied!";
     if (timeoutId) clearTimeout(timeoutId);
 

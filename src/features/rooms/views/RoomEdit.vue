@@ -8,7 +8,6 @@ import { apiErrorMessage } from "@/api/errors";
 import type { Availability } from "@/features/availabilities/types";
 import { useAllBuildings } from "@/features/buildings/composables/useAllBuildings";
 import { useAllEquipment } from "@/features/equipment/composables/useAllEquipment";
-import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { useConfirm } from "@/features/modal/composables/useConfirm";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import FormHeader from "@/features/shared/FormHeader.vue";
@@ -140,7 +139,7 @@ async function handleSave(): Promise<void> {
             title: "Success",
             message: `Room "${result.data.identifier}" updated`,
         });
-        roomsStore.fetchRooms();
+        await roomsStore.fetchRooms();
         await goBack();
         return;
     }
@@ -156,46 +155,44 @@ async function handleSave(): Promise<void> {
 </script>
 
 <template>
-    <AsideNavbarLayout>
-        <div class="flex flex-col gap-4 pb-20">
-            <ErrorText v-if="loadError" :error="loadError" />
-            <template v-else>
-                <FormHeader
-                    mode="edit"
-                    :title="room?.details.roomInfo.identifier"
-                    :is-loading
-                    :is-saving
-                    @cancel="goBack"
-                    @save="handleSave"
-                />
-                <EditRoom
-                    ref="form"
-                    :buildings
-                    :room="room?.details ?? null"
-                    :is-loading
-                    @building-change="(id) => (selectedBuildingId = id)"
-                >
-                    Edit details of the room. Please fill in all required fields.
-                </EditRoom>
-                <EquipmentPicker
-                    v-model="equipmentIds"
-                    :equipment
-                    :is-loading="isLoading || isEquipmentLoading"
-                    :error="equipmentError"
-                />
-                <RoomAvailabilitiesEdit
-                    v-model="availabilities"
-                    :building
-                    :is-loading
-                    :is-building-loading
-                    :day-errors
-                    :hints
-                    :error="showAvailabilityErrors ? emptyError : undefined"
-                >
-                    Edit the room's availabilities. Availabilities define the time slots when the
-                    room is open for reservations.
-                </RoomAvailabilitiesEdit>
-            </template>
-        </div>
-    </AsideNavbarLayout>
+    <div class="flex flex-col gap-4 pb-20">
+        <ErrorText v-if="loadError" :error="loadError" />
+        <template v-else>
+            <FormHeader
+                mode="edit"
+                :title="room?.details.roomInfo.identifier"
+                :is-loading
+                :is-saving
+                @cancel="goBack"
+                @save="handleSave"
+            />
+            <EditRoom
+                ref="form"
+                :buildings
+                :room="room?.details ?? null"
+                :is-loading
+                @building-change="(id) => (selectedBuildingId = id)"
+            >
+                Edit details of the room. Please fill in all required fields.
+            </EditRoom>
+            <EquipmentPicker
+                v-model="equipmentIds"
+                :equipment
+                :is-loading="isLoading || isEquipmentLoading"
+                :error="equipmentError"
+            />
+            <RoomAvailabilitiesEdit
+                v-model="availabilities"
+                :building
+                :is-loading
+                :is-building-loading
+                :day-errors
+                :hints
+                :error="showAvailabilityErrors ? emptyError : undefined"
+            >
+                Edit the room's availabilities. Availabilities define the time slots when the room
+                is open for reservations.
+            </RoomAvailabilitiesEdit>
+        </template>
+    </div>
 </template>

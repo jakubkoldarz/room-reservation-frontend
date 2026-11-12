@@ -13,7 +13,6 @@ import { useVisibleColumns } from "@/composables/useVisibleColumns";
 import { Permission } from "@/features/auth/constants/permissions";
 import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
 import { defineFilters } from "@/features/filters/types";
-import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { useConfirm } from "@/features/modal/composables/useConfirm";
 import PagerBlock from "@/features/pager/components/PagerBlock.vue";
 import Container from "@/features/shared/Container.vue";
@@ -68,8 +67,8 @@ const { data, isLoading, error, reload } = usePagedList(
     query,
 );
 
-watch(data, (page) => {
-    if (page) void clampPage(page.totalPages);
+watch(data, async (page) => {
+    if (page) await clampPage(page.totalPages);
 });
 
 const confirm = useConfirm();
@@ -101,69 +100,65 @@ async function deleteEquipment(equipment: Equipment): Promise<void> {
 </script>
 
 <template>
-    <AsideNavbarLayout>
-        <Container class="@container px-0! py-0!">
-            <div
-                class="border-border flex flex-col flex-wrap items-center justify-between gap-2 border-b p-4 @md:flex-row"
-            >
-                <div
-                    class="flex w-full shrink-0 flex-col items-center gap-2 @sm:w-auto @sm:flex-row"
+    <Container class="@container px-0! py-0!">
+        <div
+            class="border-border flex flex-col flex-wrap items-center justify-between gap-2 border-b p-4 @md:flex-row"
+        >
+            <div class="flex w-full shrink-0 flex-col items-center gap-2 @sm:w-auto @sm:flex-row">
+                <LinkButton
+                    v-if="hasPermission(Permission.EquipmentAdd)"
+                    :to="{ name: equipmentRoutes.add.name }"
+                    class="w-full rounded! py-1.5! sm:max-w-45"
                 >
-                    <LinkButton
-                        v-if="hasPermission(Permission.EquipmentAdd)"
-                        :to="{ name: equipmentRoutes.add.name }"
-                        class="w-full rounded! py-1.5! sm:max-w-45"
-                    >
-                        <PlusIcon />
-                        Add Equipment
-                    </LinkButton>
-                    <FiltersPanel
-                        :filters
-                        :values="query"
-                        class="w-full shrink-0 @sm:w-auto"
-                        @change="setFilter"
-                    />
-                </div>
-                <PagerBlock :current="query.page" :total="data?.totalPages ?? 1" />
+                    <PlusIcon />
+                    Add Equipment
+                </LinkButton>
+                <FiltersPanel
+                    :filters
+                    :values="query"
+                    class="w-full shrink-0 @sm:w-auto"
+                    @change="setFilter"
+                />
             </div>
+            <PagerBlock :current="query.page" :total="data?.totalPages ?? 1" />
+        </div>
 
-            <ErrorText v-if="error" :error="apiErrorMessage(error)" class="mt-4" />
+        <ErrorText v-if="error" :error="apiErrorMessage(error)" class="mt-4" />
 
-            <DataTable
-                :columns
-                :items="data?.items ?? []"
-                row-key="id"
-                :is-loading="isLoading"
-                :skeleton-rows="PAGE_SIZE"
-                :sort
-                @sort="toggleSort"
-            >
-                <template #cell-name="{ row }">
-                    <span class="inline-flex max-w-full items-center gap-3 align-middle">
-                        <component
-                            :is="iconFor(row.icon)"
-                            class="text-text/65 border-text/20 bg-text/5 size-6 shrink-0 rounded-md border p-1"
-                        />
-                        <TextLink
-                            v-if="hasPermission(Permission.EquipmentEdit)"
-                            :to="{
-                                name: equipmentRoutes.edit.name,
-                                params: { equipmentId: row.id },
-                            }"
-                            class="truncate"
-                        >
-                            {{ row.name }}
-                        </TextLink>
-                        <span v-else class="text-text truncate font-medium">{{ row.name }}</span>
-                    </span>
-                </template>
+        <DataTable
+            :columns
+            :items="data?.items ?? []"
+            row-key="id"
+            :is-loading="isLoading"
+            :skeleton-rows="PAGE_SIZE"
+            :sort
+            @sort="toggleSort"
+        >
+            <template #cell-name="{ row }">
+                <span class="inline-flex max-w-full items-center gap-3 align-middle">
+                    <component
+                        :is="iconFor(row.icon)"
+                        class="text-text/65 border-text/20 bg-text/5 size-6 shrink-0 rounded-md border p-1"
+                    />
+                    <TextLink
+                        v-if="hasPermission(Permission.EquipmentEdit)"
+                        :to="{
+                            name: equipmentRoutes.edit.name,
+                            params: { equipmentId: row.id },
+                        }"
+                        class="truncate"
+                    >
+                        {{ row.name }}
+                    </TextLink>
+                    <span v-else class="text-text truncate font-medium">{{ row.name }}</span>
+                </span>
+            </template>
 
-                <template #cell-delete="{ row }">
-                    <IconButton type="danger" @click="deleteEquipment(row)">
-                        <TrashIcon class="size-4" />
-                    </IconButton>
-                </template>
-            </DataTable>
-        </Container>
-    </AsideNavbarLayout>
+            <template #cell-delete="{ row }">
+                <IconButton type="danger" @click="deleteEquipment(row)">
+                    <TrashIcon class="size-4" />
+                </IconButton>
+            </template>
+        </DataTable>
+    </Container>
 </template>

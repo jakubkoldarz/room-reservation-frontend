@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import FormHeader from "@/features/shared/FormHeader.vue";
 import type { Building } from "../types";
 import { ref } from "vue";
@@ -36,7 +35,7 @@ async function handleSave() {
     isSaving.value = false;
 
     if (response.ok) {
-        router.push(destinationFor(response.data.id));
+        await router.push(destinationFor(response.data.id));
         toastsStore.pushSuccess({ title: "Success", message: "Building created successfully" });
         return;
     }
@@ -51,21 +50,19 @@ async function handleSave() {
 </script>
 
 <template>
-    <AsideNavbarLayout>
-        <div class="flex flex-col gap-4 pb-20">
-            <FormHeader mode="create" :is-saving @save="handleSave" @cancel="router.back()" />
-            <EditInfo ref="editRef" :building="building" is-new />
-            <AvailabilitiesEdit v-model="availabilities">
-                <div class="flex items-center gap-2">
-                    <NumberCircle>2</NumberCircle>
-                    <h2 class="text-lg font-semibold">Building availabilities</h2>
-                </div>
-                <p class="text-text-muted text-sm">
-                    Add the building's availabilities. Availabilities define the time slots when the
-                    building is open for reservations.
-                </p>
-                <hr class="border-border my-2" />
-            </AvailabilitiesEdit>
-        </div>
-    </AsideNavbarLayout>
+    <div class="flex flex-col gap-4 pb-20">
+        <FormHeader mode="create" :is-saving @save="handleSave" @cancel="router.back()" />
+        <EditInfo ref="editRef" :building="building" is-new />
+        <AvailabilitiesEdit v-model="availabilities">
+            <div class="flex items-center gap-2">
+                <NumberCircle>2</NumberCircle>
+                <h2 class="text-lg font-semibold">Building availabilities</h2>
+            </div>
+            <p class="text-text-muted text-sm">
+                Add the building's availabilities. Availabilities define the time slots when the
+                building is open for reservations.
+            </p>
+            <hr class="border-border my-2" />
+        </AvailabilitiesEdit>
+    </div>
 </template>

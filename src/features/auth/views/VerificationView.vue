@@ -27,8 +27,8 @@ const redirect = computed(() => safeRedirect(route.query.redirect));
 
 watch(
     verificationId,
-    (id) => {
-        if (!id) void router.replace({ name: authRoutes.login.name });
+    async (id) => {
+        if (!id) await router.replace({ name: authRoutes.login.name });
     },
     { immediate: true },
 );

@@ -68,13 +68,12 @@ const emit = defineEmits<{
     forceClose: [];
 }>();
 
-onMounted(() => {
-    if (hasPermission(Permission.BuildingList)) {
-        buildingsStore.ensureLoaded();
-    }
-    if (hasPermission(Permission.RoomList)) {
-        roomsStore.ensureLoaded();
-    }
+onMounted(async () => {
+    if (hasPermission(Permission.BuildingList)) await buildingsStore.ensureLoaded();
+});
+
+onMounted(async () => {
+    if (hasPermission(Permission.RoomList)) await roomsStore.ensureLoaded();
 });
 
 async function refetchBuildings() {
@@ -87,9 +86,9 @@ async function refetchRooms() {
 
 watchDebounced(
     () => buildingsStore.queryParam,
-    () => {
+    async () => {
         if (hasPermission(Permission.BuildingList)) {
-            refetchBuildings();
+            await refetchBuildings();
         }
     },
     { debounce: 300 },
@@ -97,9 +96,9 @@ watchDebounced(
 
 watchDebounced(
     () => roomsStore.queryParam,
-    () => {
+    async () => {
         if (hasPermission(Permission.RoomList)) {
-            refetchRooms();
+            await refetchRooms();
         }
     },
     { debounce: 300 },
@@ -107,7 +106,9 @@ watchDebounced(
 </script>
 
 <template>
-    <aside class="shrink-0 md:block">
+    <aside
+        class="border-text-muted/20 md:bg-surface shrink-0 md:w-72 md:scrollbar-thin md:overflow-x-hidden md:overflow-y-auto md:border-r"
+    >
         <div
             @click="emit('forceClose')"
             :class="[
@@ -120,8 +121,9 @@ watchDebounced(
         <div
             :class="[
                 isMobileAsideOpen ? 'fixed translate-x-0' : 'hidden -translate-x-full',
-                'md:static md:block md:translate-x-0',
-                'border-text-muted/20 bg-surface z-101 min-h-full w-full border-r p-4 sm:w-72',
+                'top-12 bottom-0 left-0 overflow-y-auto',
+                'md:static md:block md:w-auto md:translate-x-0 md:overflow-visible md:border-r-0',
+                'border-text-muted/20 bg-surface z-101 w-full border-r p-4 sm:w-72',
                 'transition-transform transition-discrete duration-150 ease-out sm:duration-300 starting:-translate-x-full md:starting:translate-0',
             ]"
         >
