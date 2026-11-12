@@ -5,7 +5,6 @@ import { z } from "zod";
 import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
-import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { useAllRooms } from "@/features/rooms/composables/useAllRooms";
 import FormHeader from "@/features/shared/FormHeader.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
@@ -93,22 +92,20 @@ async function handleSave(): Promise<void> {
 </script>
 
 <template>
-    <AsideNavbarLayout>
-        <div class="flex flex-col gap-4 pb-20">
-            <FormHeader
-                mode="create"
-                title="New event"
-                :is-saving
-                @cancel="goToList"
-                @save="handleSave"
-            />
-            <EditEvent ref="form" />
-            <EventRoomsPicker
-                v-model="roomIds"
-                :rooms
-                :is-loading="isRoomsLoading"
-                :error="roomsError"
-            />
-        </div>
-    </AsideNavbarLayout>
+    <div class="flex flex-col gap-4 pb-20">
+        <FormHeader
+            mode="create"
+            title="New event"
+            :is-saving
+            @cancel="goToList"
+            @save="handleSave"
+        />
+        <EditEvent ref="form" />
+        <EventRoomsPicker
+            v-model="roomIds"
+            :rooms
+            :is-loading="isRoomsLoading"
+            :error="roomsError"
+        />
+    </div>
 </template>

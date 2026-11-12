@@ -11,7 +11,6 @@ import { Permission } from "@/features/auth/constants/permissions";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
 import { slotsForDate } from "@/features/availabilities/utils/schedule";
 import NumberCircle from "@/features/buildings/components/NumberCircle.vue";
-import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { profileRoutes } from "@/features/profile/routes";
 import type { RoomSummary } from "@/features/rooms/types";
 import { parseIsoDate } from "@/features/rooms/utils/calendar";
@@ -207,67 +206,65 @@ async function handleSave(): Promise<void> {
 </script>
 
 <template>
-    <AsideNavbarLayout>
-        <div class="flex flex-col gap-4 pb-20">
-            <FormHeader
-                :mode="lockedReason ? 'view' : 'edit'"
-                :title
-                :is-loading
-                :is-saving
-                @cancel="goBack"
-                @save="handleSave"
+    <div class="flex flex-col gap-4 pb-20">
+        <FormHeader
+            :mode="lockedReason ? 'view' : 'edit'"
+            :title
+            :is-loading
+            :is-saving
+            @cancel="goBack"
+            @save="handleSave"
+        />
+
+        <template v-if="item && state">
+            <p
+                v-if="lockedReason"
+                class="border-border bg-surface text-text-muted rounded-lg border px-4 py-2 text-sm"
+            >
+                {{ lockedReason }}
+            </p>
+
+            <EditReservation
+                ref="form"
+                :key="item.reservationInfo.id"
+                :item
+                :state
+                :readonly="!!lockedReason"
+                @change="range = $event"
             />
 
-            <template v-if="item && state">
-                <p
-                    v-if="lockedReason"
-                    class="border-border bg-surface text-text-muted rounded-lg border px-4 py-2 text-sm"
-                >
-                    {{ lockedReason }}
-                </p>
+            <Container v-if="room" class="flex flex-col gap-4">
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <NumberCircle>2</NumberCircle>
+                        <h2 class="text-lg font-semibold">
+                            {{ item.roomInfo.identifier }} on
+                            {{ formatReservationDate(item.reservationInfo.date) }}
+                        </h2>
+                    </div>
+                    <p class="text-text-muted text-sm">{{ dayDescription }}</p>
+                    <hr class="border-border mt-2" />
+                </div>
 
-                <EditReservation
-                    ref="form"
-                    :key="item.reservationInfo.id"
-                    :item
-                    :state
-                    :readonly="!!lockedReason"
-                    @change="range = $event"
+                <ReservationDayTimeline
+                    :slots
+                    :busy
+                    :original="item.reservationInfo"
+                    :selection="range"
+                    :invalid="!!problem"
                 />
 
-                <Container v-if="room" class="flex flex-col gap-4">
-                    <div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <NumberCircle>2</NumberCircle>
-                            <h2 class="text-lg font-semibold">
-                                {{ item.roomInfo.identifier }} on
-                                {{ formatReservationDate(item.reservationInfo.date) }}
-                            </h2>
-                        </div>
-                        <p class="text-text-muted text-sm">{{ dayDescription }}</p>
-                        <hr class="border-border mt-2" />
-                    </div>
+                <p v-if="problem || saveError" role="alert" class="text-danger text-sm">
+                    {{ problem ?? saveError }}
+                </p>
+            </Container>
+        </template>
 
-                    <ReservationDayTimeline
-                        :slots
-                        :busy
-                        :original="item.reservationInfo"
-                        :selection="range"
-                        :invalid="!!problem"
-                    />
-
-                    <p v-if="problem || saveError" role="alert" class="text-danger text-sm">
-                        {{ problem ?? saveError }}
-                    </p>
-                </Container>
-            </template>
-
-            <template v-else-if="isLoading">
-                <Container v-for="n in 2" :key="n" class="flex animate-pulse flex-col gap-3">
-                    <Skeleton class="w-1/3" />
-                    <Skeleton v-for="line in 4" :key="line" class="w-full" />
-                </Container>
-            </template>
-        </div>
-    </AsideNavbarLayout>
+        <template v-else-if="isLoading">
+            <Container v-for="n in 2" :key="n" class="flex animate-pulse flex-col gap-3">
+                <Skeleton class="w-1/3" />
+                <Skeleton v-for="line in 4" :key="line" class="w-full" />
+            </Container>
+        </template>
+    </div>
 </template>

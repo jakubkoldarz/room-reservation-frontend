@@ -24,7 +24,6 @@ import MoreFiltersButton from "@/features/filters/components/MoreFiltersButton.v
 import MoreFiltersPanel from "@/features/filters/components/MoreFiltersPanel.vue";
 import { useMoreFilters } from "@/features/filters/composables/useMoreFilters";
 import { defineFilters } from "@/features/filters/types";
-import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { useConfirm } from "@/features/modal/composables/useConfirm";
 import PagerBlock from "@/features/pager/components/PagerBlock.vue";
 import { isConflict } from "@/features/rooms/utils/conflicts";
@@ -154,97 +153,93 @@ async function deleteBuilding(building: Building): Promise<void> {
 </script>
 
 <template>
-    <AsideNavbarLayout>
-        <Container class="@container px-0! py-0!">
-            <div
-                class="border-border flex flex-col flex-wrap items-center justify-between gap-2 border-b p-4 @md:flex-row"
-            >
-                <div
-                    class="flex w-full shrink-0 flex-col items-center gap-2 @sm:w-auto @sm:flex-row"
+    <Container class="@container px-0! py-0!">
+        <div
+            class="border-border flex flex-col flex-wrap items-center justify-between gap-2 border-b p-4 @md:flex-row"
+        >
+            <div class="flex w-full shrink-0 flex-col items-center gap-2 @sm:w-auto @sm:flex-row">
+                <LinkButton
+                    v-if="hasPermission(Permission.BuildingAdd)"
+                    :to="{ name: buildingRoutes.add.name }"
+                    class="w-full rounded! py-1.5! sm:max-w-45"
                 >
-                    <LinkButton
-                        v-if="hasPermission(Permission.BuildingAdd)"
-                        :to="{ name: buildingRoutes.add.name }"
-                        class="w-full rounded! py-1.5! sm:max-w-45"
-                    >
-                        <PlusIcon />
-                        Add Building
-                    </LinkButton>
-                    <FiltersPanel
-                        :filters
-                        :values="query"
-                        class="w-full shrink-0 @sm:w-auto"
-                        @change="setFilter"
-                    />
-                    <MoreFiltersButton
-                        v-model="showMoreFilters"
-                        controls="building-more-filters"
-                        :active-count="activeMoreFilters"
-                    />
-                </div>
-                <PagerBlock :current="query.page" :total="data?.totalPages ?? 1" />
+                    <PlusIcon />
+                    Add Building
+                </LinkButton>
+                <FiltersPanel
+                    :filters
+                    :values="query"
+                    class="w-full shrink-0 @sm:w-auto"
+                    @change="setFilter"
+                />
+                <MoreFiltersButton
+                    v-model="showMoreFilters"
+                    controls="building-more-filters"
+                    :active-count="activeMoreFilters"
+                />
             </div>
+            <PagerBlock :current="query.page" :total="data?.totalPages ?? 1" />
+        </div>
 
-            <MoreFiltersPanel
-                v-show="showMoreFilters"
-                id="building-more-filters"
-                :filters="moreFilters"
-                :values="query"
-                :active-count="activeMoreFilters"
-                @change="setFilter"
-                @clear="moreFiltersState.clear"
-            />
+        <MoreFiltersPanel
+            v-show="showMoreFilters"
+            id="building-more-filters"
+            :filters="moreFilters"
+            :values="query"
+            :active-count="activeMoreFilters"
+            @change="setFilter"
+            @clear="moreFiltersState.clear"
+        />
 
-            <ErrorText v-if="error" :error="apiErrorMessage(error)" class="mt-4" />
+        <ErrorText v-if="error" :error="apiErrorMessage(error)" class="mt-4" />
 
-            <DataTable
-                :columns
-                :items="data?.items ?? []"
-                row-key="id"
-                :is-loading="isLoading"
-                :skeleton-rows="PAGE_SIZE"
-                :sort
-                @sort="toggleSort"
-            >
-                <template #cell-name="{ row }">
-                    <TextLink
-                        v-if="hasPermission(Permission.BuildingView)"
-                        :to="{ name: buildingRoutes.view.name, params: { buildingId: row.id } }"
-                        class="block truncate"
-                    >
-                        {{ row.name }}
-                    </TextLink>
-                    <span v-else class="text-text block truncate font-medium">{{ row.name }}</span>
-                    <span v-if="row.identifier" class="text-text-muted block truncate text-xs">
-                        {{ row.identifier }}
-                    </span>
-                </template>
+        <DataTable
+            :columns
+            :items="data?.items ?? []"
+            row-key="id"
+            :is-loading="isLoading"
+            :skeleton-rows="PAGE_SIZE"
+            :sort
+            @sort="toggleSort"
+        >
+            <template #cell-name="{ row }">
+                <TextLink
+                    v-if="hasPermission(Permission.BuildingView)"
+                    :to="{ name: buildingRoutes.view.name, params: { buildingId: row.id } }"
+                    class="block truncate"
+                >
+                    {{ row.name }}
+                </TextLink>
+                <span v-else class="text-text block truncate font-medium">{{ row.name }}</span>
+                <span v-if="row.identifier" class="text-text-muted block truncate text-xs">
+                    {{ row.identifier }}
+                </span>
+            </template>
 
-                <template #cell-location="{ row }">
-                    <span class="inline-flex max-w-full items-start gap-2 text-left align-middle">
-                        <MapPinIcon class="text-text-muted/70 mt-0.5 size-4 shrink-0" />
-                        <span class="min-w-0">
-                            <span class="block truncate">{{ row.street }}</span>
-                            <span class="text-text-muted block truncate text-xs">
-                                {{ formatCityLine(row) }}
-                            </span>
+            <template #cell-location="{ row }">
+                <span class="inline-flex max-w-full items-start gap-2 text-left align-middle">
+                    <MapPinIcon class="text-text-muted/70 mt-0.5 size-4 shrink-0" />
+                    <span class="min-w-0">
+                        <span class="block truncate">{{ row.street }}</span>
+                        <span class="text-text-muted block truncate text-xs">
+                            {{ formatCityLine(row) }}
                         </span>
                     </span>
-                </template>
+                </span>
+            </template>
 
-                <template #cell-floors="{ row }">
-                    <span class="inline-flex items-center gap-2 align-middle">
-                        <Square3Stack3DIcon class="text-text-muted/70 size-4 shrink-0" />
-                        {{ row.floorsCount }} {{ row.floorsCount === 1 ? "floor" : "floors" }}
-                    </span>
-                </template>
+            <template #cell-floors="{ row }">
+                <span class="inline-flex items-center gap-2 align-middle">
+                    <Square3Stack3DIcon class="text-text-muted/70 size-4 shrink-0" />
+                    {{ row.floorsCount }} {{ row.floorsCount === 1 ? "floor" : "floors" }}
+                </span>
+            </template>
 
-                <template #cell-delete="{ row }">
-                    <IconButton type="danger" @click="deleteBuilding(row)">
-                        <TrashIcon class="size-4" />
-                    </IconButton>
-                </template>
-            </DataTable>
-        </Container>
-    </AsideNavbarLayout>
+            <template #cell-delete="{ row }">
+                <IconButton type="danger" @click="deleteBuilding(row)">
+                    <TrashIcon class="size-4" />
+                </IconButton>
+            </template>
+        </DataTable>
+    </Container>
 </template>

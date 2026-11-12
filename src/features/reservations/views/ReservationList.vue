@@ -27,7 +27,6 @@ import MoreFiltersButton from "@/features/filters/components/MoreFiltersButton.v
 import MoreFiltersPanel from "@/features/filters/components/MoreFiltersPanel.vue";
 import { useMoreFilters } from "@/features/filters/composables/useMoreFilters";
 import { defineFilters, type Filter } from "@/features/filters/types";
-import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { useConfirm, usePrompt } from "@/features/modal/composables/useConfirm";
 import PagerBlock from "@/features/pager/components/PagerBlock.vue";
 import { useAllRooms } from "@/features/rooms/composables/useAllRooms";
@@ -322,150 +321,146 @@ async function forceCancel(item: ReservationListItem): Promise<void> {
 </script>
 
 <template>
-    <AsideNavbarLayout>
-        <Container class="@container px-0! py-0!">
-            <div
-                class="border-border flex flex-col flex-wrap items-center justify-between gap-2 border-b p-4 @md:flex-row"
-            >
-                <div
-                    class="flex w-full shrink-0 flex-col items-center gap-2 @sm:w-auto @sm:flex-row"
-                >
-                    <FiltersPanel
-                        :filters
-                        :values="query"
-                        class="w-full shrink-0 @sm:w-auto"
-                        @change="setFilter"
-                    />
-                    <MoreFiltersButton
-                        v-if="moreFilters.length > 0"
-                        v-model="showMoreFilters"
-                        controls="reservation-more-filters"
-                        :active-count="activeMoreFilters"
-                    />
-                </div>
-                <PagerBlock :current="query.page" :total="data?.totalPages ?? 1" />
+    <Container class="@container px-0! py-0!">
+        <div
+            class="border-border flex flex-col flex-wrap items-center justify-between gap-2 border-b p-4 @md:flex-row"
+        >
+            <div class="flex w-full shrink-0 flex-col items-center gap-2 @sm:w-auto @sm:flex-row">
+                <FiltersPanel
+                    :filters
+                    :values="query"
+                    class="w-full shrink-0 @sm:w-auto"
+                    @change="setFilter"
+                />
+                <MoreFiltersButton
+                    v-if="moreFilters.length > 0"
+                    v-model="showMoreFilters"
+                    controls="reservation-more-filters"
+                    :active-count="activeMoreFilters"
+                />
             </div>
+            <PagerBlock :current="query.page" :total="data?.totalPages ?? 1" />
+        </div>
 
-            <MoreFiltersPanel
-                v-if="moreFilters.length > 0"
-                v-show="showMoreFilters"
-                id="reservation-more-filters"
-                :filters="moreFilters"
-                :values="query"
-                :active-count="activeMoreFilters"
-                @change="setFilter"
-                @clear="moreFiltersState.clear"
-            />
+        <MoreFiltersPanel
+            v-if="moreFilters.length > 0"
+            v-show="showMoreFilters"
+            id="reservation-more-filters"
+            :filters="moreFilters"
+            :values="query"
+            :active-count="activeMoreFilters"
+            @change="setFilter"
+            @clear="moreFiltersState.clear"
+        />
 
-            <p
-                v-if="periodNotice"
-                class="border-border bg-background text-text-muted border-b px-4 py-2 text-sm"
-            >
-                {{ periodNotice }}
-            </p>
+        <p
+            v-if="periodNotice"
+            class="border-border bg-background text-text-muted border-b px-4 py-2 text-sm"
+        >
+            {{ periodNotice }}
+        </p>
 
-            <ErrorText v-if="error" :error="apiErrorMessage(error)" class="mt-4" />
+        <ErrorText v-if="error" :error="apiErrorMessage(error)" class="mt-4" />
 
-            <DataTable
-                :columns
-                :items="data?.items ?? []"
-                :row-key="reservationKey"
-                :is-loading="isLoading"
-                :skeleton-rows="PAGE_SIZE"
-                :sort
-                @sort="toggleSort"
-            >
-                <template #cell-when="{ row }">
-                    <span class="text-text block truncate font-medium">
-                        {{ formatReservationDate(row.reservationInfo.date) }}
-                    </span>
-                    <span class="text-text-muted block truncate text-xs tabular-nums">
-                        {{ formatTimeRange(row) }}
-                    </span>
-                </template>
+        <DataTable
+            :columns
+            :items="data?.items ?? []"
+            :row-key="reservationKey"
+            :is-loading="isLoading"
+            :skeleton-rows="PAGE_SIZE"
+            :sort
+            @sort="toggleSort"
+        >
+            <template #cell-when="{ row }">
+                <span class="text-text block truncate font-medium">
+                    {{ formatReservationDate(row.reservationInfo.date) }}
+                </span>
+                <span class="text-text-muted block truncate text-xs tabular-nums">
+                    {{ formatTimeRange(row) }}
+                </span>
+            </template>
 
-                <template #cell-room="{ row }">
-                    <TextLink
-                        v-if="roomLink(row.roomInfo.id)"
-                        :to="roomLink(row.roomInfo.id)!"
-                        class="block truncate"
-                    >
-                        {{ row.roomInfo.identifier }}
-                    </TextLink>
-                    <span v-else class="text-text block truncate font-medium">
-                        {{ row.roomInfo.identifier }}
-                    </span>
-                    <span class="text-text-muted block truncate text-xs">
-                        {{ row.buildingInfo.name }} · {{ formatFloor(row.roomInfo.floor) }}
-                    </span>
-                </template>
+            <template #cell-room="{ row }">
+                <TextLink
+                    v-if="roomLink(row.roomInfo.id)"
+                    :to="roomLink(row.roomInfo.id)!"
+                    class="block truncate"
+                >
+                    {{ row.roomInfo.identifier }}
+                </TextLink>
+                <span v-else class="text-text block truncate font-medium">
+                    {{ row.roomInfo.identifier }}
+                </span>
+                <span class="text-text-muted block truncate text-xs">
+                    {{ row.buildingInfo.name }} · {{ formatFloor(row.roomInfo.floor) }}
+                </span>
+            </template>
 
-                <template #cell-bookedBy="{ row }">
-                    <span class="text-text block truncate">
-                        {{ formatUserName(row.reservationInfo.createdBy.by) }}
-                    </span>
-                    <span class="text-text-muted block truncate text-xs">
-                        Booked {{ formatActionTime(row.reservationInfo.createdBy.at) }}
-                    </span>
-                </template>
+            <template #cell-bookedBy="{ row }">
+                <span class="text-text block truncate">
+                    {{ formatUserName(row.reservationInfo.createdBy.by) }}
+                </span>
+                <span class="text-text-muted block truncate text-xs">
+                    Booked {{ formatActionTime(row.reservationInfo.createdBy.at) }}
+                </span>
+            </template>
 
-                <template #cell-purpose="{ row }">
-                    <span v-if="row.reservationInfo.purpose" class="text-text block truncate">
-                        {{ row.reservationInfo.purpose }}
-                    </span>
-                    <span v-else class="text-text-muted/70 block text-xs">No purpose</span>
-                    <span
-                        v-if="row.reservationInfo.reason"
-                        class="text-text-muted block truncate text-xs"
-                    >
-                        Reason: {{ row.reservationInfo.reason }}
-                    </span>
-                </template>
+            <template #cell-purpose="{ row }">
+                <span v-if="row.reservationInfo.purpose" class="text-text block truncate">
+                    {{ row.reservationInfo.purpose }}
+                </span>
+                <span v-else class="text-text-muted/70 block text-xs">No purpose</span>
+                <span
+                    v-if="row.reservationInfo.reason"
+                    class="text-text-muted block truncate text-xs"
+                >
+                    Reason: {{ row.reservationInfo.reason }}
+                </span>
+            </template>
 
-                <template #cell-status="{ row }">
-                    <ReservationStatusChip :state="stateOf(row)" />
-                </template>
+            <template #cell-status="{ row }">
+                <ReservationStatusChip :state="stateOf(row)" />
+            </template>
 
-                <template #cell-actions="{ row }">
-                    <span class="inline-flex items-center gap-1.5 align-middle">
-                        <template v-if="stateOf(row) === 'pending'">
-                            <BaseTooltip v-if="canApprove" text="Approve">
-                                <IconButton
-                                    type="success"
-                                    aria-label="Approve"
-                                    :disabled="busyId === row.reservationInfo.id"
-                                    @click="approve(row)"
-                                >
-                                    <CheckIcon class="size-4" />
-                                </IconButton>
-                            </BaseTooltip>
-                            <BaseTooltip v-if="canReject" text="Reject">
-                                <IconButton
-                                    type="danger"
-                                    aria-label="Reject"
-                                    :disabled="busyId === row.reservationInfo.id"
-                                    @click="reject(row)"
-                                >
-                                    <XMarkIcon class="size-4" />
-                                </IconButton>
-                            </BaseTooltip>
-                        </template>
-                        <BaseTooltip
-                            v-else-if="stateOf(row) === 'approved' && canCancel"
-                            text="Cancel reservation"
-                        >
+            <template #cell-actions="{ row }">
+                <span class="inline-flex items-center gap-1.5 align-middle">
+                    <template v-if="stateOf(row) === 'pending'">
+                        <BaseTooltip v-if="canApprove" text="Approve">
                             <IconButton
-                                type="warning"
-                                aria-label="Cancel reservation"
+                                type="success"
+                                aria-label="Approve"
                                 :disabled="busyId === row.reservationInfo.id"
-                                @click="forceCancel(row)"
+                                @click="approve(row)"
                             >
-                                <NoSymbolIcon class="size-4" />
+                                <CheckIcon class="size-4" />
                             </IconButton>
                         </BaseTooltip>
-                    </span>
-                </template>
-            </DataTable>
-        </Container>
-    </AsideNavbarLayout>
+                        <BaseTooltip v-if="canReject" text="Reject">
+                            <IconButton
+                                type="danger"
+                                aria-label="Reject"
+                                :disabled="busyId === row.reservationInfo.id"
+                                @click="reject(row)"
+                            >
+                                <XMarkIcon class="size-4" />
+                            </IconButton>
+                        </BaseTooltip>
+                    </template>
+                    <BaseTooltip
+                        v-else-if="stateOf(row) === 'approved' && canCancel"
+                        text="Cancel reservation"
+                    >
+                        <IconButton
+                            type="warning"
+                            aria-label="Cancel reservation"
+                            :disabled="busyId === row.reservationInfo.id"
+                            @click="forceCancel(row)"
+                        >
+                            <NoSymbolIcon class="size-4" />
+                        </IconButton>
+                    </BaseTooltip>
+                </span>
+            </template>
+        </DataTable>
+    </Container>
 </template>

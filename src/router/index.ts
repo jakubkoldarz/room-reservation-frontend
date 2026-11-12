@@ -6,26 +6,29 @@ import { buildingRoutes } from "@/features/buildings/routes";
 import { dashboardRoutes } from "@/features/dashboard/routes";
 import { equipmentRoutes } from "@/features/equipment/routes";
 import { eventRoutes } from "@/features/events/routes";
+import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { profileRoutes } from "@/features/profile/routes";
 import { reservationRoutes } from "@/features/reservations/routes";
 import { roomRoutes } from "@/features/rooms/routes";
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 
 const routes: RouteRecordRaw[] = [
-    {
-        component: () => import("@/App.vue"),
-        path: "/",
-        name: "index",
-        beforeEnter: handleIndexRouting,
-    },
     ...Object.values(authRoutes),
-    ...Object.values(dashboardRoutes),
-    ...Object.values(buildingRoutes),
-    ...Object.values(equipmentRoutes),
-    ...Object.values(roomRoutes),
-    ...Object.values(profileRoutes),
-    ...Object.values(reservationRoutes),
-    ...Object.values(eventRoutes),
+    {
+        path: "/",
+        component: AsideNavbarLayout,
+        meta: { requiresAuth: true },
+        children: [
+            { path: "", name: "index", redirect: handleIndexRouting },
+            ...Object.values(dashboardRoutes),
+            ...Object.values(buildingRoutes),
+            ...Object.values(equipmentRoutes),
+            ...Object.values(roomRoutes),
+            ...Object.values(profileRoutes),
+            ...Object.values(reservationRoutes),
+            ...Object.values(eventRoutes),
+        ],
+    },
 ];
 
 const router = createRouter({

@@ -8,7 +8,6 @@ import { apiErrorMessage } from "@/api/errors";
 import type { Availability } from "@/features/availabilities/types";
 import { useAllBuildings } from "@/features/buildings/composables/useAllBuildings";
 import { useAllEquipment } from "@/features/equipment/composables/useAllEquipment";
-import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import FormHeader from "@/features/shared/FormHeader.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import EditRoom from "../components/EditRoom.vue";
@@ -89,34 +88,32 @@ async function handleSave(): Promise<void> {
 </script>
 
 <template>
-    <AsideNavbarLayout>
-        <div class="flex flex-col gap-4 pb-20">
-            <FormHeader mode="create" :is-saving @cancel="goToList" @save="handleSave" />
-            <EditRoom
-                ref="form"
-                :buildings
-                :default-building-id="defaultBuildingId"
-                @building-change="(id) => (selectedBuildingId = id)"
-            >
-                Set details of the room. Please fill in all required fields.
-            </EditRoom>
-            <EquipmentPicker
-                v-model="equipmentIds"
-                :equipment
-                :is-loading="isEquipmentLoading"
-                :error="equipmentError"
-            />
-            <RoomAvailabilitiesEdit
-                v-model="availabilities"
-                :building
-                :is-building-loading
-                :day-errors
-                :hints
-                :error="showAvailabilityErrors ? emptyError : undefined"
-            >
-                Add the room's availabilities. Availabilities define the time slots when the room is
-                open for reservations.
-            </RoomAvailabilitiesEdit>
-        </div>
-    </AsideNavbarLayout>
+    <div class="flex flex-col gap-4 pb-20">
+        <FormHeader mode="create" :is-saving @cancel="goToList" @save="handleSave" />
+        <EditRoom
+            ref="form"
+            :buildings
+            :default-building-id="defaultBuildingId"
+            @building-change="(id) => (selectedBuildingId = id)"
+        >
+            Set details of the room. Please fill in all required fields.
+        </EditRoom>
+        <EquipmentPicker
+            v-model="equipmentIds"
+            :equipment
+            :is-loading="isEquipmentLoading"
+            :error="equipmentError"
+        />
+        <RoomAvailabilitiesEdit
+            v-model="availabilities"
+            :building
+            :is-building-loading
+            :day-errors
+            :hints
+            :error="showAvailabilityErrors ? emptyError : undefined"
+        >
+            Add the room's availabilities. Availabilities define the time slots when the room is
+            open for reservations.
+        </RoomAvailabilitiesEdit>
+    </div>
 </template>

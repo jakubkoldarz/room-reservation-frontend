@@ -15,7 +15,7 @@ const isMobileAsideOpen = ref(false);
                 @force-close="isMobileAsideOpen = false"
             />
             <main class="w-full p-4">
-                <slot />
+                <RouterView />
             </main>
         </div>
     </section>

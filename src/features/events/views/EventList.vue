@@ -24,7 +24,6 @@ import MoreFiltersButton from "@/features/filters/components/MoreFiltersButton.v
 import MoreFiltersPanel from "@/features/filters/components/MoreFiltersPanel.vue";
 import { useMoreFilters } from "@/features/filters/composables/useMoreFilters";
 import { defineFilters, type Filter } from "@/features/filters/types";
-import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { useConfirm } from "@/features/modal/composables/useConfirm";
 import PagerBlock from "@/features/pager/components/PagerBlock.vue";
 import { useAllRooms } from "@/features/rooms/composables/useAllRooms";
@@ -230,137 +229,133 @@ const periodNotice = computed(() => {
 </script>
 
 <template>
-    <AsideNavbarLayout>
-        <Container class="@container px-0! py-0!">
-            <div
-                class="border-border flex flex-col flex-wrap items-center justify-between gap-2 border-b p-4 @md:flex-row"
-            >
-                <div
-                    class="flex w-full shrink-0 flex-col items-center gap-2 @sm:w-auto @sm:flex-row"
+    <Container class="@container px-0! py-0!">
+        <div
+            class="border-border flex flex-col flex-wrap items-center justify-between gap-2 border-b p-4 @md:flex-row"
+        >
+            <div class="flex w-full shrink-0 flex-col items-center gap-2 @sm:w-auto @sm:flex-row">
+                <LinkButton
+                    v-if="hasPermission(Permission.EventAdd)"
+                    :to="eventRoutes.add"
+                    class="w-full rounded! py-1.5! sm:max-w-45"
                 >
-                    <LinkButton
-                        v-if="hasPermission(Permission.EventAdd)"
-                        :to="eventRoutes.add"
-                        class="w-full rounded! py-1.5! sm:max-w-45"
-                    >
-                        <PlusIcon />
-                        Add event
-                    </LinkButton>
-                    <FiltersPanel
-                        :filters
-                        :values="query"
-                        class="w-full shrink-0 @sm:w-auto"
-                        @change="setFilter"
-                    />
-                    <MoreFiltersButton
-                        v-model="showMoreFilters"
-                        controls="event-more-filters"
-                        :active-count="activeMoreFilters"
-                    />
-                </div>
-                <PagerBlock :current="query.page" :total="data?.totalPages ?? 1" />
+                    <PlusIcon />
+                    Add event
+                </LinkButton>
+                <FiltersPanel
+                    :filters
+                    :values="query"
+                    class="w-full shrink-0 @sm:w-auto"
+                    @change="setFilter"
+                />
+                <MoreFiltersButton
+                    v-model="showMoreFilters"
+                    controls="event-more-filters"
+                    :active-count="activeMoreFilters"
+                />
             </div>
+            <PagerBlock :current="query.page" :total="data?.totalPages ?? 1" />
+        </div>
 
-            <MoreFiltersPanel
-                v-show="showMoreFilters"
-                id="event-more-filters"
-                :filters="moreFilters"
-                :values="query"
-                :active-count="activeMoreFilters"
-                @change="setFilter"
-                @clear="moreFiltersState.clear"
-            />
+        <MoreFiltersPanel
+            v-show="showMoreFilters"
+            id="event-more-filters"
+            :filters="moreFilters"
+            :values="query"
+            :active-count="activeMoreFilters"
+            @change="setFilter"
+            @clear="moreFiltersState.clear"
+        />
 
-            <p
-                v-if="periodNotice"
-                class="border-border bg-background text-text-muted border-b px-4 py-2 text-sm"
-            >
-                {{ periodNotice }}
-            </p>
+        <p
+            v-if="periodNotice"
+            class="border-border bg-background text-text-muted border-b px-4 py-2 text-sm"
+        >
+            {{ periodNotice }}
+        </p>
 
-            <ErrorText v-if="error" :error="apiErrorMessage(error)" class="mt-4" />
+        <ErrorText v-if="error" :error="apiErrorMessage(error)" class="mt-4" />
 
-            <DataTable
-                :columns
-                :items="data?.items ?? []"
-                row-key="id"
-                :is-loading="isLoading"
-                :skeleton-rows="PAGE_SIZE"
-                :sort
-                @sort="toggleSort"
-            >
-                <template #cell-name="{ row }">
-                    <TextLink
-                        v-if="hasPermission(Permission.EventEdit)"
-                        :to="{ name: eventRoutes.edit.name, params: { eventId: row.id } }"
-                        class="block truncate"
-                    >
-                        {{ row.name }}
-                    </TextLink>
-                    <span v-else class="text-text block truncate font-medium">{{ row.name }}</span>
-                    <span
-                        class="block text-xs"
-                        :class="
-                            eventPeriod(row, todayIso) === 'ongoing'
-                                ? 'text-primary font-medium'
-                                : 'text-text-muted'
+        <DataTable
+            :columns
+            :items="data?.items ?? []"
+            row-key="id"
+            :is-loading="isLoading"
+            :skeleton-rows="PAGE_SIZE"
+            :sort
+            @sort="toggleSort"
+        >
+            <template #cell-name="{ row }">
+                <TextLink
+                    v-if="hasPermission(Permission.EventEdit)"
+                    :to="{ name: eventRoutes.edit.name, params: { eventId: row.id } }"
+                    class="block truncate"
+                >
+                    {{ row.name }}
+                </TextLink>
+                <span v-else class="text-text block truncate font-medium">{{ row.name }}</span>
+                <span
+                    class="block text-xs"
+                    :class="
+                        eventPeriod(row, todayIso) === 'ongoing'
+                            ? 'text-primary font-medium'
+                            : 'text-text-muted'
+                    "
+                >
+                    {{ PERIOD_LABELS[eventPeriod(row, todayIso)] }}
+                </span>
+            </template>
+
+            <template #cell-dates="{ row }">
+                <span class="text-text block truncate">{{ formatEventDates(row) }}</span>
+                <span class="text-text-muted block text-xs">
+                    {{ eventDayCount(row) === 1 ? "1 day" : `${eventDayCount(row)} days` }}
+                </span>
+            </template>
+
+            <template #cell-hours="{ row }">
+                <span
+                    class="inline-flex rounded border-l-4 px-2 py-0.5 text-xs font-medium whitespace-nowrap"
+                    :class="row.isClosed ? BLOCK_CLASSES.closed : BLOCK_CLASSES.event"
+                >
+                    {{ row.isClosed ? "Room closed" : eventHours(row) }}
+                </span>
+            </template>
+
+            <template #cell-rooms="{ row }">
+                <span class="inline-flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <template v-for="room in row.rooms.slice(0, VISIBLE_ROOMS)" :key="room.id">
+                        <TextLink v-if="roomLink(room.id)" :to="roomLink(room.id)!">
+                            {{ room.identifier }}
+                        </TextLink>
+                        <span v-else class="text-text font-medium">{{ room.identifier }}</span>
+                    </template>
+                    <BaseTooltip
+                        v-if="row.rooms.length > VISIBLE_ROOMS"
+                        :text="
+                            row.rooms
+                                .slice(VISIBLE_ROOMS)
+                                .map((room) => room.identifier)
+                                .join(', ')
                         "
                     >
-                        {{ PERIOD_LABELS[eventPeriod(row, todayIso)] }}
-                    </span>
-                </template>
+                        <span class="text-text-muted cursor-help text-xs">
+                            +{{ row.rooms.length - VISIBLE_ROOMS }} more
+                        </span>
+                    </BaseTooltip>
+                </span>
+            </template>
 
-                <template #cell-dates="{ row }">
-                    <span class="text-text block truncate">{{ formatEventDates(row) }}</span>
-                    <span class="text-text-muted block text-xs">
-                        {{ eventDayCount(row) === 1 ? "1 day" : `${eventDayCount(row)} days` }}
-                    </span>
-                </template>
-
-                <template #cell-hours="{ row }">
-                    <span
-                        class="inline-flex rounded border-l-4 px-2 py-0.5 text-xs font-medium whitespace-nowrap"
-                        :class="row.isClosed ? BLOCK_CLASSES.closed : BLOCK_CLASSES.event"
-                    >
-                        {{ row.isClosed ? "Room closed" : eventHours(row) }}
-                    </span>
-                </template>
-
-                <template #cell-rooms="{ row }">
-                    <span class="inline-flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                        <template v-for="room in row.rooms.slice(0, VISIBLE_ROOMS)" :key="room.id">
-                            <TextLink v-if="roomLink(room.id)" :to="roomLink(room.id)!">
-                                {{ room.identifier }}
-                            </TextLink>
-                            <span v-else class="text-text font-medium">{{ room.identifier }}</span>
-                        </template>
-                        <BaseTooltip
-                            v-if="row.rooms.length > VISIBLE_ROOMS"
-                            :text="
-                                row.rooms
-                                    .slice(VISIBLE_ROOMS)
-                                    .map((room) => room.identifier)
-                                    .join(', ')
-                            "
-                        >
-                            <span class="text-text-muted cursor-help text-xs">
-                                +{{ row.rooms.length - VISIBLE_ROOMS }} more
-                            </span>
-                        </BaseTooltip>
-                    </span>
-                </template>
-
-                <template #cell-delete="{ row }">
-                    <IconButton
-                        v-if="eventPeriod(row, todayIso) !== 'past'"
-                        type="danger"
-                        aria-label="Delete event"
-                        @click="deleteEvent(row)"
-                    >
-                        <TrashIcon class="size-4" />
-                    </IconButton>
-                </template>
-            </DataTable>
-        </Container>
-    </AsideNavbarLayout>
+            <template #cell-delete="{ row }">
+                <IconButton
+                    v-if="eventPeriod(row, todayIso) !== 'past'"
+                    type="danger"
+                    aria-label="Delete event"
+                    @click="deleteEvent(row)"
+                >
+                    <TrashIcon class="size-4" />
+                </IconButton>
+            </template>
+        </DataTable>
+    </Container>
 </template>
