@@ -22,9 +22,9 @@ const user = computed(() => authStore.user);
 
 const tab = computed(() => ProfileTabSchema.parse(route.query.tab));
 
-function selectTab(next: ProfileTab): void {
+async function selectTab(next: ProfileTab): Promise<void> {
     if (next === tab.value) return;
-    void router.push({ query: next === "calendar" ? {} : { tab: next } });
+    await router.push({ query: next === "calendar" ? {} : { tab: next } });
 }
 </script>
 

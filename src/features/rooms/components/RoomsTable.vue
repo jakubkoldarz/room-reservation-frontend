@@ -196,8 +196,8 @@ function roomKey(item: RoomListItem): string {
     return item.roomInfo.id;
 }
 
-watch(data, (page) => {
-    if (page) void clampPage(page.totalPages);
+watch(data, async (page) => {
+    if (page) await clampPage(page.totalPages);
 });
 
 const addRoomRoute = computed(() => ({
@@ -262,7 +262,7 @@ async function deleteRoom(room: BasicRoom): Promise<void> {
 
     toasts.pushSuccess({ title: "Deleted", message: `Room "${room.identifier}" was deleted` });
     await reload();
-    roomsStore.fetchRooms();
+    await roomsStore.fetchRooms();
 }
 </script>
 

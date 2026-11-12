@@ -106,8 +106,8 @@ const { data, isLoading, error, reload } = usePagedList(
     query,
 );
 
-watch(data, (page) => {
-    if (page) clampPage(page.totalPages);
+watch(data, async (page) => {
+    if (page) await clampPage(page.totalPages);
 });
 
 const confirm = useConfirm();
@@ -148,7 +148,7 @@ async function deleteBuilding(building: Building): Promise<void> {
 
     toasts.pushSuccess({ title: "Deleted", message: `Building "${building.name}" was deleted` });
     await reload();
-    buildingsStore.fetchBuildings();
+    await buildingsStore.fetchBuildings();
 }
 </script>
 

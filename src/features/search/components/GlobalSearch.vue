@@ -73,14 +73,14 @@ function move(step: number): void {
         highlighted.value < 0 && step < 0 ? count - 1 : (highlighted.value + step + count) % count;
 }
 
-function onEnter(): void {
+async function onEnter(): Promise<void> {
     if (!term.value) return;
     const target =
         options.value[highlighted.value]?.item.to ??
         (canSearchRooms ? links.roomList(term.value) : links.buildingList(term.value));
-    void router.push(target);
     clear();
     input.value?.blur();
+    await router.push(target);
 }
 
 function onEscape(): void {

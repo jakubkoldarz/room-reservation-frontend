@@ -20,10 +20,14 @@ const canSearch = hasPermission(Permission.RoomList) || hasPermission(Permission
 const isMobileSearchOpen = ref(false);
 const search = useTemplateRef("search");
 
-function toggleMobileSearch() {
+async function toggleMobileSearch() {
     isMobileSearchOpen.value = !isMobileSearchOpen.value;
-    if (isMobileSearchOpen.value) nextTick(() => search.value?.focus());
-    else search.value?.clear();
+    if (!isMobileSearchOpen.value) {
+        search.value?.clear();
+        return;
+    }
+    await nextTick();
+    search.value?.focus();
 }
 
 watch(

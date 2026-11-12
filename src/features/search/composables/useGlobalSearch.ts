@@ -76,8 +76,8 @@ export function useGlobalSearch() {
 
     watchDebounced(
         term,
-        (text) => {
-            if (text) void search(text);
+        async (text) => {
+            if (text) await search(text);
         },
         { debounce: DEBOUNCE_MS },
     );

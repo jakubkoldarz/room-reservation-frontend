@@ -12,9 +12,9 @@ export function useListSort(
         () => parseSort(toValue(sortParam), sortKeys(toValue(columns))) ?? toValue(defaultSort),
     );
 
-    function toggleSort(by: string): void {
+    async function toggleSort(by: string): Promise<void> {
         const next = nextSort(sort.value, by);
-        void setSortParam(isSameSort(next, toValue(defaultSort)) ? "" : formatSort(next));
+        await setSortParam(isSameSort(next, toValue(defaultSort)) ? "" : formatSort(next));
     }
 
     return { sort, toggleSort };

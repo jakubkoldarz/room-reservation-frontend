@@ -37,8 +37,8 @@ defineExpose({ submit, showServerErrors });
 
 const { copy, copied, isSupported } = useClipboard({ copiedDuring: 2000 });
 const idLabel = computed(() => (copied.value ? "Copied!" : "System Identifier (id / UUID)"));
-function copyId(): void {
-    if (isSupported.value && equipment) void copy(equipment.id);
+async function copyId(): Promise<void> {
+    if (isSupported.value && equipment) await copy(equipment.id);
 }
 </script>
 

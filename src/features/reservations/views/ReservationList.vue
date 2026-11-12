@@ -200,8 +200,8 @@ const { data, isLoading, error, reload } = usePagedList(
     query,
 );
 
-watch(data, (page) => {
-    if (page) void clampPage(page.totalPages);
+watch(data, async (page) => {
+    if (page) await clampPage(page.totalPages);
 });
 
 const periodNotice = computed(() => {

@@ -35,7 +35,7 @@ async function handleSave() {
     isSaving.value = false;
 
     if (response.ok) {
-        router.push(destinationFor(response.data.id));
+        await router.push(destinationFor(response.data.id));
         toastsStore.pushSuccess({ title: "Success", message: "Building created successfully" });
         return;
     }

@@ -64,9 +64,9 @@ const { count: buildingCount, isLoading: isLoadingBuildingCount } = useTotalCoun
 
 const approvals = useTemplateRef("approvals");
 
-function onReservationCreated(): void {
-    void reloadMyReservations();
-    void approvals.value?.reload();
+async function onReservationCreated(): Promise<void> {
+    await reloadMyReservations();
+    await approvals.value?.reload();
 }
 </script>
 

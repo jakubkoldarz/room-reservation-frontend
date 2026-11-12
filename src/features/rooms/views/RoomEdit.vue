@@ -139,7 +139,7 @@ async function handleSave(): Promise<void> {
             title: "Success",
             message: `Room "${result.data.identifier}" updated`,
         });
-        roomsStore.fetchRooms();
+        await roomsStore.fetchRooms();
         await goBack();
         return;
     }

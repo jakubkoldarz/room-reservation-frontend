@@ -17,10 +17,10 @@ export function useCalendarWeek(now: Readonly<Ref<Date>>) {
     );
     const weekLabel = computed(() => formatWeekRange(weekStart.value));
 
-    function showWeek(start: Date): void {
+    async function showWeek(start: Date): Promise<void> {
         const week =
             toIsoDate(start) === toIsoDate(currentWeekStart.value) ? undefined : toIsoDate(start);
-        void router.replace({ query: { ...route.query, week } });
+        await router.replace({ query: { ...route.query, week } });
     }
 
     return {

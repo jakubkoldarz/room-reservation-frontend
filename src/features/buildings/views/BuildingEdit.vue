@@ -66,8 +66,8 @@ async function handleSave() {
 
     if (response.ok) {
         toastsStore.pushSuccess({ message: "Building updated successfully" });
-        buildingsStore.fetchBuildings();
-        gotoBuildingView();
+        await buildingsStore.fetchBuildings();
+        await gotoBuildingView();
         return;
     }
     if (response.error.kind === "validation") {
@@ -83,8 +83,8 @@ async function handleSave() {
     });
 }
 
-function gotoBuildingView() {
-    router.push(destinationFor(buildingId.value));
+async function gotoBuildingView() {
+    await router.push(destinationFor(buildingId.value));
 }
 </script>
 

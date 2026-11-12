@@ -29,16 +29,16 @@ const props = defineProps<{
     floorsCount?: string | number | null;
 }>();
 
-function gotoEdit() {
-    router.push({ name: buildingRoutes.edit.name, params: { buildingId: props.buildingId } });
+async function gotoEdit() {
+    await router.push({ name: buildingRoutes.edit.name, params: { buildingId: props.buildingId } });
 }
 
-function gotoAddEvent() {
-    router.push({ name: eventRoutes.add.name, query: { buildingId: props.buildingId } });
+async function gotoAddEvent() {
+    await router.push({ name: eventRoutes.add.name, query: { buildingId: props.buildingId } });
 }
 
-function gotoAddRoom() {
-    router.push({ name: roomRoutes.add.name, query: { buildingId: props.buildingId } });
+async function gotoAddRoom() {
+    await router.push({ name: roomRoutes.add.name, query: { buildingId: props.buildingId } });
 }
 </script>
 

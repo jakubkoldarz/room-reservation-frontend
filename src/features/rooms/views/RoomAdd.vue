@@ -72,7 +72,7 @@ async function handleSave(): Promise<void> {
             title: "Success",
             message: `Room "${result.data.identifier}" created`,
         });
-        roomsStore.fetchRooms();
+        await roomsStore.fetchRooms();
         await router.push(afterSave(result.data.id));
         return;
     }

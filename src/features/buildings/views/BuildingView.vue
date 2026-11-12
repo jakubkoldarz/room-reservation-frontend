@@ -37,7 +37,7 @@ async function fetchBuilding() {
             title: "Failed to load building",
             message: apiErrorMessage(response.error),
         });
-        router.push({ name: buildingRoutes.list.name });
+        await router.push({ name: buildingRoutes.list.name });
     }
 }
 
@@ -46,8 +46,8 @@ const localization = computed(() => {
     return formatAddress(building.value.buildingInfo);
 });
 
-function gotoBuildingEdit() {
-    router.push({ name: buildingRoutes.edit.name, params: { buildingId: buildingId.value } });
+async function gotoBuildingEdit() {
+    await router.push({ name: buildingRoutes.edit.name, params: { buildingId: buildingId.value } });
 }
 </script>
 

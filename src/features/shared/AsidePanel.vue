@@ -68,13 +68,12 @@ const emit = defineEmits<{
     forceClose: [];
 }>();
 
-onMounted(() => {
-    if (hasPermission(Permission.BuildingList)) {
-        buildingsStore.ensureLoaded();
-    }
-    if (hasPermission(Permission.RoomList)) {
-        roomsStore.ensureLoaded();
-    }
+onMounted(async () => {
+    if (hasPermission(Permission.BuildingList)) await buildingsStore.ensureLoaded();
+});
+
+onMounted(async () => {
+    if (hasPermission(Permission.RoomList)) await roomsStore.ensureLoaded();
 });
 
 async function refetchBuildings() {
@@ -87,9 +86,9 @@ async function refetchRooms() {
 
 watchDebounced(
     () => buildingsStore.queryParam,
-    () => {
+    async () => {
         if (hasPermission(Permission.BuildingList)) {
-            refetchBuildings();
+            await refetchBuildings();
         }
     },
     { debounce: 300 },
@@ -97,9 +96,9 @@ watchDebounced(
 
 watchDebounced(
     () => roomsStore.queryParam,
-    () => {
+    async () => {
         if (hasPermission(Permission.RoomList)) {
-            refetchRooms();
+            await refetchRooms();
         }
     },
     { debounce: 300 },
