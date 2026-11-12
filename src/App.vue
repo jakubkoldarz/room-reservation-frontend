@@ -4,7 +4,7 @@ import ToastsWraper from "./features/toasts/components/ToastsWraper.vue";
 </script>
 
 <template>
-    <div class="bg-background flex min-h-screen flex-col font-sans">
+    <div class="bg-background flex min-h-dvh flex-col font-sans">
         <router-view />
         <toasts-wraper />
         <confirm-dialog />
