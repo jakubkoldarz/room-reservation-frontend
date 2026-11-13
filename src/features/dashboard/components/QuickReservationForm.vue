@@ -4,6 +4,7 @@ import { useForm } from "vee-validate";
 import { computed, ref } from "vue";
 import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
+import type { ApiError } from "@/api/errors";
 import { usePermissions } from "@/composables/usePermissions";
 import { Permission } from "@/features/auth/constants/permissions";
 import { PURPOSE_MAX_LENGTH } from "@/features/reservations/schemas";
@@ -20,7 +21,7 @@ import TextLink from "@/features/shared/TextLink.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { toIsoDate } from "@/utils/isoDate";
 import { QuickReservationFormSchema } from "../schemas";
-import type { QuickReservationFailure } from "../types";
+import type { QuickReservationFailure, QuickReservationForm } from "../types";
 import {
     calendarWeekOf,
     defaultReservationDraft,
@@ -92,6 +93,26 @@ const calendarLink = computed(() => {
     };
 });
 
+function showFailure(error: ApiError, values: QuickReservationForm, roomName: string): void {
+    if (error.kind === "validation") {
+        setErrors({
+            roomId: error.fieldErrors.roomId?.[0],
+            date: error.fieldErrors.date?.[0],
+            startTime: error.fieldErrors.startTime?.[0],
+            endTime: error.fieldErrors.endTime?.[0],
+            purpose: error.fieldErrors.purpose?.[0],
+        });
+    }
+
+    failure.value = {
+        message: reservationFailureMessage(error),
+        roomId: values.roomId,
+        roomName,
+        date: values.date,
+        canCheckCalendar: isAvailabilityFailure(error),
+    };
+}
+
 const submit = handleSubmit(async (values) => {
     const room = selectedRoom.value;
     failure.value = null;
@@ -107,33 +128,21 @@ const submit = handleSubmit(async (values) => {
     );
     isSaving.value = false;
 
+    let roomName = "the room";
+    let requiresApproval = false;
+    if (room) {
+        roomName = room.roomInfo.identifier;
+        requiresApproval = room.roomInfo.requiresApproval;
+    }
+
     if (!response.ok) {
-        const error = response.error;
-        if (error.kind === "validation") {
-            setErrors({
-                roomId: error.fieldErrors.roomId?.[0],
-                date: error.fieldErrors.date?.[0],
-                startTime: error.fieldErrors.startTime?.[0],
-                endTime: error.fieldErrors.endTime?.[0],
-                purpose: error.fieldErrors.purpose?.[0],
-            });
-        }
-        failure.value = {
-            message: reservationFailureMessage(error),
-            roomId: values.roomId,
-            roomName: room?.roomInfo.identifier ?? "the room",
-            date: values.date,
-            canCheckCalendar: isAvailabilityFailure(error),
-        };
+        showFailure(response.error, values, roomName);
         return;
     }
 
-    toasts.pushSuccess({
-        title: "Reservation created",
-        message: room?.roomInfo.requiresApproval
-            ? "It is waiting for approval."
-            : "The room is booked for you.",
-    });
+    let message = "The room is booked for you.";
+    if (requiresApproval) message = "It is waiting for approval.";
+    toasts.pushSuccess({ title: "Reservation created", message });
     resetForm({ values: emptyForm() });
     emit("created");
 });

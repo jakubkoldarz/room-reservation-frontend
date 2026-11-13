@@ -46,6 +46,7 @@ import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { toIsoDate } from "@/utils/isoDate";
 import { eventRoutes } from "../routes";
 import { EventListQuerySchema } from "../schemas";
+import type { ConflictingReservation } from "@/features/rooms/types";
 import type { EventInfo, EventPeriod } from "../types";
 import { eventDayCount, eventHours, eventPeriod, formatEventDates } from "../utils/eventFormat";
 import { toEventQueries } from "../utils/eventQueries";
@@ -186,38 +187,54 @@ const todayIso = toIsoDate(new Date());
 const toasts = useToastsStore();
 const confirm = useConfirm();
 
-async function deleteEvent(event: EventInfo): Promise<void> {
-    const confirmed = await confirm({
+async function confirmDelete(event: EventInfo): Promise<boolean> {
+    return await confirm({
         title: "Delete event?",
         message: `"${event.name}" (${formatEventDates(event)}) will be deleted. The rooms return to their normal opening hours on these days.`,
         confirmText: "Delete",
         danger: true,
     });
-    if (!confirmed) return;
+}
 
-    async function remove(force: boolean) {
-        return await apiCall(() =>
-            apiClient.deleteEventsEventId(undefined, {
-                params: { eventId: event.id },
-                queries: { force },
-            }),
-        );
+async function confirmDeleteWithReservations(
+    event: EventInfo,
+    reservations: readonly ConflictingReservation[],
+): Promise<boolean> {
+    function roomName(roomId: string): string | undefined {
+        const room = event.rooms.find((item) => item.id === roomId);
+        if (!room) return undefined;
+        return room.identifier;
     }
 
-    let result = await remove(false);
+    return await confirm({
+        title: "Delete event anyway?",
+        message: `Some reservations were made for the event hours and don't fit the normal opening hours. ${reservationsAffectedMessage(reservations.length)}`,
+        items: reservationConflictItems(reservations, roomName),
+        confirmText: "Delete anyway",
+        danger: true,
+    });
+}
+
+async function removeEvent(event: EventInfo, force: boolean) {
+    return await apiCall(() =>
+        apiClient.deleteEventsEventId(undefined, {
+            params: { eventId: event.id },
+            queries: { force },
+        }),
+    );
+}
+
+async function deleteEvent(event: EventInfo): Promise<void> {
+    const confirmed = await confirmDelete(event);
+    if (!confirmed) return;
+
+    let result = await removeEvent(event, false);
     if (!result.ok) {
         const reservations = reservationConflicts(result.error);
         if (reservations.length > 0) {
-            const roomNames = new Map(event.rooms.map((room) => [room.id, room.identifier]));
-            const forced = await confirm({
-                title: "Delete event anyway?",
-                message: `Some reservations were made for the event hours and don't fit the normal opening hours. ${reservationsAffectedMessage(reservations.length)}`,
-                items: reservationConflictItems(reservations, (id) => roomNames.get(id)),
-                confirmText: "Delete anyway",
-                danger: true,
-            });
+            const forced = await confirmDeleteWithReservations(event, reservations);
             if (!forced) return;
-            result = await remove(true);
+            result = await removeEvent(event, true);
         }
     }
 
