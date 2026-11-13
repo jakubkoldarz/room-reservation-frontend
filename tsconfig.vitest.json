@@ -3,8 +3,7 @@
   "include": ["src/**/__tests__/*", "src/env.d.ts"],
   "exclude": [],
   "compilerOptions": {
-    "lib": [],
-    "types": ["node", "jsdom"],
+    "types": ["node", "jsdom", "vite/client", "pinia-plugin-persistedstate"],
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.vitest.tsbuildinfo"
   }
 }
