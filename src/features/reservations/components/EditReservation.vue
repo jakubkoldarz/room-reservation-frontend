@@ -50,7 +50,9 @@ const [purpose, purposeAttrs] = defineField("purpose");
 
 watch(
     () => [values.startTime, values.endTime] as const,
-    ([start, end]) => emit("change", { startTime: start ?? "", endTime: end ?? "" }),
+    ([start, end]) => {
+        emit("change", { startTime: start ?? "", endTime: end ?? "" });
+    },
     { immediate: true },
 );
 

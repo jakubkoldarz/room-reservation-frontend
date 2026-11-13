@@ -195,13 +195,14 @@ async function deleteEvent(event: EventInfo): Promise<void> {
     });
     if (!confirmed) return;
 
-    const remove = (force: boolean) =>
-        apiCall(() =>
+    async function remove(force: boolean) {
+        return await apiCall(() =>
             apiClient.deleteEventsEventId(undefined, {
                 params: { eventId: event.id },
                 queries: { force },
             }),
         );
+    }
 
     let result = await remove(false);
     if (!result.ok) {

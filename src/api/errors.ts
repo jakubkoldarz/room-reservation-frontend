@@ -83,7 +83,9 @@ export function apiErrorMessage(error: ApiError): string {
         case "validation":
             return "Some fields are invalid.";
         case "http":
-            return error.detail ?? error.title ?? `Request failed with status ${error.status}.`;
+            if (error.detail !== null) return error.detail;
+            if (error.title !== null) return error.title;
+            return `Request failed with status ${error.status}.`;
         case "contract":
             return "The server returned an unexpected response.";
         case "unknown":

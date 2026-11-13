@@ -12,8 +12,11 @@ const inputValue = ref("");
 
 watch(pending, (current) => {
     inputValue.value = "";
-    if (current && !dialog.value?.open) dialog.value?.showModal();
-    if (!current && dialog.value?.open) dialog.value.close();
+    const element = dialog.value;
+    if (!element) return;
+
+    if (current && !element.open) element.showModal();
+    if (!current && element.open) element.close();
 });
 </script>
 

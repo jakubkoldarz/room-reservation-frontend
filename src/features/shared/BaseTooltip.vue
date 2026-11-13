@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, useId, useTemplateRef } from "vue";
+import { clamp } from "@/utils/clamp";
 import { onClickOutside, useEventListener } from "@vueuse/core";
 
 defineOptions({ inheritAttrs: false });
@@ -79,17 +80,23 @@ function onTap(event: PointerEvent): void {
 }
 
 function updatePosition(): void {
-    const anchor = trigger.value?.getBoundingClientRect();
-    const tip = bubble.value?.getBoundingClientRect();
-    if (!anchor || !tip) return;
+    if (!trigger.value || !bubble.value) return;
+    const anchor = trigger.value.getBoundingClientRect();
+    const tip = bubble.value.getBoundingClientRect();
 
-    const fitsAbove = anchor.top - tip.height - GAP >= VIEWPORT_MARGIN;
-    placement.value = fitsAbove ? "top" : "bottom";
-    top.value = fitsAbove ? anchor.top - tip.height - GAP : anchor.bottom + GAP;
+    const topWhenAbove = anchor.top - tip.height - GAP;
+    const fitsAbove = topWhenAbove >= VIEWPORT_MARGIN;
+    if (fitsAbove) {
+        placement.value = "top";
+        top.value = topWhenAbove;
+    } else {
+        placement.value = "bottom";
+        top.value = anchor.bottom + GAP;
+    }
 
     const anchorCenter = anchor.left + anchor.width / 2;
     const maxLeft = window.innerWidth - tip.width - VIEWPORT_MARGIN;
-    left.value = Math.min(Math.max(anchorCenter - tip.width / 2, VIEWPORT_MARGIN), maxLeft);
+    left.value = clamp(anchorCenter - tip.width / 2, VIEWPORT_MARGIN, maxLeft);
     arrowLeft.value = anchorCenter - left.value;
     isPositioned.value = true;
 }

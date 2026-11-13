@@ -53,12 +53,14 @@ const [purpose, purposeAttrs] = defineField("purpose");
 watch(
     () => open,
     (isOpen) => {
+        const element = dialog.value;
+
         if (isOpen) {
             formError.value = undefined;
             resetForm({ values: { ...draft, purpose: "" } });
-            if (!dialog.value?.open) dialog.value?.showModal();
-        } else if (dialog.value?.open) {
-            dialog.value.close();
+            if (element && !element.open) element.showModal();
+        } else if (element && element.open) {
+            element.close();
         }
     },
 );

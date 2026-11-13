@@ -46,22 +46,35 @@ const initials = computed(
 );
 
 function focusTab(index: number): void {
-    const wrapped = (index + TABS.length) % TABS.length;
+    const lastIndex = TABS.length - 1;
+    let wrapped = index;
+    if (wrapped > lastIndex) wrapped = 0;
+    if (wrapped < 0) wrapped = lastIndex;
+
     const next = TABS[wrapped];
     if (!next) return;
     emit("select", next.key);
-    tabButtons.value?.[wrapped]?.focus();
+
+    if (!tabButtons.value) return;
+    const button = tabButtons.value[wrapped];
+    if (button) button.focus();
 }
 
 function onKeydown(event: KeyboardEvent, index: number): void {
-    const moves: Record<string, number> = {
-        ArrowRight: index + 1,
-        ArrowLeft: index - 1,
-        Home: 0,
-        End: TABS.length - 1,
-    };
-    const target = moves[event.key];
-    if (target === undefined) return;
+    let target = index;
+
+    if (event.key === "ArrowRight") {
+        target = index + 1;
+    } else if (event.key === "ArrowLeft") {
+        target = index - 1;
+    } else if (event.key === "Home") {
+        target = 0;
+    } else if (event.key === "End") {
+        target = TABS.length - 1;
+    } else {
+        return;
+    }
+
     event.preventDefault();
     focusTab(target);
 }

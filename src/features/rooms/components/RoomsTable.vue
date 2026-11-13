@@ -236,13 +236,14 @@ async function deleteRoom(room: BasicRoom): Promise<void> {
     });
     if (!confirmed) return;
 
-    const remove = (force: boolean) =>
-        apiCall(() =>
+    async function remove(force: boolean) {
+        return await apiCall(() =>
             apiClient.deleteRoomsRoomId(undefined, {
                 params: { roomId: room.id },
                 queries: { force },
             }),
         );
+    }
 
     let result = await remove(false);
     if (!result.ok && isConflict(result.error)) {

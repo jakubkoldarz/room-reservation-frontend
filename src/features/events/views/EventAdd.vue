@@ -31,14 +31,20 @@ const preselectedBuildingId = uuid.safeParse(route.query.buildingId).data;
 watch(
     rooms,
     (list, previous) => {
-        if (list.length === 0 || (previous?.length ?? 0) > 0 || roomIds.value.length > 0) return;
-        roomIds.value = list
-            .filter(
-                (room) =>
-                    room.roomInfo.id === preselectedRoomId ||
-                    room.buildingInfo.id === preselectedBuildingId,
-            )
-            .map((room) => room.roomInfo.id);
+        const wasEmptyBefore = previous === undefined || previous.length === 0;
+        const roomsJustLoaded = list.length > 0 && wasEmptyBefore;
+        const nothingSelectedYet = roomIds.value.length === 0;
+        if (!roomsJustLoaded || !nothingSelectedYet) return;
+
+        const preselected: string[] = [];
+        for (const room of list) {
+            const isPreselectedRoom = room.roomInfo.id === preselectedRoomId;
+            const isInPreselectedBuilding = room.buildingInfo.id === preselectedBuildingId;
+            if (isPreselectedRoom || isInPreselectedBuilding) {
+                preselected.push(room.roomInfo.id);
+            }
+        }
+        roomIds.value = preselected;
     },
     { immediate: true },
 );

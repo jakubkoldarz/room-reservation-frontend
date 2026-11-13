@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
+import { clamp } from "@/utils/clamp";
 
 const {
     segments,
@@ -44,9 +45,10 @@ function commit(): void {
 }
 
 function focusAt(index: number): void {
-    const clamped = Math.min(Math.max(index, 0), segments - 1);
-    inputRefs.value[clamped]?.focus();
-    inputRefs.value[clamped]?.select();
+    const element = inputRefs.value[clamp(index, 0, segments - 1)];
+    if (!element) return;
+    element.focus();
+    element.select();
 }
 
 function fillFrom(start: number, text: string): void {
@@ -78,9 +80,15 @@ function onInput(index: number, event: Event): void {
 }
 
 function onPaste(index: number, event: ClipboardEvent): void {
-    const pasted = (event.clipboardData?.getData("text") ?? "").replace(/\D/g, "");
+    let text = "";
+    if (event.clipboardData) text = event.clipboardData.getData("text");
+
+    const pasted = text.replace(/\D/g, "");
     if (!pasted) return;
-    fillFrom(pasted.length >= segments ? 0 : index, pasted);
+
+    let startIndex = index;
+    if (pasted.length >= segments) startIndex = 0;
+    fillFrom(startIndex, pasted);
 }
 
 function onBackspace(index: number): void {

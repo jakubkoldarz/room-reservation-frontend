@@ -2,6 +2,7 @@
 import { NoSymbolIcon, PencilSquareIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import { onClickOutside, useEventListener } from "@vueuse/core";
 import { computed, nextTick, onMounted, ref, useId, useTemplateRef } from "vue";
+import { clamp } from "@/utils/clamp";
 import { usePermissions } from "@/composables/usePermissions";
 import { Permission } from "@/features/auth/constants/permissions";
 import { reservationRoutes } from "../routes";
@@ -48,19 +49,20 @@ function items(): HTMLElement[] {
 }
 
 function updatePosition(): void {
+    if (!menu.value) return;
     const target = anchor.getBoundingClientRect();
-    const box = menu.value?.getBoundingClientRect();
-    if (!box) return;
+    const box = menu.value.getBoundingClientRect();
 
     const below = target.bottom + GAP;
     const above = target.top - box.height - GAP;
     const fitsBelow = below + box.height <= window.innerHeight - MARGIN;
     const fitsAbove = above >= MARGIN;
-    const preferred = fitsBelow || !fitsAbove ? below : above;
-    top.value = Math.min(Math.max(preferred, MARGIN), window.innerHeight - box.height - MARGIN);
+    let preferred = above;
+    if (fitsBelow || !fitsAbove) preferred = below;
+    top.value = clamp(preferred, MARGIN, window.innerHeight - box.height - MARGIN);
 
     const centered = target.left + target.width / 2 - box.width / 2;
-    left.value = Math.min(Math.max(centered, MARGIN), window.innerWidth - box.width - MARGIN);
+    left.value = clamp(centered, MARGIN, window.innerWidth - box.width - MARGIN);
     isPositioned.value = true;
 }
 
@@ -88,17 +90,29 @@ function onKeydown(event: KeyboardEvent): void {
         return;
     }
     const list = items();
+    if (list.length === 0) return;
+
+    const lastIndex = list.length - 1;
     const index = list.indexOf(document.activeElement as HTMLElement);
-    const moves: Record<string, number> = {
-        ArrowDown: index + 1,
-        ArrowUp: index - 1,
-        Home: 0,
-        End: list.length - 1,
-    };
-    const target = moves[event.key];
-    if (target === undefined || list.length === 0) return;
+    let target = index;
+
+    if (event.key === "ArrowDown") {
+        target = index + 1;
+    } else if (event.key === "ArrowUp") {
+        target = index - 1;
+    } else if (event.key === "Home") {
+        target = 0;
+    } else if (event.key === "End") {
+        target = lastIndex;
+    } else {
+        return;
+    }
+
+    if (target > lastIndex) target = 0;
+    if (target < 0) target = lastIndex;
+
     event.preventDefault();
-    list[(target + list.length) % list.length]?.focus();
+    list[target].focus();
 }
 
 onClickOutside(menu, () => close(), { ignore: [anchor] });

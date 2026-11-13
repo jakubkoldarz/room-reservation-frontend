@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { clamp } from "@/utils/clamp";
 import ReservationDetails from "@/features/reservations/components/ReservationDetails.vue";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
 import { toIsoDate } from "@/utils/isoDate";
@@ -40,7 +41,8 @@ const emit = defineEmits<{
 }>();
 
 function blockActionable(block: CalendarBlock): boolean {
-    return isActionable?.(block) ?? false;
+    if (!isActionable) return false;
+    return isActionable(block);
 }
 
 function openBlock(block: CalendarBlock, event: Event): void {
@@ -72,7 +74,7 @@ const hasAllDay = computed(() => !isLoading && days.some((day) => day.allDay.len
 const nowMinutes = computed(() => now.getHours() * 60 + now.getMinutes());
 
 function offset(minutes: number): number {
-    const clamped = Math.min(Math.max(minutes, rangeStart.value), rangeEnd.value);
+    const clamped = clamp(minutes, rangeStart.value, rangeEnd.value);
     return ((clamped - rangeStart.value) / 60) * hourHeight.value;
 }
 
