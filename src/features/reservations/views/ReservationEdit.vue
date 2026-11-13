@@ -5,7 +5,7 @@ import { useRoute, useRouter } from "vue-router";
 import { z } from "zod";
 import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
-import { apiErrorMessage } from "@/api/errors";
+import { apiErrorMessage, type ApiError } from "@/api/errors";
 import { usePermissions } from "@/composables/usePermissions";
 import { Permission } from "@/features/auth/constants/permissions";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
@@ -20,7 +20,7 @@ import Skeleton from "@/features/shared/Skeleton.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import EditReservation from "../components/EditReservation.vue";
 import ReservationDayTimeline from "../components/ReservationDayTimeline.vue";
-import type { ReservationListItem, ReservationTimeRange } from "../types";
+import type { Reservation, ReservationListItem, ReservationTimeRange } from "../types";
 import { formatReservationDate } from "../utils/reservationDetails";
 import { isOwnReservation, ownReservationActions } from "../utils/reservationActions";
 import { editTimeProblem, formatSlots } from "../utils/reservationEdit";
@@ -123,13 +123,19 @@ const busy = computed<ReservationTimeRange[]>(() => {
     if (!room.value || !item.value) return [];
     const info = item.value.reservationInfo;
     const requiresApproval = room.value.details.roomInfo.requiresApproval;
-    return room.value.reservations
-        .filter((other) => other.date === info.date && other.id !== info.id)
-        .filter((other) => {
-            const otherState = getReservationState(other, requiresApproval);
-            return otherState === "approved" || otherState === "pending";
-        })
-        .map((other) => ({ startTime: other.startTime, endTime: other.endTime }));
+    const ranges: ReservationTimeRange[] = [];
+
+    for (const other of room.value.reservations) {
+        const isSameDay = other.date === info.date;
+        const isThisReservation = other.id === info.id;
+        if (!isSameDay || isThisReservation) continue;
+
+        const otherState = getReservationState(other, requiresApproval);
+        const isActive = otherState === "approved" || otherState === "pending";
+        if (isActive) ranges.push({ startTime: other.startTime, endTime: other.endTime });
+    }
+
+    return ranges;
 });
 
 const problem = computed(() => {
@@ -145,19 +151,44 @@ const problem = computed(() => {
 });
 
 const dayDescription = computed(() => {
-    const hours =
-        slots.value.length === 0
-            ? "The room is closed on this day."
-            : `Open ${formatSlots(slots.value)}.`;
-    return lockedReason.value ? hours : `${hours} Choose a time that is open and not booked.`;
+    let hours = `Open ${formatSlots(slots.value)}.`;
+    if (slots.value.length === 0) hours = "The room is closed on this day.";
+
+    if (lockedReason.value) return hours;
+    return `${hours} Choose a time that is open and not booked.`;
 });
+
+async function showSaveError(error: ApiError, roomId: string): Promise<void> {
+    if (error.kind === "validation" && form.value) {
+        form.value.showServerErrors(error.fieldErrors);
+    }
+
+    const isTimeTaken = error.kind === "http" && error.status === 409;
+    if (isTimeTaken) {
+        saveError.value = "Someone has just booked this time. The day view was refreshed.";
+        await loadRoom(roomId);
+    }
+
+    toasts.pushError({
+        title: "Failed to save reservation",
+        message: apiErrorMessage(error),
+    });
+}
+
+function savedMessage(saved: Reservation, current: ReservationListItem): string {
+    const newState = getReservationState(saved, current.roomInfo.requiresApproval);
+    const waitsForApprovalAgain = state.value === "approved" && newState === "pending";
+
+    if (waitsForApprovalAgain) return "The new time is waiting for approval.";
+    return `Your reservation of ${current.roomInfo.identifier} was updated.`;
+}
 
 async function handleSave(): Promise<void> {
     const id = reservationId.value;
     const current = item.value;
-    if (!id || !current || lockedReason.value) return;
+    if (!id || !current || lockedReason.value || !form.value) return;
 
-    const values = await form.value?.submit();
+    const values = await form.value.submit();
     if (!values) return;
     if (problem.value) {
         toasts.pushError({ title: "This time can't be saved", message: problem.value });
@@ -179,27 +210,13 @@ async function handleSave(): Promise<void> {
     isSaving.value = false;
 
     if (!result.ok) {
-        const error = result.error;
-        if (error.kind === "validation") form.value?.showServerErrors(error.fieldErrors);
-        if (error.kind === "http" && error.status === 409) {
-            saveError.value = "Someone has just booked this time. The day view was refreshed.";
-            await loadRoom(current.roomInfo.id);
-        }
-        toasts.pushError({
-            title: "Failed to save reservation",
-            message: apiErrorMessage(error),
-        });
+        await showSaveError(result.error, current.roomInfo.id);
         return;
     }
 
-    const waitsAgain =
-        state.value === "approved" &&
-        getReservationState(result.data, current.roomInfo.requiresApproval) === "pending";
     toasts.pushSuccess({
         title: "Reservation saved",
-        message: waitsAgain
-            ? "The new time is waiting for approval."
-            : `Your reservation of ${current.roomInfo.identifier} was updated.`,
+        message: savedMessage(result.data, current),
     });
     await goBack();
 }

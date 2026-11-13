@@ -20,7 +20,11 @@ const START_HOUR = 8;
 const END_HOUR = 17;
 const HOUR_HEIGHT = 30;
 const BODY_HEIGHT = (END_HOUR - START_HOUR) * HOUR_HEIGHT;
-const HOUR_MARKS = Array.from({ length: END_HOUR - START_HOUR }, (_, index) => START_HOUR + index);
+const HOUR_MARKS: number[] = [];
+for (let hour = START_HOUR; hour < END_HOUR; hour++) {
+    HOUR_MARKS.push(hour);
+}
+const INNER_HOUR_MARKS = HOUR_MARKS.slice(1);
 
 const KIND_CLASSES: Record<PreviewKind, string> = {
     approved: "bg-primary/30 border-primary",
@@ -123,7 +127,7 @@ function formatHour(hour: number): string {
 
                 <div class="relative" :style="{ height: `${BODY_HEIGHT}px` }">
                     <span
-                        v-for="hour in HOUR_MARKS.slice(1)"
+                        v-for="hour in INNER_HOUR_MARKS"
                         :key="hour"
                         class="text-text-muted-secondary absolute right-1.5 -translate-y-1/2 text-[9px] tabular-nums"
                         :style="{ top: `${offset(hour)}px` }"
@@ -149,7 +153,7 @@ function formatHour(hour: number): string {
                         }"
                     ></div>
                     <div
-                        v-for="hour in HOUR_MARKS.slice(1)"
+                        v-for="hour in INNER_HOUR_MARKS"
                         :key="hour"
                         class="border-border-secondary/60 absolute inset-x-0 border-t"
                         :style="{ top: `${offset(hour)}px` }"

@@ -28,29 +28,73 @@ const AREA_ORDER = Object.keys(AREAS);
 const ACTION_ORDER = Object.keys(ACTIONS);
 
 function capitalize(value: string): string {
-    return value.charAt(0).toUpperCase() + value.slice(1).split(".").join(" ");
+    const firstLetter = value.charAt(0).toUpperCase();
+    const rest = value.slice(1).split(".").join(" ");
+    return firstLetter + rest;
+}
+
+function areaLabel(area: string): string {
+    return AREAS[area] ?? capitalize(area);
+}
+
+function actionLabel(action: string): string {
+    return ACTIONS[action] ?? capitalize(action);
 }
 
 function rank(order: readonly string[], value: string): number {
     const index = order.indexOf(value);
-    return index === -1 ? order.length : index;
+    if (index === -1) return order.length;
+    return index;
+}
+
+function compareAreas(a: string, b: string): number {
+    const rankDifference = rank(AREA_ORDER, a) - rank(AREA_ORDER, b);
+    if (rankDifference !== 0) return rankDifference;
+    return a.localeCompare(b);
+}
+
+function compareActions(a: string, b: string): number {
+    return rank(ACTION_ORDER, a) - rank(ACTION_ORDER, b);
+}
+
+function splitPermission(permission: string): { area: string; action: string } | null {
+    const dotIndex = permission.indexOf(".");
+    if (dotIndex <= 0) return null;
+
+    const area = permission.slice(0, dotIndex);
+    const action = permission.slice(dotIndex + 1);
+    if (action === "") return null;
+    return { area, action };
 }
 
 export function groupPermissions(permissions: readonly string[]): PermissionGroup[] {
-    const byArea = new Map<string, string[]>();
+    const actionsByArea = new Map<string, string[]>();
+
     for (const permission of permissions) {
-        const [area = "", ...rest] = permission.split(".");
-        const action = rest.join(".");
-        if (!area || !action) continue;
-        byArea.set(area, [...(byArea.get(area) ?? []), action]);
+        const parts = splitPermission(permission);
+        if (!parts) continue;
+
+        let actions = actionsByArea.get(parts.area);
+        if (!actions) {
+            actions = [];
+            actionsByArea.set(parts.area, actions);
+        }
+        if (!actions.includes(parts.action)) actions.push(parts.action);
     }
 
-    return [...byArea.entries()]
-        .sort(([a], [b]) => rank(AREA_ORDER, a) - rank(AREA_ORDER, b) || a.localeCompare(b))
-        .map(([area, actions]) => ({
-            area: AREAS[area] ?? capitalize(area),
-            actions: [...new Set(actions)]
-                .sort((a, b) => rank(ACTION_ORDER, a) - rank(ACTION_ORDER, b))
-                .map((action) => ACTIONS[action] ?? capitalize(action)),
-        }));
+    const areas = [...actionsByArea.keys()];
+    areas.sort(compareAreas);
+
+    const groups: PermissionGroup[] = [];
+    for (const area of areas) {
+        const actions = actionsByArea.get(area) ?? [];
+        actions.sort(compareActions);
+
+        const labels: string[] = [];
+        for (const action of actions) {
+            labels.push(actionLabel(action));
+        }
+        groups.push({ area: areaLabel(area), actions: labels });
+    }
+    return groups;
 }

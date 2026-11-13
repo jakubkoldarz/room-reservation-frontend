@@ -1,9 +1,14 @@
 import type { Reservation, ReservationAction, ReservationState } from "../types";
 import { toIsoDate } from "@/utils/isoDate";
 
+function twoDigits(value: number): string {
+    return String(value).padStart(2, "0");
+}
+
 function currentHm(now: Date): string {
-    const pad = (value: number) => String(value).padStart(2, "0");
-    return `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const hours = twoDigits(now.getHours());
+    const minutes = twoDigits(now.getMinutes());
+    return `${hours}:${minutes}`;
 }
 
 export function hasStarted(

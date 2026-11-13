@@ -29,33 +29,52 @@ const TABS: { key: ProfileTab; label: string; icon: Component }[] = [
 
 const tabButtons = useTemplateRef<HTMLButtonElement[]>("tabButtons");
 
-const fullName = computed(() =>
-    [user.userInfo.firstname, user.userInfo.lastname].filter(Boolean).join(" "),
-);
+const fullName = computed(() => {
+    const parts: string[] = [];
+    if (user.userInfo.firstname) parts.push(user.userInfo.firstname);
+    if (user.userInfo.lastname) parts.push(user.userInfo.lastname);
+    return parts.join(" ");
+});
 
-const initials = computed(() =>
-    [user.userInfo.firstname, user.userInfo.lastname]
-        .map((part) => part?.trim().charAt(0).toUpperCase() ?? "")
-        .join(""),
+function firstLetter(name: string | null | undefined): string {
+    if (!name) return "";
+    return name.trim().charAt(0).toUpperCase();
+}
+
+const initials = computed(
+    () => firstLetter(user.userInfo.firstname) + firstLetter(user.userInfo.lastname),
 );
 
 function focusTab(index: number): void {
-    const wrapped = (index + TABS.length) % TABS.length;
+    const lastIndex = TABS.length - 1;
+    let wrapped = index;
+    if (wrapped > lastIndex) wrapped = 0;
+    if (wrapped < 0) wrapped = lastIndex;
+
     const next = TABS[wrapped];
     if (!next) return;
     emit("select", next.key);
-    tabButtons.value?.[wrapped]?.focus();
+
+    if (!tabButtons.value) return;
+    const button = tabButtons.value[wrapped];
+    if (button) button.focus();
 }
 
 function onKeydown(event: KeyboardEvent, index: number): void {
-    const moves: Record<string, number> = {
-        ArrowRight: index + 1,
-        ArrowLeft: index - 1,
-        Home: 0,
-        End: TABS.length - 1,
-    };
-    const target = moves[event.key];
-    if (target === undefined) return;
+    let target = index;
+
+    if (event.key === "ArrowRight") {
+        target = index + 1;
+    } else if (event.key === "ArrowLeft") {
+        target = index - 1;
+    } else if (event.key === "Home") {
+        target = 0;
+    } else if (event.key === "End") {
+        target = TABS.length - 1;
+    } else {
+        return;
+    }
+
     event.preventDefault();
     focusTab(target);
 }

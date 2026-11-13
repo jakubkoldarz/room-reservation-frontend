@@ -20,7 +20,7 @@ export type ConflictingRoom = z.infer<typeof ConflictingRoomSchema>;
 
 export type CalendarBlockKind = ReservationState | "event" | "closed";
 
-export type CalendarBlock = {
+export type CalendarBlockContent = {
     id: string;
     kind: ReservationState;
     start: number;
@@ -30,8 +30,17 @@ export type CalendarBlock = {
     detail: string;
     reservation: Reservation;
     room: ReservationRoom | null;
+};
+
+export type CalendarBlock = CalendarBlockContent & {
     lane: number;
     lanes: number;
+};
+
+export type LanePlacement = {
+    lane: number;
+    lanes: number;
+    cluster: number;
 };
 
 export type CalendarMore = {

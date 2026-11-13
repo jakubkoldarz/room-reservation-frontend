@@ -9,6 +9,15 @@ export interface ConfirmOptions {
     warning?: ConfirmWarning;
 }
 
+export interface PromptOptions extends ConfirmOptions {
+    input: ConfirmInput;
+}
+
+export interface PendingConfirm {
+    options: ConfirmOptions;
+    resolve: (confirmed: boolean, value: string) => void;
+}
+
 export interface ConfirmWarning {
     title: string;
     points: readonly string[];

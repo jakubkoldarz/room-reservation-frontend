@@ -48,6 +48,10 @@ const isLoading = ref(false);
 const isSaving = ref(false);
 
 const selectedBuildingId = ref("");
+
+function onBuildingChange(buildingId: string): void {
+    selectedBuildingId.value = buildingId;
+}
 const equipmentIds = ref<string[]>([]);
 const equipmentError = ref<string>();
 const availabilities = ref<Availability[]>([]);
@@ -111,6 +115,21 @@ function confirmForce(conflicts: readonly ConflictingReservation[]): Promise<boo
     });
 }
 
+async function saveWithConfirmation(id: string, values: RoomForm) {
+    const firstResult = await update(id, values, false);
+    if (firstResult.ok) return firstResult;
+
+    const conflicts = reservationConflicts(firstResult.error);
+    if (conflicts.length === 0) return firstResult;
+
+    isSaving.value = false;
+    const confirmed = await confirmForce(conflicts);
+    if (!confirmed) return null;
+
+    isSaving.value = true;
+    return await update(id, values, true);
+}
+
 async function handleSave(): Promise<void> {
     const id = roomId.value;
     if (!id || isSaving.value) return;
@@ -124,15 +143,9 @@ async function handleSave(): Promise<void> {
 
     isSaving.value = true;
     equipmentError.value = undefined;
-    let result = await update(id, values, false);
-    const conflicts = result.ok ? [] : reservationConflicts(result.error);
-    if (conflicts.length > 0) {
-        isSaving.value = false;
-        if (!(await confirmForce(conflicts))) return;
-        isSaving.value = true;
-        result = await update(id, values, true);
-    }
+    const result = await saveWithConfirmation(id, values);
     isSaving.value = false;
+    if (!result) return;
 
     if (result.ok) {
         toasts.pushSuccess({
@@ -171,7 +184,7 @@ async function handleSave(): Promise<void> {
                 :buildings
                 :room="room?.details ?? null"
                 :is-loading
-                @building-change="(id) => (selectedBuildingId = id)"
+                @building-change="onBuildingChange"
             >
                 Edit details of the room. Please fill in all required fields.
             </EditRoom>

@@ -20,6 +20,7 @@ import { buildingRoutes } from "@/features/buildings/routes";
 import { formatAddress } from "@/features/buildings/utils/formatAddres";
 import { iconFor } from "@/features/equipment/icons";
 import { eventRoutes } from "@/features/events/routes";
+import type { EventInfo } from "@/features/events/types";
 import { eventHours, formatEventDates } from "@/features/events/utils/eventFormat";
 import BaseButton from "@/features/shared/BaseButton.vue";
 import Container from "@/features/shared/Container.vue";
@@ -65,9 +66,14 @@ const openingHours = computed(() =>
 
 const VISIBLE_EVENTS = 3;
 
-const sortedEvents = computed(() =>
-    [...(room?.events ?? [])].sort((a, b) => a.startDate.localeCompare(b.startDate)),
-);
+function compareByStartDate(a: EventInfo, b: EventInfo): number {
+    return a.startDate.localeCompare(b.startDate);
+}
+
+const sortedEvents = computed(() => {
+    if (!room) return [];
+    return [...room.events].sort(compareByStartDate);
+});
 const visibleEvents = computed(() => sortedEvents.value.slice(0, VISIBLE_EVENTS));
 const hiddenEventsCount = computed(() => sortedEvents.value.length - visibleEvents.value.length);
 const showEvents = computed(

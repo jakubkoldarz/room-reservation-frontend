@@ -4,7 +4,7 @@ import { useForm } from "vee-validate";
 import { computed, ref, useId, useTemplateRef, watch } from "vue";
 import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
-import { apiErrorMessage } from "@/api/errors";
+import { apiErrorMessage, type ApiError } from "@/api/errors";
 import type { Availability } from "@/features/availabilities/types";
 import { formatHm, slotsForDate } from "@/features/availabilities/utils/schedule";
 import type { EventInfo } from "@/features/events/types";
@@ -53,12 +53,14 @@ const [purpose, purposeAttrs] = defineField("purpose");
 watch(
     () => open,
     (isOpen) => {
+        const element = dialog.value;
+
         if (isOpen) {
             formError.value = undefined;
             resetForm({ values: { ...draft, purpose: "" } });
-            if (!dialog.value?.open) dialog.value?.showModal();
-        } else if (dialog.value?.open) {
-            dialog.value.close();
+            if (element && !element.open) element.showModal();
+        } else if (element && element.open) {
+            element.close();
         }
     },
 );
@@ -82,6 +84,23 @@ function isInPast(values: { date: string; startTime: string }): boolean {
     return day.getTime() < Date.now();
 }
 
+function showFailure(error: ApiError): void {
+    if (error.kind === "validation") {
+        setErrors({
+            date: error.fieldErrors.date?.[0],
+            startTime: error.fieldErrors.startTime?.[0],
+            endTime: error.fieldErrors.endTime?.[0],
+            purpose: error.fieldErrors.purpose?.[0],
+        });
+        formError.value = error.formErrors[0];
+    } else if (error.kind === "http" && error.status === 409) {
+        formError.value = "This time overlaps another reservation. The calendar was refreshed.";
+        emit("conflict");
+    } else {
+        formError.value = apiErrorMessage(error);
+    }
+}
+
 const submit = handleSubmit(async (values) => {
     formError.value = undefined;
     if (isInPast(values)) {
@@ -102,28 +121,13 @@ const submit = handleSubmit(async (values) => {
     isSaving.value = false;
 
     if (!response.ok) {
-        const error = response.error;
-        if (error.kind === "validation") {
-            setErrors({
-                date: error.fieldErrors.date?.[0],
-                startTime: error.fieldErrors.startTime?.[0],
-                endTime: error.fieldErrors.endTime?.[0],
-                purpose: error.fieldErrors.purpose?.[0],
-            });
-            formError.value = error.formErrors[0];
-        } else if (error.kind === "http" && error.status === 409) {
-            formError.value = "This time overlaps another reservation. The calendar was refreshed.";
-            emit("conflict");
-        } else {
-            formError.value = apiErrorMessage(error);
-        }
+        showFailure(response.error);
         return;
     }
 
-    toasts.pushSuccess({
-        title: "Reservation created",
-        message: requiresApproval ? "It is waiting for approval." : "The room is booked for you.",
-    });
+    let message = "The room is booked for you.";
+    if (requiresApproval) message = "It is waiting for approval.";
+    toasts.pushSuccess({ title: "Reservation created", message });
     emit("created", response.data);
 });
 </script>

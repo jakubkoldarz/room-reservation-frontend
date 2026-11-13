@@ -40,35 +40,53 @@ function toFieldPath(key: string): string {
     return key.split(".").map(lowerFirst).join(".");
 }
 
-export function toApiError(err: unknown): ApiError {
-    if (isCancel(err)) return { kind: "canceled" };
-    if (err instanceof ZodiosError) return { kind: "contract", message: err.message };
-    if (!isAxiosError(err)) {
-        return { kind: "unknown", message: err instanceof Error ? err.message : String(err) };
-    }
-    if (!err.response) return { kind: "network" };
+function unknownError(err: unknown): ApiError {
+    if (err instanceof Error) return { kind: "unknown", message: err.message };
+    return { kind: "unknown", message: String(err) };
+}
 
-    const { status, data } = err.response;
-    const parsed = ProblemDetailsSchema.safeParse(data);
-    const problem = parsed.success ? parsed.data : null;
+function validationError(errors: Record<string, string[]>): ApiError {
+    const fieldErrors: Record<string, string[]> = {};
+    const formErrors: string[] = [];
 
-    if (status === 400 && problem?.errors) {
-        const fieldErrors: Record<string, string[]> = {};
-        const formErrors: string[] = [];
-        for (const [key, messages] of Object.entries(problem.errors)) {
-            if (isFormLevelKey(key)) formErrors.push(...messages);
-            else fieldErrors[toFieldPath(key)] = messages;
+    for (const [key, messages] of Object.entries(errors)) {
+        if (isFormLevelKey(key)) {
+            formErrors.push(...messages);
+        } else {
+            fieldErrors[toFieldPath(key)] = messages;
         }
-        return { kind: "validation", fieldErrors, formErrors };
+    }
+
+    return { kind: "validation", fieldErrors, formErrors };
+}
+
+function httpError(status: number, data: unknown): ApiError {
+    const parsed = ProblemDetailsSchema.safeParse(data);
+    if (!parsed.success) {
+        return { kind: "http", status, title: null, detail: null, conflictingItems: [] };
+    }
+
+    const problem = parsed.data;
+    if (status === 400 && problem.errors) {
+        return validationError(problem.errors);
     }
 
     return {
         kind: "http",
         status,
-        title: problem?.title ?? null,
-        detail: problem?.detail ?? null,
-        conflictingItems: problem?.conflictingItems ?? [],
+        title: problem.title ?? null,
+        detail: problem.detail ?? null,
+        conflictingItems: problem.conflictingItems ?? [],
     };
+}
+
+export function toApiError(err: unknown): ApiError {
+    if (isCancel(err)) return { kind: "canceled" };
+    if (err instanceof ZodiosError) return { kind: "contract", message: err.message };
+    if (!isAxiosError(err)) return unknownError(err);
+    if (!err.response) return { kind: "network" };
+
+    return httpError(err.response.status, err.response.data);
 }
 
 export function apiErrorMessage(error: ApiError): string {
@@ -80,7 +98,9 @@ export function apiErrorMessage(error: ApiError): string {
         case "validation":
             return "Some fields are invalid.";
         case "http":
-            return error.detail ?? error.title ?? `Request failed with status ${error.status}.`;
+            if (error.detail !== null) return error.detail;
+            if (error.title !== null) return error.title;
+            return `Request failed with status ${error.status}.`;
         case "contract":
             return "The server returned an unexpected response.";
         case "unknown":

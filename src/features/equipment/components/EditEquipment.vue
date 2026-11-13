@@ -23,7 +23,13 @@ const [icon] = defineField("icon");
 
 watch(
     () => equipment,
-    (next) => resetForm({ values: { name: next?.name ?? "", icon: next?.icon ?? "" } }),
+    (next) => {
+        if (next) {
+            resetForm({ values: { name: next.name, icon: next.icon } });
+        } else {
+            resetForm({ values: { name: "", icon: "" } });
+        }
+    },
     { immediate: true },
 );
 

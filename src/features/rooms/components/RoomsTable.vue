@@ -52,7 +52,7 @@ import { useRoomDestination } from "../composables/useRoomDestination";
 import { roomRoutes } from "../routes";
 import { RoomListQuerySchema } from "../schemas";
 import { useRoomsStore } from "../stores/useRoomsStore";
-import type { BasicRoom, RoomListItem } from "../types";
+import type { BasicRoom, ConflictingReservation, RoomListItem } from "../types";
 import {
     isConflict,
     reservationConflictItems,
@@ -192,6 +192,14 @@ const { data, isLoading, error, reload } = usePagedList(
 const now = useNow({ scheduler: (tick) => useIntervalFn(tick, 60_000) });
 const highlightDay = computed(() => (query.value.day === "" ? undefined : Number(query.value.day)));
 
+function equipmentNames(room: RoomListItem): string {
+    const names: string[] = [];
+    for (const item of room.equipment) {
+        names.push(item.name);
+    }
+    return names.join(", ");
+}
+
 function roomKey(item: RoomListItem): string {
     return item.roomInfo.id;
 }
@@ -210,8 +218,8 @@ const confirm = useConfirm();
 const roomsStore = useRoomsStore();
 const { roomLink } = useRoomDestination();
 
-async function deleteRoom(room: BasicRoom): Promise<void> {
-    const confirmed = await confirm({
+async function confirmDelete(room: BasicRoom): Promise<boolean> {
+    return await confirm({
         title: "Delete room?",
         message: `You are about to delete room "${room.identifier}".`,
         warning: {
@@ -226,31 +234,45 @@ async function deleteRoom(room: BasicRoom): Promise<void> {
         confirmText: "Delete room",
         danger: true,
     });
+}
+
+async function confirmDeleteWithReservations(
+    room: BasicRoom,
+    reservations: readonly ConflictingReservation[],
+): Promise<boolean> {
+    let consequence = "They will be canceled and their owners notified.";
+    if (reservations.length > 0) {
+        consequence = reservationsAffectedMessage(reservations.length);
+    }
+
+    return await confirm({
+        title: "Delete room anyway?",
+        message: `"${room.identifier}" still has upcoming reservations. ${consequence}`,
+        items: reservationConflictItems(reservations, () => room.identifier),
+        confirmText: "Delete anyway",
+        danger: true,
+    });
+}
+
+async function removeRoom(room: BasicRoom, force: boolean) {
+    return await apiCall(() =>
+        apiClient.deleteRoomsRoomId(undefined, {
+            params: { roomId: room.id },
+            queries: { force },
+        }),
+    );
+}
+
+async function deleteRoom(room: BasicRoom): Promise<void> {
+    const confirmed = await confirmDelete(room);
     if (!confirmed) return;
 
-    const remove = (force: boolean) =>
-        apiCall(() =>
-            apiClient.deleteRoomsRoomId(undefined, {
-                params: { roomId: room.id },
-                queries: { force },
-            }),
-        );
-
-    let result = await remove(false);
+    let result = await removeRoom(room, false);
     if (!result.ok && isConflict(result.error)) {
         const reservations = reservationConflicts(result.error);
-        const forced = await confirm({
-            title: "Delete room anyway?",
-            message:
-                reservations.length > 0
-                    ? `"${room.identifier}" still has upcoming reservations. ${reservationsAffectedMessage(reservations.length)}`
-                    : `"${room.identifier}" still has upcoming reservations. They will be canceled and their owners notified.`,
-            items: reservationConflictItems(reservations, () => room.identifier),
-            confirmText: "Delete anyway",
-            danger: true,
-        });
+        const forced = await confirmDeleteWithReservations(room, reservations);
         if (!forced) return;
-        result = await remove(true);
+        result = await removeRoom(room, true);
     }
     if (!result.ok) {
         toasts.pushError({
@@ -384,7 +406,7 @@ async function deleteRoom(room: BasicRoom): Promise<void> {
                     </BaseTooltip>
                 </span>
                 <span v-if="row.equipment.length > 0" class="@3xl:hidden">
-                    {{ row.equipment.map((item) => item.name).join(", ") }}
+                    {{ equipmentNames(row) }}
                 </span>
                 <span v-else class="text-text-muted/70 text-xs">None</span>
             </template>

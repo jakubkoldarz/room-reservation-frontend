@@ -28,9 +28,10 @@ const selectedIds = defineModel<string[]>({ default: () => [] });
 const search = ref("");
 const expanded = ref<Set<string>>(new Set());
 
-const visibleRooms = computed(() =>
-    readonly ? rooms.filter((room) => selectedIds.value.includes(room.roomInfo.id)) : rooms,
-);
+const visibleRooms = computed(() => {
+    if (!readonly) return rooms;
+    return rooms.filter((room) => selectedIds.value.includes(room.roomInfo.id));
+});
 
 const groups = computed(() => groupRoomsByBuilding(visibleRooms.value, search.value));
 const isSearching = computed(() => search.value.trim() !== "");
@@ -41,8 +42,11 @@ function isExpanded(group: BuildingRoomGroup): boolean {
 
 function toggleExpanded(group: BuildingRoomGroup): void {
     const next = new Set(expanded.value);
-    if (next.has(group.id)) next.delete(group.id);
-    else next.add(group.id);
+    if (next.has(group.id)) {
+        next.delete(group.id);
+    } else {
+        next.add(group.id);
+    }
     expanded.value = next;
 }
 

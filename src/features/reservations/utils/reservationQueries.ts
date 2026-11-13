@@ -46,11 +46,12 @@ export function isPastFirst(when: string): boolean {
 }
 
 export function toReservationQueries(query: ReservationListQuery, pageSize: number, today: Date) {
-    const date = parseIsoDate(query.date) ? query.date : undefined;
-    return {
+    let date: string | undefined;
+    if (parseIsoDate(query.date)) date = query.date;
+
+    const filters = {
         Status: reservationStatusCode(query.status),
         Date: date,
-        ...(date ? {} : reservationPeriodRange(query.when, today)),
         BuildingId: uuidOrUndefined(query.building),
         RoomId: uuidOrUndefined(query.room),
         CreatedById: uuidOrUndefined(query.createdBy),
@@ -59,4 +60,9 @@ export function toReservationQueries(query: ReservationListQuery, pageSize: numb
         Page: query.page,
         PageSize: pageSize,
     };
+
+    if (date) return filters;
+
+    const period = reservationPeriodRange(query.when, today);
+    return { ...filters, ...period };
 }

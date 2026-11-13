@@ -41,9 +41,11 @@ const text = ref("");
 const filterText = ref("");
 const highlighted = ref(-1);
 
-const selectedLabel = computed(
-    () => options.find((option) => option.value === model.value)?.label ?? "",
-);
+const selectedLabel = computed(() => {
+    const selected = options.find((option) => option.value === model.value);
+    if (!selected) return "";
+    return selected.label;
+});
 
 const filtered = computed(() => {
     const needle = filterText.value.trim().toLowerCase();
@@ -51,9 +53,10 @@ const filtered = computed(() => {
     return options.filter((option) => option.label.toLowerCase().includes(needle));
 });
 
-const activeDescendant = computed(() =>
-    isOpen.value && highlighted.value >= 0 ? optionId(highlighted.value) : undefined,
-);
+const activeDescendant = computed(() => {
+    if (!isOpen.value || highlighted.value < 0) return undefined;
+    return optionId(highlighted.value);
+});
 
 watch(
     selectedLabel,
@@ -124,10 +127,17 @@ function onInput(event: Event): void {
 }
 
 function move(step: number): void {
-    if (!isOpen.value) return open();
+    if (!isOpen.value) {
+        open();
+        return;
+    }
     const count = filtered.value.length;
     if (count === 0) return;
-    highlighted.value = (highlighted.value + step + count) % count;
+
+    let next = highlighted.value + step;
+    if (next >= count) next = 0;
+    if (next < 0) next = count - 1;
+    highlighted.value = next;
 }
 
 function onEnter(): void {
@@ -136,8 +146,11 @@ function onEnter(): void {
 }
 
 function onEscape(): void {
-    if (isOpen.value) close();
-    else if (model.value) reset();
+    if (isOpen.value) {
+        close();
+    } else if (model.value) {
+        reset();
+    }
 }
 </script>
 

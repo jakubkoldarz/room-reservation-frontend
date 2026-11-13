@@ -46,6 +46,7 @@ import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { toIsoDate } from "@/utils/isoDate";
 import { eventRoutes } from "../routes";
 import { EventListQuerySchema } from "../schemas";
+import type { ConflictingReservation } from "@/features/rooms/types";
 import type { EventInfo, EventPeriod } from "../types";
 import { eventDayCount, eventHours, eventPeriod, formatEventDates } from "../utils/eventFormat";
 import { toEventQueries } from "../utils/eventQueries";
@@ -77,6 +78,18 @@ const PERIOD_LABELS: Record<EventPeriod, string> = {
 const { buildings } = useAllBuildings();
 const { rooms } = useAllRooms();
 const { roomLink } = useRoomDestination();
+
+function shownRooms(event: EventInfo) {
+    return event.rooms.slice(0, VISIBLE_ROOMS);
+}
+
+function hiddenRoomNames(event: EventInfo): string {
+    const names: string[] = [];
+    for (const room of event.rooms.slice(VISIBLE_ROOMS)) {
+        names.push(room.identifier);
+    }
+    return names.join(", ");
+}
 
 const { query, setFilter, setFilters, clampPage } = useListQuery(EventListQuerySchema);
 
@@ -174,37 +187,54 @@ const todayIso = toIsoDate(new Date());
 const toasts = useToastsStore();
 const confirm = useConfirm();
 
-async function deleteEvent(event: EventInfo): Promise<void> {
-    const confirmed = await confirm({
+async function confirmDelete(event: EventInfo): Promise<boolean> {
+    return await confirm({
         title: "Delete event?",
         message: `"${event.name}" (${formatEventDates(event)}) will be deleted. The rooms return to their normal opening hours on these days.`,
         confirmText: "Delete",
         danger: true,
     });
+}
+
+async function confirmDeleteWithReservations(
+    event: EventInfo,
+    reservations: readonly ConflictingReservation[],
+): Promise<boolean> {
+    function roomName(roomId: string): string | undefined {
+        const room = event.rooms.find((item) => item.id === roomId);
+        if (!room) return undefined;
+        return room.identifier;
+    }
+
+    return await confirm({
+        title: "Delete event anyway?",
+        message: `Some reservations were made for the event hours and don't fit the normal opening hours. ${reservationsAffectedMessage(reservations.length)}`,
+        items: reservationConflictItems(reservations, roomName),
+        confirmText: "Delete anyway",
+        danger: true,
+    });
+}
+
+async function removeEvent(event: EventInfo, force: boolean) {
+    return await apiCall(() =>
+        apiClient.deleteEventsEventId(undefined, {
+            params: { eventId: event.id },
+            queries: { force },
+        }),
+    );
+}
+
+async function deleteEvent(event: EventInfo): Promise<void> {
+    const confirmed = await confirmDelete(event);
     if (!confirmed) return;
 
-    const remove = (force: boolean) =>
-        apiCall(() =>
-            apiClient.deleteEventsEventId(undefined, {
-                params: { eventId: event.id },
-                queries: { force },
-            }),
-        );
-
-    let result = await remove(false);
+    let result = await removeEvent(event, false);
     if (!result.ok) {
         const reservations = reservationConflicts(result.error);
         if (reservations.length > 0) {
-            const roomNames = new Map(event.rooms.map((room) => [room.id, room.identifier]));
-            const forced = await confirm({
-                title: "Delete event anyway?",
-                message: `Some reservations were made for the event hours and don't fit the normal opening hours. ${reservationsAffectedMessage(reservations.length)}`,
-                items: reservationConflictItems(reservations, (id) => roomNames.get(id)),
-                confirmText: "Delete anyway",
-                danger: true,
-            });
+            const forced = await confirmDeleteWithReservations(event, reservations);
             if (!forced) return;
-            result = await remove(true);
+            result = await removeEvent(event, true);
         }
     }
 
@@ -324,7 +354,7 @@ const periodNotice = computed(() => {
 
             <template #cell-rooms="{ row }">
                 <span class="inline-flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <template v-for="room in row.rooms.slice(0, VISIBLE_ROOMS)" :key="room.id">
+                    <template v-for="room in shownRooms(row)" :key="room.id">
                         <TextLink v-if="roomLink(room.id)" :to="roomLink(room.id)!">
                             {{ room.identifier }}
                         </TextLink>
@@ -332,12 +362,7 @@ const periodNotice = computed(() => {
                     </template>
                     <BaseTooltip
                         v-if="row.rooms.length > VISIBLE_ROOMS"
-                        :text="
-                            row.rooms
-                                .slice(VISIBLE_ROOMS)
-                                .map((room) => room.identifier)
-                                .join(', ')
-                        "
+                        :text="hiddenRoomNames(row)"
                     >
                         <span class="text-text-muted cursor-help text-xs">
                             +{{ row.rooms.length - VISIBLE_ROOMS }} more

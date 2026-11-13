@@ -16,10 +16,15 @@ const {
 }>();
 
 const availabilitiesModel = defineModel<Availability[]>({ default: () => [] });
-const { rows, setOpen, setTime } = useAvailabilityRow(
-    availabilitiesModel,
-    (next) => (availabilitiesModel.value = next),
-);
+const { rows, setOpen, setTime } = useAvailabilityRow(availabilitiesModel, updateAvailabilities);
+
+function updateAvailabilities(next: Availability[]): void {
+    availabilitiesModel.value = next;
+}
+
+function onOpenChange(dayOfWeek: number, isOpen: boolean | undefined): void {
+    setOpen(dayOfWeek, isOpen === true);
+}
 </script>
 
 <template>
@@ -44,7 +49,7 @@ const { rows, setOpen, setTime } = useAvailabilityRow(
                     <SlidingCheckbox
                         :label="row.isOpen ? 'Open' : 'Closed'"
                         v-model="row.isOpen"
-                        @update:model-value="(value) => setOpen(row.dayOfWeek, value ?? false)"
+                        @update:model-value="onOpenChange(row.dayOfWeek, $event)"
                     />
                 </div>
                 <div

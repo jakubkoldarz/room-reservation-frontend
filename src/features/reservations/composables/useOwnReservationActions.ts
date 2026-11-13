@@ -4,6 +4,7 @@ import { apiCall, type ApiResult } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
 import { useConfirm, usePrompt } from "@/features/modal/composables/useConfirm";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
+import type { ToastOptions } from "@/features/toasts/types";
 import { REASON_MAX_LENGTH } from "../schemas";
 import type { Reservation } from "../types";
 import { formatReservationDate, formatReservationTime } from "../utils/reservationDetails";
@@ -15,19 +16,16 @@ export function useOwnReservationActions() {
     const busyId = ref<string | null>(null);
 
     function summary(reservation: Reservation, roomName: string): string {
-        return `${roomName}, ${formatReservationDate(reservation.date)}, ${formatReservationTime(reservation)}.`;
+        const date = formatReservationDate(reservation.date);
+        const time = formatReservationTime(reservation);
+        return `${roomName}, ${date}, ${time}.`;
     }
 
-    async function run(
-        reservation: Reservation,
-        action: () => Promise<ApiResult<unknown>>,
-        success: { title: string; message: string },
+    function showResult(
+        result: ApiResult<unknown>,
         failureTitle: string,
-    ): Promise<boolean> {
-        busyId.value = reservation.id;
-        const result = await action();
-        busyId.value = null;
-
+        success: ToastOptions,
+    ): boolean {
         if (!result.ok) {
             toasts.pushError({ title: failureTitle, message: apiErrorMessage(result.error) });
             return false;
@@ -47,12 +45,17 @@ export function useOwnReservationActions() {
         if (!confirmed) return false;
 
         const params = { reservationId: reservation.id };
-        return run(
-            reservation,
-            () => apiCall(() => apiClient.deleteReservationsReservationId(undefined, { params })),
-            { title: "Request withdrawn", message: `Request for ${roomName} was withdrawn.` },
-            "Failed to withdraw",
+
+        busyId.value = reservation.id;
+        const result = await apiCall(() =>
+            apiClient.deleteReservationsReservationId(undefined, { params }),
         );
+        busyId.value = null;
+
+        return showResult(result, "Failed to withdraw", {
+            title: "Request withdrawn",
+            message: `Request for ${roomName} was withdrawn.`,
+        });
     }
 
     async function cancel(reservation: Reservation, roomName: string): Promise<boolean> {
@@ -67,18 +70,18 @@ export function useOwnReservationActions() {
         if (reason === null) return false;
 
         const params = { reservationId: reservation.id };
-        return run(
-            reservation,
-            () =>
-                apiCall(() =>
-                    apiClient.postReservationsReservationIdcancel(
-                        { reason: reason || null },
-                        { params },
-                    ),
-                ),
-            { title: "Canceled", message: `Reservation of ${roomName} was canceled.` },
-            "Failed to cancel",
+        const body = { reason: reason || null };
+
+        busyId.value = reservation.id;
+        const result = await apiCall(() =>
+            apiClient.postReservationsReservationIdcancel(body, { params }),
         );
+        busyId.value = null;
+
+        return showResult(result, "Failed to cancel", {
+            title: "Canceled",
+            message: `Reservation of ${roomName} was canceled.`,
+        });
     }
 
     return { busyId, withdraw, cancel };
