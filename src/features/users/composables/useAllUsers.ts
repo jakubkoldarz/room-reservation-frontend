@@ -24,12 +24,18 @@ export function useAllUsers() {
         );
         isLoading.value = false;
 
-        if (result.ok) users.value = result.data.items;
-        else
+        if (result.ok) {
+            const loadedUsers: User[] = [];
+            for (const item of result.data.items) {
+                loadedUsers.push(item.userInfo);
+            }
+            users.value = loadedUsers;
+        } else {
             toasts.pushError({
                 title: "Failed to load users",
                 message: apiErrorMessage(result.error),
             });
+        }
     });
 
     return { users, isLoading };

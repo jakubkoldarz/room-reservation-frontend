@@ -33,11 +33,11 @@ function capitalize(value: string): string {
     return firstLetter + rest;
 }
 
-function areaLabel(area: string): string {
+export function areaLabel(area: string): string {
     return AREAS[area] ?? capitalize(area);
 }
 
-function actionLabel(action: string): string {
+export function actionLabel(action: string): string {
     return ACTIONS[action] ?? capitalize(action);
 }
 
@@ -47,17 +47,17 @@ function rank(order: readonly string[], value: string): number {
     return index;
 }
 
-function compareAreas(a: string, b: string): number {
+export function compareAreas(a: string, b: string): number {
     const rankDifference = rank(AREA_ORDER, a) - rank(AREA_ORDER, b);
     if (rankDifference !== 0) return rankDifference;
     return a.localeCompare(b);
 }
 
-function compareActions(a: string, b: string): number {
+export function compareActions(a: string, b: string): number {
     return rank(ACTION_ORDER, a) - rank(ACTION_ORDER, b);
 }
 
-function splitPermission(permission: string): { area: string; action: string } | null {
+export function splitPermission(permission: string): { area: string; action: string } | null {
     const dotIndex = permission.indexOf(".");
     if (dotIndex <= 0) return null;
 

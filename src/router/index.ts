@@ -9,7 +9,9 @@ import { eventRoutes } from "@/features/events/routes";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { profileRoutes } from "@/features/profile/routes";
 import { reservationRoutes } from "@/features/reservations/routes";
+import { roleRoutes } from "@/features/roles/routes";
 import { roomRoutes } from "@/features/rooms/routes";
+import { userRoutes } from "@/features/users/routes";
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 
 const routes: RouteRecordRaw[] = [
@@ -27,6 +29,8 @@ const routes: RouteRecordRaw[] = [
             ...Object.values(profileRoutes),
             ...Object.values(reservationRoutes),
             ...Object.values(eventRoutes),
+            ...Object.values(userRoutes),
+            ...Object.values(roleRoutes),
         ],
     },
 ];

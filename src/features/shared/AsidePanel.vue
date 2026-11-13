@@ -8,7 +8,9 @@ import {
     ClipboardDocumentListIcon,
     HomeIcon,
     RectangleGroupIcon,
+    ShieldCheckIcon,
     StarIcon,
+    UsersIcon,
 } from "@heroicons/vue/24/solid";
 import { useBuildingsStore } from "../buildings/stores/useBuildingsStore.ts";
 import AsideList from "./AsideList.vue";
@@ -20,7 +22,9 @@ import { equipmentRoutes } from "../equipment/routes.ts";
 import { eventRoutes } from "../events/routes.ts";
 import { profileRoutes } from "../profile/routes.ts";
 import { reservationRoutes } from "../reservations/routes.ts";
+import { roleRoutes } from "../roles/routes.ts";
 import { roomRoutes } from "../rooms/routes.ts";
+import { userRoutes } from "../users/routes.ts";
 import { useRoomsStore } from "../rooms/stores/useRoomsStore.ts";
 import { useRoomDestination } from "../rooms/composables/useRoomDestination.ts";
 
@@ -153,6 +157,14 @@ watchDebounced(
                 <LinkButton v-if="hasPermission(Permission.EventList)" :to="eventRoutes.list">
                     <StarIcon />
                     Events
+                </LinkButton>
+                <LinkButton v-if="hasPermission(Permission.UserList)" :to="userRoutes.list">
+                    <UsersIcon />
+                    Users
+                </LinkButton>
+                <LinkButton v-if="hasPermission(Permission.RoleList)" :to="roleRoutes.list">
+                    <ShieldCheckIcon />
+                    Roles
                 </LinkButton>
                 <AsideList
                     v-model="buildingsStore.queryParam"
