@@ -19,7 +19,14 @@ export type ProfileTab = (typeof PROFILE_TABS)[number];
 
 export type MyReservationsQuery = z.infer<typeof MyReservationsQuerySchema>;
 
+export type PermissionActionKind = "read" | "write" | "decide" | "danger";
+
+export type PermissionAction = {
+    label: string;
+    kind: PermissionActionKind;
+};
+
 export type PermissionGroup = {
     area: string;
-    actions: string[];
+    actions: PermissionAction[];
 };

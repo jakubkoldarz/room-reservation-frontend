@@ -5,6 +5,7 @@ import { onboardingRouteName } from "@/features/auth/utils/onboarding";
 import { buildingRoutes } from "@/features/buildings/routes";
 import { dashboardRoutes } from "@/features/dashboard/routes";
 import { equipmentRoutes } from "@/features/equipment/routes";
+import { errorRoutes } from "@/features/errors/routes";
 import { eventRoutes } from "@/features/events/routes";
 import AsideNavbarLayout from "@/features/layouts/AsideNavbarLayout.vue";
 import { profileRoutes } from "@/features/profile/routes";
@@ -31,6 +32,7 @@ const routes: RouteRecordRaw[] = [
             ...Object.values(eventRoutes),
             ...Object.values(userRoutes),
             ...Object.values(roleRoutes),
+            ...Object.values(errorRoutes),
         ],
     },
 ];

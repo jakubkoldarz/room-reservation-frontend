@@ -25,6 +25,7 @@ export const RoomListQuerySchema = z.object({
     floor: textParam,
     capacity: textParam,
     equipment: textParam,
+    approval: textParam,
     day: textParam,
     from: textParam,
     to: textParam,

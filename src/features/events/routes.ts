@@ -1,5 +1,6 @@
 import type { RouteRecordRaw } from "vue-router";
 import { Permission } from "../auth/constants/permissions";
+import { UUID_PARAM } from "@/router/uuidParam";
 
 export const eventRoutes = {
     list: {
@@ -15,7 +16,7 @@ export const eventRoutes = {
         meta: { requiresAuth: true, requiredPermission: Permission.EventAdd },
     },
     edit: {
-        path: "/events/:eventId/edit",
+        path: `/events/:eventId${UUID_PARAM}/edit`,
         name: "events.edit",
         component: () => import("@/features/events/views/EventEdit.vue"),
         meta: { requiresAuth: true, requiredPermission: Permission.EventEdit },

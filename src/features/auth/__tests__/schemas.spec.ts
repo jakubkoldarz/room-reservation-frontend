@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { LoginFormSchema, ProfileFormSchema, RegisterFormSchema } from "../schemas";
+import {
+    ForgotPasswordFormSchema,
+    LoginFormSchema,
+    ProfileFormSchema,
+    RegisterFormSchema,
+    ResetPasswordFormSchema,
+} from "../schemas";
 
 function issuesOf(result: {
     success: boolean;
@@ -36,6 +42,38 @@ describe("RegisterFormSchema", () => {
     it("powtórzone hasło musi być takie samo", () => {
         const result = RegisterFormSchema.safeParse({
             email: "a@b.pl",
+            password: "12345678",
+            confirmPassword: "12345679",
+        });
+        expect(issuesOf(result)).toEqual([["confirmPassword", "Passwords do not match"]]);
+    });
+});
+
+describe("ForgotPasswordFormSchema", () => {
+    it("wymaga poprawnego maila i przycina spacje", () => {
+        expect(ForgotPasswordFormSchema.safeParse({ email: " a@b.pl " })).toMatchObject({
+            success: true,
+            data: { email: "a@b.pl" },
+        });
+        expect(issuesOf(ForgotPasswordFormSchema.safeParse({ email: "abc" }))).toEqual([
+            ["email", "Enter a valid email address"],
+        ]);
+    });
+});
+
+describe("ResetPasswordFormSchema", () => {
+    it("nowe hasło min. 8 znaków (jak w backendzie)", () => {
+        const result = ResetPasswordFormSchema.safeParse({
+            password: "1234567",
+            confirmPassword: "1234567",
+        });
+        expect(issuesOf(result)).toEqual([
+            ["password", "Password must have at least 8 characters"],
+        ]);
+    });
+
+    it("powtórzone hasło musi być takie samo", () => {
+        const result = ResetPasswordFormSchema.safeParse({
             password: "12345678",
             confirmPassword: "12345679",
         });

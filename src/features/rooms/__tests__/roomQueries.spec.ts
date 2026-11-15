@@ -13,6 +13,7 @@ function query(overrides: Partial<RoomListQuery> = {}): RoomListQuery {
         floor: "",
         capacity: "",
         equipment: "",
+        approval: "",
         day: "",
         from: "",
         to: "",
@@ -22,12 +23,19 @@ function query(overrides: Partial<RoomListQuery> = {}): RoomListQuery {
 }
 
 describe("toRoomQueries", () => {
+    it("filtr akceptacji zamienia wartość z URL na true, false albo brak parametru", () => {
+        expect(toRoomQueries(query({ approval: "required" }), 25).RequiresApproval).toBe(true);
+        expect(toRoomQueries(query({ approval: "instant" }), 25).RequiresApproval).toBe(false);
+        expect(toRoomQueries(query({ approval: "maybe" }), 25).RequiresApproval).toBeUndefined();
+    });
+
     it("puste filtry nie wysyłają żadnych parametrów poza stronicowaniem", () => {
         expect(toRoomQueries(query({ page: 2 }), 25)).toEqual({
             Identifier: undefined,
             BuildingId: undefined,
             Floor: undefined,
             MinCapacity: undefined,
+            RequiresApproval: undefined,
             DayOfWeek: undefined,
             StartTime: undefined,
             EndTime: undefined,
@@ -80,6 +88,7 @@ describe("toRoomQueries", () => {
             BuildingId: undefined,
             Floor: undefined,
             MinCapacity: undefined,
+            RequiresApproval: undefined,
             DayOfWeek: undefined,
             StartTime: undefined,
             EndTime: undefined,

@@ -1,5 +1,6 @@
 import type { RouteRecordRaw } from "vue-router";
 import { Permission } from "../auth/constants/permissions";
+import { UUID_PARAM } from "@/router/uuidParam";
 
 export const roleRoutes = {
     list: {
@@ -15,13 +16,13 @@ export const roleRoutes = {
         meta: { requiresAuth: true, requiredPermission: Permission.RoleAdd },
     },
     view: {
-        path: "/roles/:roleId",
+        path: `/roles/:roleId${UUID_PARAM}`,
         name: "roles.view",
         component: () => import("@/features/roles/views/RoleEdit.vue"),
         meta: { requiresAuth: true, requiredPermission: Permission.RoleView },
     },
     edit: {
-        path: "/roles/:roleId/edit",
+        path: `/roles/:roleId${UUID_PARAM}/edit`,
         name: "roles.edit",
         component: () => import("@/features/roles/views/RoleEdit.vue"),
         meta: { requiresAuth: true, requiredPermission: Permission.RoleEdit },

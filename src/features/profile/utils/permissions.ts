@@ -1,4 +1,4 @@
-import type { PermissionGroup } from "../types";
+import type { PermissionAction, PermissionActionKind, PermissionGroup } from "../types";
 
 const AREAS: Record<string, string> = {
     reservation: "Reservations",
@@ -24,6 +24,26 @@ const ACTIONS: Record<string, string> = {
     assign: "Assign",
 };
 
+const ACTION_KINDS: Record<string, PermissionActionKind> = {
+    view: "read",
+    list: "read",
+    create: "write",
+    add: "write",
+    edit: "write",
+    assign: "write",
+    approve: "decide",
+    reject: "decide",
+    delete: "danger",
+    "force.cancel": "danger",
+};
+
+export const ACTION_KIND_LABELS: Record<PermissionActionKind, string> = {
+    read: "Read",
+    write: "Create and edit",
+    decide: "Decide on requests",
+    danger: "Remove or cancel",
+};
+
 const AREA_ORDER = Object.keys(AREAS);
 const ACTION_ORDER = Object.keys(ACTIONS);
 
@@ -39,6 +59,10 @@ export function areaLabel(area: string): string {
 
 export function actionLabel(action: string): string {
     return ACTIONS[action] ?? capitalize(action);
+}
+
+export function actionKind(action: string): PermissionActionKind {
+    return ACTION_KINDS[action] ?? "write";
 }
 
 function rank(order: readonly string[], value: string): number {
@@ -90,11 +114,11 @@ export function groupPermissions(permissions: readonly string[]): PermissionGrou
         const actions = actionsByArea.get(area) ?? [];
         actions.sort(compareActions);
 
-        const labels: string[] = [];
+        const groupActions: PermissionAction[] = [];
         for (const action of actions) {
-            labels.push(actionLabel(action));
+            groupActions.push({ label: actionLabel(action), kind: actionKind(action) });
         }
-        groups.push({ area: areaLabel(area), actions: labels });
+        groups.push({ area: areaLabel(area), actions: groupActions });
     }
     return groups;
 }

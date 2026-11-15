@@ -13,15 +13,28 @@ describe("groupPermissions", () => {
                 "room.list",
             ]),
         ).toEqual([
-            { area: "Reservations", actions: ["Book", "Cancel any"] },
-            { area: "Rooms", actions: ["View", "List", "Edit"] },
-            { area: "Buildings", actions: ["List"] },
+            {
+                area: "Reservations",
+                actions: [
+                    { label: "Book", kind: "write" },
+                    { label: "Cancel any", kind: "danger" },
+                ],
+            },
+            {
+                area: "Rooms",
+                actions: [
+                    { label: "View", kind: "read" },
+                    { label: "List", kind: "read" },
+                    { label: "Edit", kind: "write" },
+                ],
+            },
+            { area: "Buildings", actions: [{ label: "List", kind: "read" }] },
         ]);
     });
 
     it("usuwa powtórzenia i pomija wpisy bez obszaru albo akcji", () => {
         expect(groupPermissions(["room.view", "room.view", "room", ".view", ""])).toEqual([
-            { area: "Rooms", actions: ["View"] },
+            { area: "Rooms", actions: [{ label: "View", kind: "read" }] },
         ]);
     });
 
@@ -29,9 +42,15 @@ describe("groupPermissions", () => {
         expect(
             groupPermissions(["zebra.fly.high", "audit.export", "room.archive", "room.view"]),
         ).toEqual([
-            { area: "Rooms", actions: ["View", "Archive"] },
-            { area: "Audit", actions: ["Export"] },
-            { area: "Zebra", actions: ["Fly high"] },
+            {
+                area: "Rooms",
+                actions: [
+                    { label: "View", kind: "read" },
+                    { label: "Archive", kind: "write" },
+                ],
+            },
+            { area: "Audit", actions: [{ label: "Export", kind: "write" }] },
+            { area: "Zebra", actions: [{ label: "Fly high", kind: "write" }] },
         ]);
     });
 });

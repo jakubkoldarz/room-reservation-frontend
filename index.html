@@ -1,13 +1,45 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pl">
     <head>
         <meta charset="UTF-8" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>room-reservation-frontend</title>
+        <style>
+            .app-splash {
+                display: flex;
+                min-height: 100dvh;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
+                background: #f8f9fa;
+                color: #5f6368;
+                font-family: ui-sans-serif, system-ui, sans-serif;
+                font-size: 14px;
+            }
+            .app-splash-spinner {
+                width: 32px;
+                height: 32px;
+                border: 3px solid #dadce0;
+                border-top-color: #1a73e8;
+                border-radius: 50%;
+                animation: app-splash-spin 0.8s linear infinite;
+            }
+            @keyframes app-splash-spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+        </style>
     </head>
     <body>
-        <div id="app"></div>
+        <div id="app">
+            <div class="app-splash" role="status">
+                <div class="app-splash-spinner"></div>
+                <p>Loading…</p>
+            </div>
+        </div>
         <script type="module" src="/src/main.ts"></script>
     </body>
 </html>

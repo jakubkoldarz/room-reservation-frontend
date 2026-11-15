@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.app.json",
-  "include": ["src/**/__tests__/*", "src/env.d.ts"],
+  "include": ["src/**/__tests__/*", "src/env.d.ts", "src/router/meta.ts"],
   "exclude": [],
   "compilerOptions": {
     "types": ["node", "jsdom", "vite/client", "pinia-plugin-persistedstate"],

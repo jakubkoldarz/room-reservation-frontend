@@ -13,6 +13,12 @@ export const authRoutes = {
         component: () => import("@/features/auth/views/RegisterView.vue"),
         meta: { requiresGuest: true },
     },
+    forgotPassword: {
+        path: "/forgot-password",
+        name: "auth.forgotPassword",
+        component: () => import("@/features/auth/views/ForgotPasswordView.vue"),
+        meta: { requiresGuest: true },
+    },
     verification: {
         path: "/verification/:verificationId",
         name: "auth.verification",

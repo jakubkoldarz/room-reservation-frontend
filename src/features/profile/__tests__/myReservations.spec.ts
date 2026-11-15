@@ -41,15 +41,27 @@ describe("groupPermissions", () => {
                 "custom.thing",
             ]),
         ).toEqual([
-            { area: "Reservations", actions: ["Book", "Cancel any"] },
-            { area: "Rooms", actions: ["View", "Edit"] },
-            { area: "Custom", actions: ["Thing"] },
+            {
+                area: "Reservations",
+                actions: [
+                    { label: "Book", kind: "write" },
+                    { label: "Cancel any", kind: "danger" },
+                ],
+            },
+            {
+                area: "Rooms",
+                actions: [
+                    { label: "View", kind: "read" },
+                    { label: "Edit", kind: "write" },
+                ],
+            },
+            { area: "Custom", actions: [{ label: "Thing", kind: "write" }] },
         ]);
     });
 
     it("pomija niepełne wpisy i duplikaty", () => {
         expect(groupPermissions(["room", "room.view", "room.view"])).toEqual([
-            { area: "Rooms", actions: ["View"] },
+            { area: "Rooms", actions: [{ label: "View", kind: "read" }] },
         ]);
     });
 });

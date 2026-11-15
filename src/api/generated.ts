@@ -17,6 +17,7 @@ const RefreshTokenResponseDto = z.object({ id: z.string().uuid(), created: z.str
 const UserDetailsResponseDto = z.object({ userInfo: BasicUserResponseDto, email: z.string(), pendingEmail: z.union([z.null(), z.string()]).optional(), accountStatus: UserAccountStatusResponseDto, roleInfo: RoleWithPermissionsResponseDto, refreshTokens: z.array(RefreshTokenResponseDto) });
 const ChangePasswordRequestDto = z.object({ oldPassword: z.string().min(8), newPassword: z.string().min(8) });
 const EmailRequestDto = z.object({ emailAddress: z.string() });
+const ResetPasswordRequestDto = z.object({ emailAddress: z.string(), verificationCode: z.string(), newPassword: z.string().min(8) });
 const VerificationIdResponseDto = z.object({ verificationId: z.string().uuid() });
 const ConfirmPasswordRequestDto = z.object({ password: z.string() });
 const BasicBuildingResponseDto = z.object({ id: z.string().uuid(), name: z.string(), identifier: z.union([z.null(), z.string()]).optional(), street: z.string(), city: z.string(), postalCode: z.string(), floorsCount: z.number().int() });
@@ -69,6 +70,7 @@ export const schemas = {
 	UserDetailsResponseDto,
 	ChangePasswordRequestDto,
 	EmailRequestDto,
+	ResetPasswordRequestDto,
 	VerificationIdResponseDto,
 	ConfirmPasswordRequestDto,
 	BasicBuildingResponseDto,
@@ -195,6 +197,20 @@ const endpoints = makeApi([
 		response: z.void(),
 	},
 	{
+		method: "delete",
+		path: "/auth/email/pending",
+		alias: "deleteAuthemailpending",
+		requestFormat: "json",
+		parameters: [
+			{
+				name: "userId",
+				type: "Query",
+				schema: z.string().uuid().optional()
+			},
+		],
+		response: z.void(),
+	},
+	{
 		method: "post",
 		path: "/auth/email/verify",
 		alias: "postAuthemailverify",
@@ -279,6 +295,34 @@ const endpoints = makeApi([
 				name: "userId",
 				type: "Query",
 				schema: z.string().uuid().optional()
+			},
+		],
+		response: z.void(),
+	},
+	{
+		method: "post",
+		path: "/auth/password/forgot",
+		alias: "postAuthpasswordforgot",
+		requestFormat: "json",
+		parameters: [
+			{
+				name: "body",
+				type: "Body",
+				schema: z.object({ emailAddress: z.string() })
+			},
+		],
+		response: z.void(),
+	},
+	{
+		method: "post",
+		path: "/auth/password/reset",
+		alias: "postAuthpasswordreset",
+		requestFormat: "json",
+		parameters: [
+			{
+				name: "body",
+				type: "Body",
+				schema: ResetPasswordRequestDto
 			},
 		],
 		response: z.void(),
@@ -1190,6 +1234,11 @@ const endpoints = makeApi([
 				name: "Floor",
 				type: "Query",
 				schema: z.number().int().optional()
+			},
+			{
+				name: "RequiresApproval",
+				type: "Query",
+				schema: z.boolean().optional()
 			},
 			{
 				name: "DayOfWeek",

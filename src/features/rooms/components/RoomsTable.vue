@@ -4,6 +4,7 @@ import { useIntervalFn, useNow } from "@vueuse/core";
 import {
     BuildingOfficeIcon,
     CalendarDaysIcon,
+    CheckCircleIcon,
     ClockIcon,
     PlusIcon,
     RectangleGroupIcon,
@@ -65,7 +66,7 @@ import {
     formatCapacity,
     formatFloor,
 } from "../utils/formatRoom";
-import { timeRangeError, toRoomQueries } from "../utils/roomQueries";
+import { APPROVAL_FILTER_OPTIONS, timeRangeError, toRoomQueries } from "../utils/roomQueries";
 
 const props = withDefaults(
     defineProps<{
@@ -148,6 +149,13 @@ const moreFilters = computed(() =>
                   } satisfies Filter<"equipment">,
               ]
             : []),
+        {
+            key: "approval",
+            type: "select",
+            placeholder: "Booking",
+            icon: CheckCircleIcon,
+            values: APPROVAL_FILTER_OPTIONS,
+        },
         {
             key: "day",
             type: "select",

@@ -18,6 +18,7 @@ async function bootstrap() {
     await authStore.init();
 
     app.use(router);
+    await router.isReady();
     app.mount("#app");
 }
 

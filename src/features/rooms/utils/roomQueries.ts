@@ -19,6 +19,17 @@ function toTimeRange(query: RoomListQuery): { from: string; to: string } | undef
     return { from: query.from, to: query.to };
 }
 
+export const APPROVAL_FILTER_OPTIONS = [
+    { value: "required", label: "Requires approval" },
+    { value: "instant", label: "Instant booking" },
+];
+
+function toRequiresApproval(value: string): boolean | undefined {
+    if (value === "required") return true;
+    if (value === "instant") return false;
+    return undefined;
+}
+
 export function timeRangeError(query: RoomListQuery): string | null {
     const hasFrom = query.from !== "";
     const hasTo = query.to !== "";
@@ -39,6 +50,7 @@ export function toRoomQueries(query: RoomListQuery, pageSize: number) {
         BuildingId: isUuid(query.building) ? query.building : undefined,
         Floor: toInt(query.floor),
         MinCapacity: capacity !== undefined && capacity >= 1 ? capacity : undefined,
+        RequiresApproval: toRequiresApproval(query.approval),
         DayOfWeek: day !== undefined && day >= 0 && day <= 6 ? day : undefined,
         StartTime: timeRange?.from,
         EndTime: timeRange?.to,

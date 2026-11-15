@@ -92,6 +92,12 @@ const onSubmit = handleSubmit(async (values) => {
                 autocomplete="current-password"
                 :error-message="errors.password"
             />
+            <TextLink
+                :to="{ name: authRoutes.forgotPassword.name }"
+                class="text-primary! self-end text-sm"
+            >
+                Forgot password?
+            </TextLink>
             <BaseButton type="submit" :is-loading="isLoading" class="mt-2 justify-center py-2">
                 Sign in
             </BaseButton>

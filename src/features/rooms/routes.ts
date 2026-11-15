@@ -1,5 +1,6 @@
 import type { RouteRecordRaw } from "vue-router";
 import { Permission } from "../auth/constants/permissions";
+import { UUID_PARAM } from "@/router/uuidParam";
 
 export const roomRoutes = {
     list: {
@@ -15,13 +16,13 @@ export const roomRoutes = {
         meta: { requiresAuth: true, requiredPermission: Permission.RoomAdd },
     },
     view: {
-        path: "/rooms/:roomId",
+        path: `/rooms/:roomId${UUID_PARAM}`,
         name: "rooms.view",
         component: () => import("@/features/rooms/views/RoomView.vue"),
         meta: { requiresAuth: true, requiredPermission: Permission.RoomView },
     },
     edit: {
-        path: "/rooms/:roomId/edit",
+        path: `/rooms/:roomId${UUID_PARAM}/edit`,
         name: "rooms.edit",
         component: () => import("@/features/rooms/views/RoomEdit.vue"),
         meta: { requiresAuth: true, requiredPermission: Permission.RoomEdit },

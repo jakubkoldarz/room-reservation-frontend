@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { EnvelopeIcon } from "@heroicons/vue/24/solid";
 import { toTypedSchema } from "@vee-validate/zod";
+import { useSessionStorage } from "@vueuse/core";
 import { useForm } from "vee-validate";
 import { computed, ref } from "vue";
 import apiClient from "@/api/client";
@@ -33,10 +34,18 @@ const authStore = useAuthStore();
 const toasts = useToastsStore();
 const cooldown = useResendCooldown();
 
+const verificationId = useSessionStorage("email-change-verification-id", "");
 const step = ref<"idle" | "editing" | "confirming">("idle");
 const targetEmail = ref("");
-const verificationId = ref<string | null>(null);
+
+if (pendingEmail && verificationId.value !== "") {
+    targetEmail.value = pendingEmail;
+    step.value = "confirming";
+} else {
+    verificationId.value = "";
+}
 const isSending = ref(false);
+const isCancelingPending = ref(false);
 
 const code = ref("");
 const codeError = ref<string>();
@@ -56,7 +65,7 @@ function startEditing(): void {
 
 function cancel(): void {
     step.value = "idle";
-    verificationId.value = null;
+    verificationId.value = "";
     code.value = "";
     codeError.value = undefined;
     cooldown.reset();
@@ -92,6 +101,7 @@ async function sendCode(address: string): Promise<boolean> {
     codeError.value = undefined;
     step.value = "confirming";
     cooldown.start();
+    await authStore.init();
     return true;
 }
 
@@ -119,14 +129,34 @@ async function resumePending(): Promise<void> {
     if (pendingEmail) await sendCode(pendingEmail);
 }
 
+async function cancelPending(): Promise<void> {
+    if (isCancelingPending.value) return;
+
+    isCancelingPending.value = true;
+    const response = await apiCall(() => apiClient.deleteAuthemailpending(undefined));
+    isCancelingPending.value = false;
+
+    if (!response.ok) {
+        toasts.pushError({
+            title: "Failed to cancel the change",
+            message: authErrorMessage(response.error),
+        });
+        return;
+    }
+
+    cancel();
+    await authStore.init();
+    toasts.pushInfo({ title: "Change canceled", message: "Your email stays the same." });
+}
+
 async function confirm(): Promise<void> {
-    if (!verificationId.value || !isCodeComplete.value || isConfirming.value) return;
+    if (verificationId.value === "" || !isCodeComplete.value || isConfirming.value) return;
 
     isConfirming.value = true;
     codeError.value = undefined;
     const response = await apiCall(() =>
         apiClient.postAuthemailverify({
-            verificationId: verificationId.value!,
+            verificationId: verificationId.value,
             verificationCode: code.value,
         }),
     );
@@ -168,6 +198,14 @@ async function confirm(): Promise<void> {
                     @click="resumePending"
                 >
                     Send code again
+                </PlainButton>
+                <PlainButton
+                    type="button"
+                    class="ml-2 inline-flex! text-xs"
+                    :is-loading="isCancelingPending"
+                    @click="cancelPending"
+                >
+                    Cancel change
                 </PlainButton>
             </p>
             <OutlineButton type="button" class="self-end" @click="startEditing">
