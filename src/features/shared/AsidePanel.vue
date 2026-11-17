@@ -177,6 +177,7 @@ watchDebounced(
                     :is-loading="buildingsStore.isLoading"
                     :total-count="buildingsStore.totalCount"
                     searchbar-placeholder="Search buildings..."
+                    empty-text="No buildings yet"
                     @searchbar-focus="refetchBuildings"
                 />
                 <AsideList
@@ -190,6 +191,7 @@ watchDebounced(
                     :is-loading="roomsStore.isLoading"
                     :total-count="roomsStore.totalCount"
                     searchbar-placeholder="Search rooms..."
+                    empty-text="No rooms yet"
                     @searchbar-focus="refetchRooms"
                 />
             </div>

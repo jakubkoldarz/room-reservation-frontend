@@ -44,7 +44,7 @@ async function handleSave(): Promise<void> {
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 pb-20">
+    <div class="flex flex-col gap-4 pb-20 sm:pb-0">
         <FormHeader mode="create" :is-saving @cancel="goToList" @save="handleSave" />
         <EditEquipment ref="form" is-new>
             Set details of the equipment. Please fill in all required fields. Equipment is used as a

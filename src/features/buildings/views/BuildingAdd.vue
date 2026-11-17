@@ -12,7 +12,9 @@ import { useToastsStore } from "@/features/toasts/stores/useToastsStore.ts";
 import AvailabilitiesEdit from "@/features/availabilities/components/AvailabilitiesEdit.vue";
 import type { Availability } from "@/features/availabilities/types.ts";
 import NumberCircle from "../components/NumberCircle.vue";
+import { useBuildingsStore } from "../stores/useBuildingsStore";
 
+const buildingsStore = useBuildingsStore();
 const building = ref<Building>();
 const availabilities = ref<Availability[]>([]);
 
@@ -35,6 +37,7 @@ async function handleSave() {
     isSaving.value = false;
 
     if (response.ok) {
+        await buildingsStore.fetchBuildings();
         await router.push(destinationFor(response.data.id));
         toastsStore.pushSuccess({ title: "Success", message: "Building created successfully" });
         return;
@@ -50,7 +53,7 @@ async function handleSave() {
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 pb-20">
+    <div class="flex flex-col gap-4 pb-20 sm:pb-0">
         <FormHeader mode="create" :is-saving @save="handleSave" @cancel="router.back()" />
         <EditInfo ref="editRef" :building="building" is-new />
         <AvailabilitiesEdit v-model="availabilities">

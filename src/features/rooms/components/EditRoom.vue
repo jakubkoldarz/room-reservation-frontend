@@ -10,7 +10,7 @@ import ComboBox from "@/features/shared/ComboBox.vue";
 import Container from "@/features/shared/Container.vue";
 import Skeleton from "@/features/shared/Skeleton.vue";
 import SlidingCheckbox from "@/features/shared/SlidingCheckbox.vue";
-import { RoomFormSchema } from "../schemas";
+import { MAX_ROOM_CAPACITY, MAX_ROOM_FLOOR, MIN_ROOM_FLOOR, RoomFormSchema } from "../schemas";
 import type { RoomDetails, RoomForm } from "../types";
 
 const {
@@ -160,6 +160,8 @@ defineExpose({ submit, showServerErrors });
                     label="Floor"
                     placeholder="e.g. 0, 1, 2"
                     type="number"
+                    :min="MIN_ROOM_FLOOR"
+                    :max="MAX_ROOM_FLOOR"
                     is-required
                 />
                 <p v-if="selectedBuilding" class="text-text-muted text-xs">
@@ -177,6 +179,7 @@ defineExpose({ submit, showServerErrors });
                 placeholder="e.g. 30"
                 type="number"
                 min="1"
+                :max="MAX_ROOM_CAPACITY"
                 is-required
             />
 

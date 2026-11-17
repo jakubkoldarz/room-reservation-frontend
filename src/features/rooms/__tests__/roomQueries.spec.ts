@@ -96,6 +96,11 @@ describe("toRoomQueries", () => {
         });
     });
 
+    it("liczby spoza zakresu int są pomijane", () => {
+        const result = toRoomQueries(query({ floor: "2e+22", capacity: "99999999999" }), 25);
+        expect(result).toMatchObject({ Floor: undefined, MinCapacity: undefined });
+    });
+
     it("godziny są wysyłane tylko w parze i gdy początek jest przed końcem", () => {
         const onlyFrom = toRoomQueries(query({ from: "08:00" }), 25);
         expect(onlyFrom).toMatchObject({ StartTime: undefined, EndTime: undefined });

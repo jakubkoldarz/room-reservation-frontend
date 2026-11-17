@@ -2,7 +2,7 @@
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/vue/24/solid";
 import IconButton from "./IconButton.vue";
 import type { RouteLocationRaw } from "vue-router";
-import { nextTick } from "vue";
+import { computed, nextTick } from "vue";
 import { ref } from "vue";
 import Searchbar from "./Searchbar.vue";
 import Badge from "./Badge.vue";
@@ -16,11 +16,13 @@ const props = withDefaults(
         isLoading?: boolean;
         searchbarPlaceholder?: string;
         displayCount?: number;
+        emptyText?: string;
         items?: { id: string; name: string; to?: RouteLocationRaw }[];
     }>(),
     {
         isLoading: false,
         displayCount: 4,
+        emptyText: "Nothing here yet",
     },
 );
 
@@ -43,6 +45,19 @@ async function onSearchbarClick() {
 }
 
 const searchbarModel = defineModel<string>();
+
+const isEmpty = computed(() => {
+    if (!props.items) return true;
+    return props.items.length === 0;
+});
+
+const emptyMessage = computed(() => {
+    const query = searchbarModel.value ?? "";
+    if (isSearchbarActive.value && query.trim() !== "") {
+        return "No matching results";
+    }
+    return props.emptyText;
+});
 </script>
 
 <template>
@@ -77,6 +92,9 @@ const searchbarModel = defineModel<string>();
             <li :key="n" v-for="n in props.displayCount"><Skeleton class="w-full" /></li>
         </ul>
         <ul v-else class="flex min-h-27 flex-col gap-1">
+            <li v-if="isEmpty" class="text-text-muted flex h-6 items-center text-sm">
+                {{ emptyMessage }}
+            </li>
             <li
                 v-for="item in items"
                 :key="item.id"

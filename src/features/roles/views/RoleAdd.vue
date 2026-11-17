@@ -71,7 +71,7 @@ async function handleSave(): Promise<void> {
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 pb-20">
+    <div class="flex flex-col gap-4 pb-20 sm:pb-0">
         <FormHeader mode="create" :is-saving @cancel="goToList" @save="handleSave" />
         <EditRole ref="form">
             Name the role and decide how it is used. Roles are assigned to users on the Users page.

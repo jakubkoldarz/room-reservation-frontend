@@ -3,11 +3,15 @@ import type { RoomListQuery } from "../types";
 
 const uuid = z.string().uuid();
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+const INT_MAX = 2147483647;
+const INT_MIN = -2147483648;
 
 function toInt(value: string): number | undefined {
     if (!value.trim()) return undefined;
     const number = Number(value);
-    return Number.isInteger(number) ? number : undefined;
+    if (!Number.isInteger(number)) return undefined;
+    if (number > INT_MAX || number < INT_MIN) return undefined;
+    return number;
 }
 
 function isUuid(value: string): boolean {

@@ -7,6 +7,7 @@ import { usePermissions } from "@/composables/usePermissions";
 import { Permission } from "@/features/auth/constants/permissions";
 import GlobalSearch from "@/features/search/components/GlobalSearch.vue";
 import { useSignOut } from "../auth/composables/useSignOut";
+import { dashboardRoutes } from "../dashboard/routes";
 import { profileRoutes } from "../profile/routes";
 import BaseTooltip from "./BaseTooltip.vue";
 import IconButton from "./IconButton.vue";
@@ -16,6 +17,7 @@ const route = useRoute();
 const { hasPermission } = usePermissions();
 const { signOut, isSigningOut } = useSignOut();
 
+const dashboardLink = { name: dashboardRoutes.dashboard.name };
 const canSearch = hasPermission(Permission.RoomList) || hasPermission(Permission.BuildingList);
 const isMobileSearchOpen = ref(false);
 const search = useTemplateRef("search");
@@ -51,7 +53,14 @@ const emit = defineEmits<{
         >
             <Bars4Icon />
         </IconButton>
-        <Logo :class="[isMobileSearchOpen ? 'hidden' : 'flex', 'sm:flex']" />
+        <RouterLink
+            :to="dashboardLink"
+            aria-label="Go to dashboard"
+            class="focus-visible:ring-primary shrink-0 rounded outline-none focus-visible:ring-2"
+            :class="[isMobileSearchOpen ? 'hidden' : 'flex', 'sm:flex']"
+        >
+            <Logo />
+        </RouterLink>
         <div
             :class="[
                 isMobileSearchOpen ? 'pr-2' : 'px-4',

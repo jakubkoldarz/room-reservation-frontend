@@ -89,7 +89,7 @@ async function gotoBuildingView() {
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 pb-20">
+    <div class="flex flex-col gap-4 pb-20 sm:pb-0">
         <FormHeader
             mode="edit"
             :is-saving

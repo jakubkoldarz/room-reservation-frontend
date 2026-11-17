@@ -120,6 +120,25 @@ function earliestMinute(day: CalendarDay): number {
     return day.iso === todayIso ? nowMinutes.value : 0;
 }
 
+function pastEnd(day: CalendarDay): number | null {
+    const todayIso = toIsoDate(now);
+    if (day.iso < todayIso) return rangeEnd.value;
+    if (day.iso === todayIso && nowMinutes.value > rangeStart.value) return nowMinutes.value;
+    return null;
+}
+
+function pastStyle(day: CalendarDay) {
+    const end = pastEnd(day);
+    if (end === null) return undefined;
+    return intervalStyle(rangeStart.value, end);
+}
+
+function showsCrosshair(day: CalendarDay): boolean {
+    if (drag.value) return drag.value.iso === day.iso;
+    if (!hover.value) return false;
+    return hover.value.iso === day.iso;
+}
+
 function minuteAt(event: PointerEvent): number {
     const column = event.currentTarget as HTMLElement;
     const y = event.clientY - column.getBoundingClientRect().top;
@@ -249,7 +268,7 @@ function weekday(date: Date): string {
             class="border-border relative border-l"
             :class="[
                 showOpeningHours && !isLoading ? 'bg-background' : 'bg-surface',
-                { 'cursor-crosshair select-none': canSelect },
+                { 'select-none': canSelect, 'cursor-crosshair': showsCrosshair(day) },
             ]"
             :style="{
                 height: `${BODY_HEIGHT}px`,
@@ -271,6 +290,12 @@ function weekday(date: Date): string {
                     :key="index"
                     class="bg-surface absolute inset-x-0"
                     :style="intervalStyle(interval.start, interval.end)"
+                ></div>
+
+                <div
+                    v-if="pastStyle(day)"
+                    class="bg-text-muted/10 pointer-events-none absolute inset-x-0"
+                    :style="pastStyle(day)"
                 ></div>
 
                 <div
