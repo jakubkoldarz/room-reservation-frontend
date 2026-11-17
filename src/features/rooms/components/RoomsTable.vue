@@ -37,7 +37,7 @@ import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
 import MoreFiltersButton from "@/features/filters/components/MoreFiltersButton.vue";
 import MoreFiltersPanel from "@/features/filters/components/MoreFiltersPanel.vue";
 import { useMoreFilters } from "@/features/filters/composables/useMoreFilters";
-import { defineFilters, type Filter } from "@/features/filters/types";
+import type { Filter } from "@/features/filters/types";
 import { useConfirm } from "@/features/modal/composables/useConfirm";
 import PagerBlock from "@/features/pager/components/PagerBlock.vue";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
@@ -67,6 +67,9 @@ import {
     formatFloor,
 } from "../utils/formatRoom";
 import { APPROVAL_FILTER_OPTIONS, timeRangeError, toRoomQueries } from "../utils/roomQueries";
+
+type RoomFilterKey = "identifier" | "building";
+type RoomMoreFilterKey = "floor" | "capacity" | "equipment" | "approval" | "day" | "from" | "to";
 
 const props = withDefaults(
     defineProps<{
@@ -117,56 +120,54 @@ const { dayNames } = useDate();
 
 const dayOptions = DAYS_MONDAY_FIRST.map((day) => ({ value: String(day), label: dayNames[day] }));
 
-const filters = computed(() =>
-    defineFilters([
+const filters = computed(() => {
+    const list: Filter<RoomFilterKey>[] = [
         { key: "identifier", type: "text", placeholder: "Room identifier" },
-        ...(!isBuildingScoped.value && hasPermission(Permission.BuildingList)
-            ? [
-                  {
-                      key: "building",
-                      type: "select",
-                      placeholder: "Building",
-                      icon: BuildingOfficeIcon,
-                      values: buildings.value.map((b) => ({ value: b.id, label: b.name })),
-                  } satisfies Filter<"building">,
-              ]
-            : []),
-    ]),
-);
+    ];
+    if (!isBuildingScoped.value && hasPermission(Permission.BuildingList)) {
+        list.push({
+            key: "building",
+            type: "select",
+            placeholder: "Building",
+            icon: BuildingOfficeIcon,
+            values: buildings.value.map((b) => ({ value: b.id, label: b.name })),
+        });
+    }
+    return list;
+});
 
-const moreFilters = computed(() =>
-    defineFilters([
+const moreFilters = computed(() => {
+    const list: Filter<RoomMoreFilterKey>[] = [
         { key: "floor", type: "number", placeholder: "Floor", icon: Square3Stack3DIcon },
         { key: "capacity", type: "number", placeholder: "Min. capacity", icon: UsersIcon },
-        ...(hasPermission(Permission.EquipmentList)
-            ? [
-                  {
-                      key: "equipment",
-                      type: "multiselect",
-                      placeholder: "Has all equipment",
-                      icon: RectangleGroupIcon,
-                      values: equipment.value.map((e) => ({ value: e.id, label: e.name })),
-                  } satisfies Filter<"equipment">,
-              ]
-            : []),
-        {
-            key: "approval",
-            type: "select",
-            placeholder: "Booking",
-            icon: CheckCircleIcon,
-            values: APPROVAL_FILTER_OPTIONS,
-        },
-        {
-            key: "day",
-            type: "select",
-            placeholder: "Open on",
-            icon: CalendarDaysIcon,
-            values: dayOptions,
-        },
-        { key: "from", type: "time", placeholder: "Open from", icon: ClockIcon },
-        { key: "to", type: "time", placeholder: "Open until", icon: ClockIcon },
-    ]),
-);
+    ];
+    if (hasPermission(Permission.EquipmentList)) {
+        list.push({
+            key: "equipment",
+            type: "multiselect",
+            placeholder: "Has all equipment",
+            icon: RectangleGroupIcon,
+            values: equipment.value.map((e) => ({ value: e.id, label: e.name })),
+        });
+    }
+    list.push({
+        key: "approval",
+        type: "select",
+        placeholder: "Booking",
+        icon: CheckCircleIcon,
+        values: APPROVAL_FILTER_OPTIONS,
+    });
+    list.push({
+        key: "day",
+        type: "select",
+        placeholder: "Open on",
+        icon: CalendarDaysIcon,
+        values: dayOptions,
+    });
+    list.push({ key: "from", type: "time", placeholder: "Open from", icon: ClockIcon });
+    list.push({ key: "to", type: "time", placeholder: "Open until", icon: ClockIcon });
+    return list;
+});
 
 const { query, setFilter, setFilters, clampPage } = useListQuery(RoomListQuerySchema);
 

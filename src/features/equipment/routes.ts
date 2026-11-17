@@ -15,12 +15,6 @@ export const equipmentRoutes = {
         component: () => import("@/features/equipment/views/EquipmentAdd.vue"),
         meta: { requiresAuth: true, requiredPermission: Permission.EquipmentAdd },
     },
-    view: {
-        path: `/equipment/:equipmentId${UUID_PARAM}`,
-        name: "equipment.view",
-        component: () => import("@/features/equipment/views/EquipmentView.vue"),
-        meta: { requiresAuth: true, requiredPermission: Permission.EquipmentView },
-    },
     edit: {
         path: `/equipment/:equipmentId${UUID_PARAM}/edit`,
         name: "equipment.edit",

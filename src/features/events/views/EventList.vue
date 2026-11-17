@@ -51,6 +51,8 @@ import type { EventInfo, EventPeriod } from "../types";
 import { eventDayCount, eventHours, eventPeriod, formatEventDates } from "../utils/eventFormat";
 import { toEventQueries } from "../utils/eventQueries";
 
+type EventMoreFilterKey = "building" | "room" | "type";
+
 const PAGE_SIZE = 25;
 const VISIBLE_ROOMS = 3;
 
@@ -130,42 +132,38 @@ const filters = computed(() =>
     ]),
 );
 
-const moreFilters = computed(() =>
-    defineFilters([
-        ...(hasPermission(Permission.BuildingList)
-            ? [
-                  {
-                      key: "building",
-                      type: "select",
-                      placeholder: "Building",
-                      icon: BuildingOfficeIcon,
-                      values: buildings.value.map((b) => ({ value: b.id, label: b.name })),
-                  } satisfies Filter<"building">,
-              ]
-            : []),
-        ...(hasPermission(Permission.RoomList)
-            ? [
-                  {
-                      key: "room",
-                      type: "select",
-                      placeholder: "Room",
-                      icon: RectangleStackIcon,
-                      values: roomOptions.value,
-                  } satisfies Filter<"room">,
-              ]
-            : []),
-        {
-            key: "type",
+const moreFilters = computed(() => {
+    const list: Filter<EventMoreFilterKey>[] = [];
+    if (hasPermission(Permission.BuildingList)) {
+        list.push({
+            key: "building",
             type: "select",
-            placeholder: "Type",
-            icon: TagIcon,
-            values: [
-                { value: "closed", label: "Room closed" },
-                { value: "hours", label: "Special hours" },
-            ],
-        } satisfies Filter<"type">,
-    ]),
-);
+            placeholder: "Building",
+            icon: BuildingOfficeIcon,
+            values: buildings.value.map((b) => ({ value: b.id, label: b.name })),
+        });
+    }
+    if (hasPermission(Permission.RoomList)) {
+        list.push({
+            key: "room",
+            type: "select",
+            placeholder: "Room",
+            icon: RectangleStackIcon,
+            values: roomOptions.value,
+        });
+    }
+    list.push({
+        key: "type",
+        type: "select",
+        placeholder: "Type",
+        icon: TagIcon,
+        values: [
+            { value: "closed", label: "Room closed" },
+            { value: "hours", label: "Special hours" },
+        ],
+    });
+    return list;
+});
 
 const moreFiltersState = useMoreFilters(moreFilters, query, setFilters);
 const { activeCount: activeMoreFilters, isOpen: showMoreFilters } = moreFiltersState;

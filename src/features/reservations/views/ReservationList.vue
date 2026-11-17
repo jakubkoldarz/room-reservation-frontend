@@ -26,7 +26,7 @@ import FiltersPanel from "@/features/filters/components/FiltersPanel.vue";
 import MoreFiltersButton from "@/features/filters/components/MoreFiltersButton.vue";
 import MoreFiltersPanel from "@/features/filters/components/MoreFiltersPanel.vue";
 import { useMoreFilters } from "@/features/filters/composables/useMoreFilters";
-import { defineFilters, type Filter } from "@/features/filters/types";
+import type { Filter } from "@/features/filters/types";
 import { useConfirm, usePrompt } from "@/features/modal/composables/useConfirm";
 import PagerBlock from "@/features/pager/components/PagerBlock.vue";
 import { useAllRooms } from "@/features/rooms/composables/useAllRooms";
@@ -60,6 +60,9 @@ import {
     getReservationState,
     reservationStateLabel,
 } from "../utils/reservationState";
+
+type ReservationFilterKey = "when" | "status" | "date" | "building";
+type ReservationMoreFilterKey = "room" | "createdBy" | "approvedBy" | "canceledBy";
 
 const PAGE_SIZE = 25;
 
@@ -114,77 +117,72 @@ const roomOptions = computed(() =>
         })),
 );
 
-const filters = computed(() =>
-    defineFilters([
+const filters = computed(() => {
+    const list: Filter<ReservationFilterKey>[] = [
         {
             key: "when",
             type: "select",
             placeholder: "Period",
             icon: ClockIcon,
             values: RESERVATION_PERIOD_OPTIONS,
-        } satisfies Filter<"when">,
+        },
         {
             key: "status",
             type: "select",
             placeholder: "Status",
             icon: TagIcon,
             values: statusOptions,
-        } satisfies Filter<"status">,
+        },
         { key: "date", type: "date", placeholder: "Date", icon: CalendarDaysIcon },
-        ...(hasPermission(Permission.BuildingList)
-            ? [
-                  {
-                      key: "building",
-                      type: "select",
-                      placeholder: "Building",
-                      icon: BuildingOfficeIcon,
-                      values: buildings.value.map((b) => ({ value: b.id, label: b.name })),
-                  } satisfies Filter<"building">,
-              ]
-            : []),
-    ]),
-);
+    ];
+    if (hasPermission(Permission.BuildingList)) {
+        list.push({
+            key: "building",
+            type: "select",
+            placeholder: "Building",
+            icon: BuildingOfficeIcon,
+            values: buildings.value.map((b) => ({ value: b.id, label: b.name })),
+        });
+    }
+    return list;
+});
 
-const moreFilters = computed(() =>
-    defineFilters([
-        ...(hasPermission(Permission.RoomList)
-            ? [
-                  {
-                      key: "room",
-                      type: "select",
-                      placeholder: "Room",
-                      icon: RectangleStackIcon,
-                      values: roomOptions.value,
-                  } satisfies Filter<"room">,
-              ]
-            : []),
-        ...(hasPermission(Permission.UserList)
-            ? ([
-                  {
-                      key: "createdBy",
-                      type: "select",
-                      placeholder: "Booked by",
-                      icon: UserIcon,
-                      values: userOptions.value,
-                  },
-                  {
-                      key: "approvedBy",
-                      type: "select",
-                      placeholder: "Approved by",
-                      icon: UserIcon,
-                      values: userOptions.value,
-                  },
-                  {
-                      key: "canceledBy",
-                      type: "select",
-                      placeholder: "Canceled by",
-                      icon: UserIcon,
-                      values: userOptions.value,
-                  },
-              ] satisfies Filter<"createdBy" | "approvedBy" | "canceledBy">[])
-            : []),
-    ]),
-);
+const moreFilters = computed(() => {
+    const list: Filter<ReservationMoreFilterKey>[] = [];
+    if (hasPermission(Permission.RoomList)) {
+        list.push({
+            key: "room",
+            type: "select",
+            placeholder: "Room",
+            icon: RectangleStackIcon,
+            values: roomOptions.value,
+        });
+    }
+    if (hasPermission(Permission.UserList)) {
+        list.push({
+            key: "createdBy",
+            type: "select",
+            placeholder: "Booked by",
+            icon: UserIcon,
+            values: userOptions.value,
+        });
+        list.push({
+            key: "approvedBy",
+            type: "select",
+            placeholder: "Approved by",
+            icon: UserIcon,
+            values: userOptions.value,
+        });
+        list.push({
+            key: "canceledBy",
+            type: "select",
+            placeholder: "Canceled by",
+            icon: UserIcon,
+            values: userOptions.value,
+        });
+    }
+    return list;
+});
 
 const moreFiltersState = useMoreFilters(moreFilters, query, setFilters);
 const { activeCount: activeMoreFilters, isOpen: showMoreFilters } = moreFiltersState;
