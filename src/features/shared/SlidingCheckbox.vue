@@ -12,7 +12,7 @@ const props = defineProps<{
 </script>
 
 <template>
-    <label :for="id" class="flex cursor-pointer items-center gap-2">
+    <label :for="id" class="relative flex cursor-pointer items-center gap-2">
         <input :id="id" v-bind="$attrs" type="checkbox" v-model="checked" class="peer sr-only" />
 
         <p v-if="props.label" class="text-text-muted text-sm select-none">{{ props.label }}</p>

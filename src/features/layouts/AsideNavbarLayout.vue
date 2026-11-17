@@ -23,7 +23,7 @@ watch(
                 :is-mobile-aside-open="isMobileAsideOpen"
                 @force-close="isMobileAsideOpen = false"
             />
-            <main ref="content" class="min-w-0 grow overflow-y-auto p-4">
+            <main ref="content" class="relative min-w-0 grow overflow-y-auto p-4">
                 <RouterView />
             </main>
         </div>
