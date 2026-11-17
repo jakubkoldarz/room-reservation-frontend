@@ -92,7 +92,7 @@ function label(range: ReservationTimeRange): string {
 <template>
     <div class="flex flex-col gap-1">
         <div
-            class="border-border relative h-16 overflow-hidden rounded border"
+            class="border-border bg-closed relative h-16 overflow-hidden rounded border"
             :style="{ backgroundImage: CLOSED_HOURS_BACKGROUND }"
             aria-hidden="true"
         >
@@ -164,7 +164,7 @@ function label(range: ReservationTimeRange): string {
             </span>
             <span class="flex items-center gap-1.5">
                 <span
-                    class="border-border size-3 rounded-sm border"
+                    class="border-border bg-closed size-3 rounded-sm border"
                     :style="{ backgroundImage: CLOSED_HOURS_BACKGROUND }"
                 ></span>
                 Closed

@@ -23,7 +23,7 @@ defineSlots<{
 }>();
 
 const BUBBLE_CLASSES = {
-    dark: "bg-secondary text-text-secondary max-w-64 rounded-md px-2 py-1 text-xs font-medium whitespace-pre-line shadow-lg",
+    dark: "bg-text text-surface max-w-64 rounded-md px-2 py-1 text-xs font-medium whitespace-pre-line shadow-lg",
     card: "bg-surface text-text border-border w-72 max-w-[calc(100vw-16px)] rounded-lg border p-3 shadow-xl",
 } as const;
 
@@ -139,7 +139,7 @@ onBeforeUnmount(clearTimers);
             <slot name="content">{{ text }}</slot>
             <span
                 v-if="variant === 'dark'"
-                class="bg-secondary absolute size-2 -translate-x-1/2 rotate-45"
+                class="bg-text absolute size-2 -translate-x-1/2 rotate-45"
                 :class="placement === 'top' ? '-bottom-1' : '-top-1'"
                 :style="{ left: `${arrowLeft}px` }"
             ></span>

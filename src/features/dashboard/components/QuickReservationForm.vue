@@ -11,7 +11,6 @@ import { PURPOSE_MAX_LENGTH } from "@/features/reservations/schemas";
 import { formatReservationDate } from "@/features/reservations/utils/reservationDetails";
 import { useAllRooms } from "@/features/rooms/composables/useAllRooms";
 import { roomRoutes } from "@/features/rooms/routes";
-import { DARK_CLOSED_HOURS_BACKGROUND } from "@/features/rooms/utils/calendarStyles";
 import { approvalShortLabel, formatCapacity, formatFloor } from "@/features/rooms/utils/formatRoom";
 import BaseButton from "@/features/shared/BaseButton.vue";
 import BaseInput from "@/features/shared/BaseInput.vue";
@@ -152,7 +151,6 @@ const submit = handleSubmit(async (values) => {
     <Container class="@container px-0! py-0!">
         <div
             class="bg-secondary flex items-baseline justify-between gap-3 rounded-t-md px-4 py-3 sm:px-6"
-            :style="{ backgroundImage: DARK_CLOSED_HOURS_BACKGROUND }"
         >
             <h2 class="text-text-secondary text-lg font-semibold">New reservation</h2>
             <p class="text-text-muted-secondary text-sm">{{ today }}</p>

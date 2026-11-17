@@ -2,11 +2,11 @@ import { reservationStateLabel } from "@/features/reservations/utils/reservation
 import type { CalendarBlockKind } from "../types";
 
 export const BLOCK_CLASSES: Record<CalendarBlockKind, string> = {
-    approved: "bg-primary/10 border-primary text-primary",
-    pending: "bg-warning/10 border-warning text-warning-text",
+    approved: "bg-success/10 border-success text-success",
+    pending: "bg-warning/15 border-warning text-warning-text",
     rejected: "bg-danger/10 border-danger text-danger line-through",
     canceled: "bg-text-muted/10 border-text-muted/40 text-text-muted line-through",
-    event: "bg-secondary/10 border-secondary text-secondary",
+    event: "bg-primary/10 border-primary text-primary",
     closed: "bg-danger/10 border-danger text-danger",
 };
 
@@ -33,14 +33,11 @@ export const PERSONAL_LEGEND_KINDS: readonly CalendarBlockKind[] = [
     "canceled",
 ];
 
+export const CLOSED_HOURS_BACKGROUND =
+    "repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--color-text-muted) 14%, transparent) 6px 7px)";
+
 export function blockKindLabel(kind: CalendarBlockKind): string {
     if (kind === "event") return "Event";
     if (kind === "closed") return "Closed";
     return reservationStateLabel(kind);
 }
-
-export const CLOSED_HOURS_BACKGROUND =
-    "repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--color-text-muted) 12%, transparent) 6px 7px)";
-
-export const DARK_CLOSED_HOURS_BACKGROUND =
-    "repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--color-text-muted-secondary) 22%, transparent) 6px 7px)";

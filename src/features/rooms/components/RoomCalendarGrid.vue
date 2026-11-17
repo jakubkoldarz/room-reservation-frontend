@@ -120,6 +120,13 @@ function earliestMinute(day: CalendarDay): number {
     return day.iso === todayIso ? nowMinutes.value : 0;
 }
 
+function columnStyle() {
+    if (showOpeningHours && !isLoading) {
+        return { height: `${BODY_HEIGHT}px`, backgroundImage: CLOSED_HOURS_BACKGROUND };
+    }
+    return { height: `${BODY_HEIGHT}px` };
+}
+
 function pastEnd(day: CalendarDay): number | null {
     const todayIso = toIsoDate(now);
     if (day.iso < todayIso) return rangeEnd.value;
@@ -267,14 +274,10 @@ function weekday(date: Date): string {
             :key="`body-${day.iso}`"
             class="border-border relative border-l"
             :class="[
-                showOpeningHours && !isLoading ? 'bg-background' : 'bg-surface',
+                showOpeningHours && !isLoading ? 'bg-closed' : 'bg-surface',
                 { 'select-none': canSelect, 'cursor-crosshair': showsCrosshair(day) },
             ]"
-            :style="{
-                height: `${BODY_HEIGHT}px`,
-                backgroundImage:
-                    showOpeningHours && !isLoading ? CLOSED_HOURS_BACKGROUND : undefined,
-            }"
+            :style="columnStyle()"
             @pointerdown="onPointerDown(day, $event)"
             @pointermove="onPointerMove(day, $event)"
             @pointerleave="hover = null"
@@ -282,7 +285,7 @@ function weekday(date: Date): string {
             @pointercancel="cancelDrag"
             @lostpointercapture="cancelDrag"
         >
-            <div v-if="isLoading" class="absolute inset-1 animate-pulse rounded bg-gray-200"></div>
+            <div v-if="isLoading" class="bg-closed absolute inset-1 animate-pulse rounded"></div>
 
             <template v-else>
                 <div
@@ -294,7 +297,7 @@ function weekday(date: Date): string {
 
                 <div
                     v-if="pastStyle(day)"
-                    class="bg-text-muted/10 pointer-events-none absolute inset-x-0"
+                    class="bg-text-muted/5 pointer-events-none absolute inset-x-0"
                     :style="pastStyle(day)"
                 ></div>
 

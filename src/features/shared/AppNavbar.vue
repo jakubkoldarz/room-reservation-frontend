@@ -47,7 +47,7 @@ const emit = defineEmits<{
 <template>
     <nav class="bg-secondary text-text-secondary z-1000 flex h-12 items-center px-4 py-2">
         <IconButton
-            class="mr-2 block size-8 shrink-0 md:hidden"
+            class="hover:text-text-muted-secondary! focus-visible:ring-text-secondary! mr-2 block size-8 shrink-0 md:hidden"
             aria-label="Menu"
             @click="emit('mobileBurgerClick')"
         >
@@ -56,7 +56,7 @@ const emit = defineEmits<{
         <RouterLink
             :to="dashboardLink"
             aria-label="Go to dashboard"
-            class="focus-visible:ring-primary shrink-0 rounded outline-none focus-visible:ring-2"
+            class="focus-visible:ring-text-secondary shrink-0 rounded outline-none focus-visible:ring-2"
             :class="[isMobileSearchOpen ? 'hidden' : 'flex', 'sm:flex']"
         >
             <Logo />
@@ -76,7 +76,7 @@ const emit = defineEmits<{
         <div class="flex gap-2">
             <IconButton
                 v-if="canSearch"
-                class="block size-6 sm:hidden"
+                class="hover:text-text-muted-secondary! focus-visible:ring-text-secondary! block size-6 sm:hidden"
                 :aria-label="isMobileSearchOpen ? 'Close search' : 'Open search'"
                 :aria-expanded="isMobileSearchOpen"
                 @click="toggleMobileSearch"
@@ -88,13 +88,13 @@ const emit = defineEmits<{
                 <RouterLink
                     :to="{ name: profileRoutes.view.name }"
                     aria-label="My profile"
-                    class="text-text-secondary hover:text-primary focus-visible:ring-primary block size-6 rounded-full outline-none focus-visible:ring-1"
+                    class="text-text-secondary hover:text-text-muted-secondary focus-visible:ring-text-secondary block size-6 rounded-full outline-none focus-visible:ring-1"
                 >
                     <UserIcon />
                 </RouterLink>
                 <BaseTooltip text="Sign out">
                     <IconButton
-                        class="text-text-secondary block size-6 disabled:opacity-60"
+                        class="text-text-secondary hover:text-text-muted-secondary! focus-visible:ring-text-secondary! block size-6 disabled:opacity-60"
                         aria-label="Sign out"
                         :disabled="isSigningOut"
                         @click="signOut"

@@ -155,7 +155,7 @@ defineExpose({ focus: focusInput, clear });
 <template>
     <div ref="root" class="relative w-full max-w-175" @focusout="onFocusOut">
         <MagnifyingGlassIcon
-            class="text-text-muted-secondary pointer-events-none absolute top-1/2 left-2 size-5 -translate-y-1/2"
+            class="text-text-muted pointer-events-none absolute top-1/2 left-2 size-5 -translate-y-1/2"
         />
         <input
             :id="inputId"
@@ -171,7 +171,7 @@ defineExpose({ focus: focusInput, clear });
             :aria-controls="listboxId"
             :aria-activedescendant="activeDescendant"
             :placeholder
-            class="border-border-secondary bg-secondary-hover text-text-secondary placeholder:text-text-muted-secondary focus-visible:ring-primary w-full rounded-md border py-1 pr-2 pl-8 text-sm outline-none focus-visible:ring-2 sm:pr-8"
+            class="border-border-secondary bg-surface text-text placeholder:text-text-muted focus-visible:ring-text-muted-secondary w-full rounded-md border py-1 pr-2 pl-8 text-sm outline-none focus-visible:ring-2 sm:pr-8"
             @focus="open"
             @input="open"
             @keydown.down.prevent="move(1)"
@@ -184,7 +184,7 @@ defineExpose({ focus: focusInput, clear });
             type="button"
             aria-label="Clear search"
             tabindex="-1"
-            class="text-text-muted-secondary hover:text-text-secondary absolute top-1/2 right-2 hidden size-4 -translate-y-1/2 cursor-pointer sm:block"
+            class="text-text-muted hover:text-text absolute top-1/2 right-2 hidden size-4 -translate-y-1/2 cursor-pointer sm:block"
             @mousedown.prevent
             @click="clearAndFocus"
         >

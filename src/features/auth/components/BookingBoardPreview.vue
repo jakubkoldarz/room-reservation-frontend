@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DARK_CLOSED_HOURS_BACKGROUND } from "@/features/rooms/utils/calendarStyles";
+import { CLOSED_HOURS_BACKGROUND } from "@/features/rooms/utils/calendarStyles";
 
 type PreviewKind = "approved" | "pending" | "event";
 
@@ -27,9 +27,9 @@ for (let hour = START_HOUR; hour < END_HOUR; hour++) {
 const INNER_HOUR_MARKS = HOUR_MARKS.slice(1);
 
 const KIND_CLASSES: Record<PreviewKind, string> = {
-    approved: "bg-primary/30 border-primary",
+    approved: "bg-success/15 border-success",
     pending: "bg-warning/15 border-warning",
-    event: "bg-text-muted-secondary/20 border-text-muted-secondary",
+    event: "bg-primary/10 border-primary",
 };
 
 const WEEK: PreviewDay[] = [
@@ -95,11 +95,11 @@ function formatHour(hour: number): string {
 <template>
     <div aria-hidden="true" class="flex flex-col gap-4 select-none">
         <div
-            class="border-border-secondary bg-secondary-hover/40 overflow-hidden rounded-md border shadow-2xl shadow-black/30"
+            class="border-border bg-surface overflow-hidden rounded-md border shadow-lg shadow-black/10"
         >
-            <div class="border-border-secondary flex items-center gap-2 border-b px-3 py-2">
-                <span class="text-text-secondary text-xs font-semibold">A-101 · Lecture hall</span>
-                <span class="text-text-muted-secondary text-[10px]">Building A · Floor 1</span>
+            <div class="border-border flex items-center gap-2 border-b px-3 py-2">
+                <span class="text-text text-xs font-semibold">A-101 · Lecture hall</span>
+                <span class="text-text-muted text-[10px]">Building A · Floor 1</span>
                 <span
                     class="bg-success/20 text-success ml-auto rounded-full px-2 py-0.5 text-[10px] font-medium"
                 >
@@ -108,18 +108,18 @@ function formatHour(hour: number): string {
             </div>
 
             <div class="grid grid-cols-[2.75rem_repeat(5,minmax(0,1fr))]">
-                <div class="border-border-secondary border-b"></div>
+                <div class="border-border border-b"></div>
                 <div
                     v-for="day in days"
                     :key="day.weekday"
-                    class="border-border-secondary flex flex-col items-center gap-0.5 border-b border-l py-1.5"
+                    class="border-border flex flex-col items-center gap-0.5 border-b border-l py-1.5"
                 >
-                    <span class="text-text-muted-secondary text-[10px] uppercase">
+                    <span class="text-text-muted text-[10px] uppercase">
                         {{ day.weekday }}
                     </span>
                     <span
                         class="flex size-6 items-center justify-center rounded-full text-xs font-semibold"
-                        :class="day.isToday ? 'bg-primary text-surface' : 'text-text-secondary'"
+                        :class="day.isToday ? 'bg-primary text-surface' : 'text-text'"
                     >
                         {{ day.dayOfMonth }}
                     </span>
@@ -129,7 +129,7 @@ function formatHour(hour: number): string {
                     <span
                         v-for="hour in INNER_HOUR_MARKS"
                         :key="hour"
-                        class="text-text-muted-secondary absolute right-1.5 -translate-y-1/2 text-[9px] tabular-nums"
+                        class="text-text-muted absolute right-1.5 -translate-y-1/2 text-[9px] tabular-nums"
                         :style="{ top: `${offset(hour)}px` }"
                     >
                         {{ formatHour(hour) }}
@@ -139,14 +139,14 @@ function formatHour(hour: number): string {
                 <div
                     v-for="day in days"
                     :key="`body-${day.weekday}`"
-                    class="border-border-secondary relative border-l"
+                    class="border-border bg-closed relative border-l"
                     :style="{
                         height: `${BODY_HEIGHT}px`,
-                        backgroundImage: DARK_CLOSED_HOURS_BACKGROUND,
+                        backgroundImage: CLOSED_HOURS_BACKGROUND,
                     }"
                 >
                     <div
-                        class="bg-secondary absolute inset-x-0"
+                        class="bg-surface absolute inset-x-0"
                         :style="{
                             top: `${offset(day.open.start)}px`,
                             height: `${offset(day.open.end) - offset(day.open.start)}px`,
@@ -155,7 +155,7 @@ function formatHour(hour: number): string {
                     <div
                         v-for="hour in INNER_HOUR_MARKS"
                         :key="hour"
-                        class="border-border-secondary/60 absolute inset-x-0 border-t"
+                        class="border-border/60 absolute inset-x-0 border-t"
                         :style="{ top: `${offset(hour)}px` }"
                     ></div>
                     <div
@@ -168,10 +168,10 @@ function formatHour(hour: number): string {
                             height: `${offset(block.end) - offset(block.start) - 2}px`,
                         }"
                     >
-                        <span class="text-text-secondary truncate text-[10px] font-semibold">
+                        <span class="text-text truncate text-[10px] font-semibold">
                             {{ formatHour(block.start) }}
                         </span>
-                        <span class="text-text-secondary/80 truncate text-[10px]">
+                        <span class="text-text/80 truncate text-[10px]">
                             {{ block.room }} · {{ block.title }}
                         </span>
                     </div>
@@ -190,19 +190,19 @@ function formatHour(hour: number): string {
 
         <ul class="flex flex-wrap gap-x-4 gap-y-1.5">
             <li class="flex items-center gap-1.5">
-                <span class="bg-primary/30 border-primary size-3 rounded-sm border-l-4"></span>
-                <span class="text-text-muted-secondary text-xs">Confirmed</span>
+                <span class="bg-surface border-success size-3 rounded-sm border-l-4"></span>
+                <span class="text-text-secondary text-xs">Confirmed</span>
             </li>
             <li class="flex items-center gap-1.5">
-                <span class="bg-warning/15 border-warning size-3 rounded-sm border-l-4"></span>
-                <span class="text-text-muted-secondary text-xs">Waiting for approval</span>
+                <span class="bg-surface border-warning size-3 rounded-sm border-l-4"></span>
+                <span class="text-text-secondary text-xs">Waiting for approval</span>
             </li>
             <li class="flex items-center gap-1.5">
                 <span
-                    class="border-border-secondary size-3 rounded-sm border"
-                    :style="{ backgroundImage: DARK_CLOSED_HOURS_BACKGROUND }"
+                    class="border-border-secondary bg-closed size-3 rounded-sm border"
+                    :style="{ backgroundImage: CLOSED_HOURS_BACKGROUND }"
                 ></span>
-                <span class="text-text-muted-secondary text-xs">Closed</span>
+                <span class="text-text-secondary text-xs">Closed</span>
             </li>
         </ul>
     </div>

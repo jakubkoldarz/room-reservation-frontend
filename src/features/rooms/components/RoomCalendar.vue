@@ -191,7 +191,7 @@ watch(
             </li>
             <li v-if="showOpeningHours" class="flex items-center gap-1.5">
                 <span
-                    class="border-border bg-background size-3 rounded-sm border"
+                    class="border-border bg-closed size-3 rounded-sm border"
                     :style="{ backgroundImage: CLOSED_HOURS_BACKGROUND }"
                 ></span>
                 Outside opening hours

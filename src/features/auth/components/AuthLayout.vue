@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { CheckIcon } from "@heroicons/vue/16/solid";
-import { DARK_CLOSED_HOURS_BACKGROUND } from "@/features/rooms/utils/calendarStyles";
 import Logo from "@/features/shared/Logo.vue";
 import BookingBoardPreview from "./BookingBoardPreview.vue";
 
@@ -25,7 +24,7 @@ function stepState(index: number): "done" | "current" | "upcoming" {
 
 const STEP_BADGE_CLASSES = {
     done: "bg-success text-surface",
-    current: "bg-primary text-text-secondary",
+    current: "bg-primary text-surface",
     upcoming: "border-border text-text-muted border bg-surface",
 } as const;
 </script>
@@ -41,10 +40,7 @@ const STEP_BADGE_CLASSES = {
             </div>
         </aside>
 
-        <header
-            class="bg-secondary shrink-0 px-4 pt-3 pb-20 sm:px-8 lg:hidden"
-            :style="{ backgroundImage: DARK_CLOSED_HOURS_BACKGROUND }"
-        >
+        <header class="bg-secondary shrink-0 px-4 pt-3 pb-20 sm:px-8 lg:hidden">
             <Logo />
         </header>
 

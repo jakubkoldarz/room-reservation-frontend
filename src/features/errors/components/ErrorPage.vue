@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { dashboardRoutes } from "@/features/dashboard/routes";
-import { DARK_CLOSED_HOURS_BACKGROUND } from "@/features/rooms/utils/calendarStyles";
 
 defineProps<{
     code: string;
@@ -14,10 +13,7 @@ const dashboardLink = { name: dashboardRoutes.dashboard.name };
 <template>
     <div class="mx-auto mt-6 w-full max-w-lg sm:mt-16">
         <div class="border-border bg-surface overflow-hidden rounded-md border shadow">
-            <div
-                class="bg-secondary px-6 py-8"
-                :style="{ backgroundImage: DARK_CLOSED_HOURS_BACKGROUND }"
-            >
+            <div class="bg-secondary px-6 py-8">
                 <p class="text-text-secondary text-5xl font-semibold tabular-nums">{{ code }}</p>
             </div>
             <div class="flex flex-col items-start gap-2 p-6">
