@@ -64,7 +64,7 @@ async function gotoBuildingEdit() {
         <AvailabilitiesTable
             @edit="gotoBuildingEdit"
             :is-loading="isLoading"
-            title="Building Availabilities"
+            title="Opening hours"
             :items="building?.availabilities"
             :has-edit-permission="hasPermission(Permission.BuildingEdit)"
         />

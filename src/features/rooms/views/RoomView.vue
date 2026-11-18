@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from "vue";
 import { useRoute } from "vue-router";
-import { useIntervalFn, useNow } from "@vueuse/core";
+import { useIntervalFn, useLocalStorage, useNow } from "@vueuse/core";
 import { PlusIcon } from "@heroicons/vue/24/solid";
 import { z } from "zod";
 import apiClient from "@/api/client";
@@ -16,6 +16,7 @@ import { useModeratorReservationActions } from "@/features/reservations/composab
 import { useOwnReservationActions } from "@/features/reservations/composables/useOwnReservationActions";
 import type {
     ModeratorPermissions,
+    Reservation,
     ReservationAction,
     ReservationDraft,
     ReservationRoom,
@@ -24,8 +25,12 @@ import {
     calendarBlockActions,
     isOwnReservation,
 } from "@/features/reservations/utils/reservationActions";
-import { blocksNewReservation } from "@/features/reservations/utils/reservationOverlap";
+import {
+    blocksNewReservation,
+    isOtherUsersRequest,
+} from "@/features/reservations/utils/reservationOverlap";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
+import SlidingCheckbox from "@/features/shared/SlidingCheckbox.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import { toIsoDate } from "@/utils/isoDate";
 import RoomCalendar from "../components/RoomCalendar.vue";
@@ -82,22 +87,8 @@ const reservationRoom = computed<ReservationRoom>(() => ({
     building: room.value?.details.buildingInfo.name ?? "",
 }));
 
-const days = computed(() =>
-    buildCalendarDays({
-        weekStart: weekStart.value,
-        now: now.value,
-        reservations: room.value?.reservations ?? [],
-        events: room.value?.events ?? [],
-        availabilities: room.value?.availabilities ?? [],
-        requiresApproval: room.value?.details.roomInfo.requiresApproval ?? false,
-        roomOf: () => reservationRoom.value,
-    }),
-);
-
 const authStore = useAuthStore();
 const { hasPermission } = usePermissions();
-const { withdraw, cancel } = useOwnReservationActions();
-const moderator = useModeratorReservationActions();
 
 function moderatorPermissions(): ModeratorPermissions {
     return {
@@ -106,6 +97,40 @@ function moderatorPermissions(): ModeratorPermissions {
         canForceCancel: hasPermission(Permission.ReservationForceCancel),
     };
 }
+
+const canModerate = computed(() => {
+    const permissions = moderatorPermissions();
+    return permissions.canApprove || permissions.canReject || permissions.canForceCancel;
+});
+
+const showOtherRequests = useLocalStorage("room-calendar-show-other-requests", false);
+
+const visibleReservations = computed(() => {
+    const visible: Reservation[] = [];
+    if (!room.value) return visible;
+
+    const showAll = canModerate.value && showOtherRequests.value;
+    const userId = authStore.user?.userInfo.id;
+    for (const reservation of room.value.reservations) {
+        if (showAll || !isOtherUsersRequest(reservation, userId)) visible.push(reservation);
+    }
+    return visible;
+});
+
+const days = computed(() =>
+    buildCalendarDays({
+        weekStart: weekStart.value,
+        now: now.value,
+        reservations: visibleReservations.value,
+        events: room.value?.events ?? [],
+        availabilities: room.value?.availabilities ?? [],
+        requiresApproval: room.value?.details.roomInfo.requiresApproval ?? false,
+        roomOf: () => reservationRoom.value,
+    }),
+);
+
+const { withdraw, cancel } = useOwnReservationActions();
+const moderator = useModeratorReservationActions();
 
 function blockActions(block: CalendarBlock): ReservationAction[] {
     const isOwn = isOwnReservation(block.reservation, authStore.user?.userInfo.id);
@@ -235,6 +260,13 @@ async function onCreated(): Promise<void> {
                 @action="onBlockAction"
             >
                 <template #actions>
+                    <BaseTooltip
+                        v-if="canModerate"
+                        text="Show other people's requests waiting for approval"
+                        class="shrink-0"
+                    >
+                        <SlidingCheckbox v-model="showOtherRequests" label="Requests" />
+                    </BaseTooltip>
                     <BaseTooltip v-if="canReserve" text="New reservation" class="@3xl:hidden">
                         <button
                             type="button"

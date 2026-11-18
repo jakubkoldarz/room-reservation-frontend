@@ -28,6 +28,11 @@ export function blocksNewReservation(
     return isOwnReservation(reservation, userId);
 }
 
+export function isOtherUsersRequest(reservation: Reservation, userId: string | undefined): boolean {
+    if (getReservationState(reservation, true) !== "pending") return false;
+    return !isOwnReservation(reservation, userId);
+}
+
 export function waitingRequests(
     reservations: readonly Reservation[],
     draft: ReservationDraft,
@@ -37,8 +42,7 @@ export function waitingRequests(
 
     for (const reservation of reservations) {
         if (reservation.date !== draft.date) continue;
-        if (getReservationState(reservation, true) !== "pending") continue;
-        if (isOwnReservation(reservation, userId)) continue;
+        if (!isOtherUsersRequest(reservation, userId)) continue;
         if (!rangesOverlap(reservation, draft)) continue;
         result.push(reservation);
     }

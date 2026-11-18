@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { Reservation } from "../types";
-import { blocksNewReservation, rangesOverlap, waitingRequests } from "../utils/reservationOverlap";
+import {
+    blocksNewReservation,
+    isOtherUsersRequest,
+    rangesOverlap,
+    waitingRequests,
+} from "../utils/reservationOverlap";
 
 function reservation(
     id: string,
@@ -63,5 +68,19 @@ describe("waitingRequests", () => {
         ];
 
         expect(waitingRequests(reservations, draft, "me")).toEqual([overlapping]);
+    });
+});
+
+describe("isOtherUsersRequest", () => {
+    it("tylko oczekująca prośba innej osoby", () => {
+        expect(
+            isOtherUsersRequest(reservation("1", "other", "PENDING", "10:00", "11:00"), "me"),
+        ).toBe(true);
+        expect(isOtherUsersRequest(reservation("2", "me", "PENDING", "10:00", "11:00"), "me")).toBe(
+            false,
+        );
+        expect(
+            isOtherUsersRequest(reservation("3", "other", "APPROVED", "10:00", "11:00"), "me"),
+        ).toBe(false);
     });
 });
