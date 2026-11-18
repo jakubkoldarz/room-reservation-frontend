@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, useTemplateRef } from "vue";
 import type { Availability } from "@/features/availabilities/types";
 import { formatHm, toMinutes } from "@/features/availabilities/utils/schedule";
+import type { MinuteRange } from "@/features/rooms/types";
+import { minutesToHm } from "@/features/rooms/utils/calendar";
 import { CLOSED_HOURS_BACKGROUND } from "@/features/rooms/utils/calendarStyles";
-import type { ReservationTimeRange } from "../types";
+import type { ReservationTimeRange, TimelineDragMode } from "../types";
 import { isSameTimeRange } from "../utils/reservationEdit";
+import { draggedRange } from "../utils/timelineDrag";
 
 const {
     slots,
@@ -12,12 +15,18 @@ const {
     original,
     selection = null,
     invalid = false,
+    editable = false,
 } = defineProps<{
     slots: readonly Availability[];
     busy: readonly ReservationTimeRange[];
     original: ReservationTimeRange;
     selection?: ReservationTimeRange | null;
     invalid?: boolean;
+    editable?: boolean;
+}>();
+
+const emit = defineEmits<{
+    change: [range: ReservationTimeRange];
 }>();
 
 const DEFAULT_START = 8 * 60;
@@ -87,11 +96,83 @@ function place(range: ReservationTimeRange) {
 function label(range: ReservationTimeRange): string {
     return `${formatHm(range.startTime)}–${formatHm(range.endTime)}`;
 }
+
+type Drag = {
+    mode: TimelineDragMode;
+    initial: MinuteRange;
+    anchor: number;
+};
+
+const track = useTemplateRef("track");
+const drag = ref<Drag | null>(null);
+
+function minuteAt(event: PointerEvent): number {
+    if (!track.value) return bounds.value.start;
+    const box = track.value.getBoundingClientRect();
+    const x = event.clientX - box.left;
+    return bounds.value.start + (x / box.width) * bounds.value.span;
+}
+
+function dragModeOf(event: PointerEvent): TimelineDragMode {
+    const handle = (event.target as HTMLElement).dataset.handle;
+    if (handle === "start") return "start";
+    if (handle === "end") return "end";
+    return "move";
+}
+
+function onPointerDown(event: PointerEvent): void {
+    const current = shownSelection.value;
+    if (!editable || !current || event.button !== 0) return;
+
+    event.preventDefault();
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    drag.value = {
+        mode: dragModeOf(event),
+        initial: { start: toMinutes(current.startTime), end: toMinutes(current.endTime) },
+        anchor: minuteAt(event),
+    };
+}
+
+function onPointerMove(event: PointerEvent): void {
+    const current = drag.value;
+    if (!current) return;
+
+    const limits = { start: bounds.value.start, end: bounds.value.end };
+    const next = draggedRange(
+        current.mode,
+        current.initial,
+        current.anchor,
+        minuteAt(event),
+        limits,
+    );
+    const range = { startTime: minutesToHm(next.start), endTime: minutesToHm(next.end) };
+
+    const selected = shownSelection.value;
+    if (selected && isSameTimeRange(selected, range)) return;
+    emit("change", range);
+}
+
+function stopDrag(): void {
+    drag.value = null;
+}
+
+const selectionClasses = computed(() => {
+    const classes: string[] = [];
+    if (invalid) {
+        classes.push("bg-danger/15 border-danger text-danger");
+    } else {
+        classes.push("bg-primary/15 border-primary text-primary");
+    }
+    if (editable && drag.value) classes.push("cursor-grabbing touch-none select-none");
+    if (editable && !drag.value) classes.push("cursor-grab touch-none select-none");
+    return classes;
+});
 </script>
 
 <template>
     <div class="flex flex-col gap-1">
         <div
+            ref="track"
             class="border-border bg-closed relative h-16 overflow-hidden rounded border"
             :style="{ backgroundImage: CLOSED_HOURS_BACKGROUND }"
             aria-hidden="true"
@@ -128,14 +209,27 @@ function label(range: ReservationTimeRange): string {
             <div
                 v-if="shownSelection"
                 class="absolute inset-y-2 overflow-hidden rounded border-l-4 px-1 text-xs leading-4 font-medium"
-                :class="
-                    invalid
-                        ? 'bg-danger/15 border-danger text-danger'
-                        : 'bg-primary/15 border-primary text-primary'
-                "
+                :class="selectionClasses"
                 :style="place(shownSelection)"
+                @pointerdown="onPointerDown"
+                @pointermove="onPointerMove"
+                @pointerup="stopDrag"
+                @pointercancel="stopDrag"
+                @lostpointercapture="stopDrag"
             >
-                <span class="block truncate tabular-nums">{{ label(shownSelection) }}</span>
+                <span class="pointer-events-none block truncate tabular-nums">
+                    {{ label(shownSelection) }}
+                </span>
+                <span
+                    v-if="editable"
+                    data-handle="start"
+                    class="absolute inset-y-0 left-0 w-2 cursor-ew-resize"
+                ></span>
+                <span
+                    v-if="editable"
+                    data-handle="end"
+                    class="absolute inset-y-0 right-0 w-2 cursor-ew-resize"
+                ></span>
             </div>
         </div>
 
@@ -149,6 +243,11 @@ function label(range: ReservationTimeRange): string {
                 {{ String(tick.hour).padStart(2, "0") }}
             </span>
         </div>
+
+        <p v-if="editable" class="text-text-muted text-xs">
+            Drag the highlighted bar to move your reservation, or drag its edges to change the start
+            or the end. The time fields above update as you drag.
+        </p>
 
         <ul class="sr-only">
             <li v-for="(slot, index) in slots" :key="`sr-slot-${index}`">Open {{ label(slot) }}</li>
@@ -179,7 +278,7 @@ function label(range: ReservationTimeRange): string {
                 <span class="bg-primary/15 border-primary size-3 rounded-sm border-l-4"></span>
                 Your reservation
             </span>
-            <span v-if="showOriginal" class="flex items-center gap-1.5">
+            <span class="flex items-center gap-1.5">
                 <span class="border-text-muted/60 size-3 rounded-sm border-2 border-dashed"></span>
                 Before the change
             </span>

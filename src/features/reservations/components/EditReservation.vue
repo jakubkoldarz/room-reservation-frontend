@@ -2,7 +2,7 @@
 import { BuildingOfficeIcon, CalendarDaysIcon, RectangleStackIcon } from "@heroicons/vue/24/solid";
 import { toTypedSchema } from "@vee-validate/zod";
 import { useForm } from "vee-validate";
-import { computed, useId, watch } from "vue";
+import { useId, watch } from "vue";
 import NumberCircle from "@/features/buildings/components/NumberCircle.vue";
 import { formatHm } from "@/features/availabilities/utils/schedule";
 import { useRoomDestination } from "@/features/rooms/composables/useRoomDestination";
@@ -13,7 +13,6 @@ import TextLink from "@/features/shared/TextLink.vue";
 import { PURPOSE_MAX_LENGTH, ReservationEditFormSchema } from "../schemas";
 import type { ReservationListItem, ReservationState, ReservationTimeRange } from "../types";
 import { formatReservationDate } from "../utils/reservationDetails";
-import { isSameTimeRange } from "../utils/reservationEdit";
 import ReservationStatusChip from "./ReservationStatusChip.vue";
 
 const {
@@ -34,9 +33,8 @@ const purposeId = useId();
 const { roomLink } = useRoomDestination();
 
 const reservation = item.reservationInfo;
-const original = { startTime: reservation.startTime, endTime: reservation.endTime };
 
-const { handleSubmit, errors, defineField, setErrors, values } = useForm({
+const { handleSubmit, errors, defineField, setErrors, setFieldValue, values } = useForm({
     validationSchema: toTypedSchema(ReservationEditFormSchema),
     initialValues: {
         startTime: formatHm(reservation.startTime),
@@ -56,13 +54,6 @@ watch(
     { immediate: true },
 );
 
-const timeChanged = computed(
-    () =>
-        !!values.startTime &&
-        !!values.endTime &&
-        !isSameTimeRange({ startTime: values.startTime, endTime: values.endTime }, original),
-);
-
 const submit = handleSubmit((formValues) => formValues);
 
 function showServerErrors(fieldErrors: Readonly<Record<string, readonly string[]>>): void {
@@ -73,7 +64,13 @@ function showServerErrors(fieldErrors: Readonly<Record<string, readonly string[]
     });
 }
 
-defineExpose({ submit, showServerErrors });
+function setTimes(range: ReservationTimeRange): void {
+    if (readonly) return;
+    setFieldValue("startTime", range.startTime);
+    setFieldValue("endTime", range.endTime);
+}
+
+defineExpose({ submit, showServerErrors, setTimes });
 </script>
 
 <template>
@@ -170,10 +167,10 @@ defineExpose({ submit, showServerErrors });
         </div>
 
         <p
-            v-if="!readonly && timeChanged && item.roomInfo.requiresApproval"
+            v-if="!readonly && item.roomInfo.requiresApproval"
             class="bg-warning/10 border-warning text-warning-text rounded border-l-4 px-3 py-2 text-xs"
         >
-            This room requires approval. After changing the time, the reservation will wait for
+            This room requires approval. If you change the time, the reservation will wait for
             approval again.
         </p>
     </Container>

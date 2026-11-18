@@ -156,6 +156,13 @@ const problem = computed(() => {
     });
 });
 
+const canDragTimeline = computed(() => lockedReason.value === null);
+
+function onTimelineChange(next: ReservationTimeRange): void {
+    if (!form.value) return;
+    form.value.setTimes(next);
+}
+
 const dayDescription = computed(() => {
     let hours = `Open ${formatSlots(slots.value)}.`;
     if (slots.value.length === 0) hours = "The room is closed on this day.";
@@ -275,9 +282,11 @@ async function handleSave(): Promise<void> {
                     :original="item.reservationInfo"
                     :selection="range"
                     :invalid="!!problem"
+                    :editable="canDragTimeline"
+                    @change="onTimelineChange"
                 />
 
-                <p v-if="problem || saveError" role="alert" class="text-danger text-sm">
+                <p role="alert" class="text-danger min-h-5 text-sm">
                     {{ problem ?? saveError }}
                 </p>
             </Container>

@@ -29,6 +29,8 @@ export type ReservationDraft = {
 export type ReservationAction =
     "edit" | "withdraw" | "cancel" | "approve" | "reject" | "forceCancel";
 
+export type TimelineDragMode = "move" | "start" | "end";
+
 export type ModeratorPermissions = {
     canApprove: boolean;
     canReject: boolean;
