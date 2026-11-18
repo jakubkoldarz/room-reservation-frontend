@@ -6,7 +6,7 @@ export type Reservation = z.infer<typeof schemas.ReservationResponseDto>;
 export type ReservationListItem = z.infer<typeof schemas.ReservationListItemResponseDto>;
 export type ReservationListQuery = z.infer<typeof ReservationListQuerySchema>;
 
-export type ReservationState = "approved" | "pending" | "rejected" | "canceled";
+export type ReservationState = "approved" | "pending" | "rejected" | "canceled" | "expired";
 
 export type ReservationRoom = {
     name: string;
@@ -26,7 +26,14 @@ export type ReservationDraft = {
     endTime: string;
 };
 
-export type ReservationAction = "edit" | "withdraw" | "cancel";
+export type ReservationAction =
+    "edit" | "withdraw" | "cancel" | "approve" | "reject" | "forceCancel";
+
+export type ModeratorPermissions = {
+    canApprove: boolean;
+    canReject: boolean;
+    canForceCancel: boolean;
+};
 
 export type ReservationTimeRange = {
     startTime: string;

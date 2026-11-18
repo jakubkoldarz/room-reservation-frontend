@@ -24,6 +24,7 @@ import type { Reservation, ReservationListItem, ReservationTimeRange } from "../
 import { formatReservationDate } from "../utils/reservationDetails";
 import { isOwnReservation, ownReservationActions } from "../utils/reservationActions";
 import { editTimeProblem, formatSlots } from "../utils/reservationEdit";
+import { blocksNewReservation } from "../utils/reservationOverlap";
 import { getReservationState } from "../utils/reservationState";
 
 const route = useRoute();
@@ -101,6 +102,9 @@ const lockedReason = computed(() => {
     if (state.value === "rejected" || state.value === "canceled") {
         return `This reservation was ${state.value}, so it can't be changed.`;
     }
+    if (state.value === "expired") {
+        return "This request expired before anyone approved it, so it can't be changed.";
+    }
     if (ownReservationActions(state.value, item.value.reservationInfo, now.value).length === 0) {
         return "This reservation has already started, so it can't be changed.";
     }
@@ -131,8 +135,10 @@ const busy = computed<ReservationTimeRange[]>(() => {
         if (!isSameDay || isThisReservation) continue;
 
         const otherState = getReservationState(other, requiresApproval);
-        const isActive = otherState === "approved" || otherState === "pending";
-        if (isActive) ranges.push({ startTime: other.startTime, endTime: other.endTime });
+        const userId = authStore.user?.userInfo.id;
+        if (blocksNewReservation(otherState, other, requiresApproval, userId)) {
+            ranges.push({ startTime: other.startTime, endTime: other.endTime });
+        }
     }
 
     return ranges;

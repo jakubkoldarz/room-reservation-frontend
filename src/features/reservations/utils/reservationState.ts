@@ -6,6 +6,7 @@ const STATE_LABELS: Record<ReservationState, string> = {
     pending: "Waiting for approval",
     rejected: "Rejected",
     canceled: "Canceled",
+    expired: "Expired",
 };
 
 export function getReservationState(
@@ -14,6 +15,7 @@ export function getReservationState(
 ): ReservationState {
     const status = reservation.status?.toLowerCase() ?? "";
     if (status.includes("cancel")) return "canceled";
+    if (status.includes("expir")) return "expired";
     if (status.includes("reject")) return "rejected";
     if (status.includes("pend")) return "pending";
     if (status.includes("approv") || status.includes("confirm")) return "approved";

@@ -1,4 +1,4 @@
-import type { CalendarDay, MinuteRange } from "../types";
+import type { CalendarBlockContent, CalendarDay, MinuteRange } from "../types";
 
 export const SELECTION_STEP = 15;
 export const DEFAULT_SELECTION_MINUTES = 60;
@@ -17,10 +17,15 @@ function clamp(value: number, min: number, max: number): number {
     return value;
 }
 
+export function isActiveBlock(block: CalendarBlockContent): boolean {
+    return block.kind === "approved" || block.kind === "pending";
+}
+
 export function selectableBounds(
     day: CalendarDay,
     minute: number,
     earliest: number,
+    blocksSelection: (block: CalendarBlockContent) => boolean = isActiveBlock,
 ): MinuteRange | null {
     if (minute < earliest) return null;
 
@@ -31,8 +36,7 @@ export function selectableBounds(
     let end = interval.end;
 
     for (const block of day.blocks) {
-        const isBlocking = block.kind === "approved" || block.kind === "pending";
-        if (!isBlocking) continue;
+        if (!blocksSelection(block)) continue;
 
         const coversMinute = block.start <= minute && minute < block.end;
         if (coversMinute) return null;
@@ -53,8 +57,13 @@ function latestStart(bounds: MinuteRange): number {
     return bounds.end - SELECTION_STEP;
 }
 
-export function hoverMinute(day: CalendarDay, minute: number, earliest: number): number | null {
-    const bounds = selectableBounds(day, minute, earliest);
+export function hoverMinute(
+    day: CalendarDay,
+    minute: number,
+    earliest: number,
+    blocksSelection: (block: CalendarBlockContent) => boolean = isActiveBlock,
+): number | null {
+    const bounds = selectableBounds(day, minute, earliest, blocksSelection);
     if (!bounds) return null;
     return clamp(floorToStep(minute), bounds.start, latestStart(bounds));
 }

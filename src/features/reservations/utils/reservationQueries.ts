@@ -8,6 +8,7 @@ const STATUS_CODES: Record<ReservationState, number> = {
     approved: 1,
     rejected: 2,
     canceled: 3,
+    expired: 4,
 };
 
 export const RESERVATION_STATES = Object.keys(STATUS_CODES) as ReservationState[];

@@ -7,6 +7,7 @@ import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage, type ApiError } from "@/api/errors";
 import type { Availability } from "@/features/availabilities/types";
 import { formatHm, slotsForDate } from "@/features/availabilities/utils/schedule";
+import { useAuthStore } from "@/features/auth/stores/useAuthStore";
 import type { EventInfo } from "@/features/events/types";
 import { parseIsoDate } from "@/features/rooms/utils/calendar";
 import BaseButton from "@/features/shared/BaseButton.vue";
@@ -17,8 +18,18 @@ import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { toIsoDate } from "@/utils/isoDate";
 import { PURPOSE_MAX_LENGTH, ReservationFormSchema } from "../schemas";
 import type { Reservation, ReservationDraft, ReservationRoom } from "../types";
+import { waitingRequests } from "../utils/reservationOverlap";
 
-const { open, roomId, room, requiresApproval, draft, availabilities, events } = defineProps<{
+const {
+    open,
+    roomId,
+    room,
+    requiresApproval,
+    draft,
+    availabilities,
+    events,
+    reservations = [],
+} = defineProps<{
     open: boolean;
     roomId: string;
     room: ReservationRoom;
@@ -26,6 +37,7 @@ const { open, roomId, room, requiresApproval, draft, availabilities, events } = 
     draft: ReservationDraft | null;
     availabilities: readonly Availability[];
     events: readonly EventInfo[];
+    reservations?: readonly Reservation[];
 }>();
 
 const emit = defineEmits<{
@@ -74,6 +86,22 @@ const openingHours = computed(() => {
     if (slots.length === 0) return "The room is closed on this day.";
     const ranges = slots.map((slot) => `${formatHm(slot.startTime)}–${formatHm(slot.endTime)}`);
     return `Open on this day: ${ranges.join(", ")}`;
+});
+
+const authStore = useAuthStore();
+
+const waitingCount = computed(() => {
+    if (!requiresApproval) return 0;
+    if (!date.value || !startTime.value || !endTime.value) return 0;
+    const chosen = { date: date.value, startTime: startTime.value, endTime: endTime.value };
+    return waitingRequests(reservations, chosen, authStore.user?.userInfo.id).length;
+});
+
+const waitingMessage = computed(() => {
+    if (waitingCount.value === 1) {
+        return "1 other request is waiting for this time. Only one of them can be approved.";
+    }
+    return `${waitingCount.value} other requests are waiting for this time. Only one of them can be approved.`;
 });
 
 function isInPast(values: { date: string; startTime: string }): boolean {
@@ -201,6 +229,9 @@ const submit = handleSubmit(async (values) => {
                 class="bg-warning/10 border-warning text-warning-text rounded border-l-4 px-3 py-2 text-xs"
             >
                 This room requires approval. Your reservation will wait until it is confirmed.
+                <span v-if="waitingCount > 0" class="text-warning-text mt-1 block font-semibold">
+                    {{ waitingMessage }}
+                </span>
             </p>
 
             <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

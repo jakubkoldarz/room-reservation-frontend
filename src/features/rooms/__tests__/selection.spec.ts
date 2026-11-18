@@ -50,6 +50,18 @@ describe("selectableBounds", () => {
         expect(selectableBounds(day(blocks), 640, 0)).toEqual({ start: 600, end: 720 });
         expect(selectableBounds(day(blocks), 560, 0)).toBeNull();
     });
+
+    it("własna reguła blokowania pozwala zaznaczyć teren cudzej prośby", () => {
+        const blocks = [block(540, 600), block(720, 780, "pending")];
+        function onlyApproved(candidate: { kind: string }): boolean {
+            return candidate.kind === "approved";
+        }
+        expect(selectableBounds(day(blocks), 740, 0, onlyApproved)).toEqual({
+            start: 600,
+            end: 960,
+        });
+        expect(hoverMinute(day(blocks), 745, 0, onlyApproved)).toBe(735);
+    });
 });
 
 describe("zaznaczanie", () => {

@@ -3,7 +3,11 @@ import { useIntervalFn, useLocalStorage, useNow } from "@vueuse/core";
 import { computed } from "vue";
 import { useMyReservations } from "@/features/reservations/composables/useMyReservations";
 import { useOwnReservationActions } from "@/features/reservations/composables/useOwnReservationActions";
-import type { Reservation, ReservationRoom } from "@/features/reservations/types";
+import type {
+    Reservation,
+    ReservationAction,
+    ReservationRoom,
+} from "@/features/reservations/types";
 import { ownReservationActions } from "@/features/reservations/utils/reservationActions";
 import { getReservationState } from "@/features/reservations/utils/reservationState";
 import RoomCalendar from "@/features/rooms/components/RoomCalendar.vue";
@@ -78,12 +82,16 @@ function blockActions(block: CalendarBlock) {
     return ownReservationActions(block.kind, block.reservation, now.value);
 }
 
-async function onWithdraw(block: CalendarBlock): Promise<void> {
-    if (await withdraw(block.reservation, roomOf(block.reservation).name)) await reload();
+async function runBlockAction(block: CalendarBlock, action: ReservationAction): Promise<boolean> {
+    const roomName = roomOf(block.reservation).name;
+    if (action === "withdraw") return withdraw(block.reservation, roomName);
+    if (action === "cancel") return cancel(block.reservation, roomName);
+    return false;
 }
 
-async function onCancel(block: CalendarBlock): Promise<void> {
-    if (await cancel(block.reservation, roomOf(block.reservation).name)) await reload();
+async function onBlockAction(block: CalendarBlock, action: ReservationAction): Promise<void> {
+    const changed = await runBlockAction(block, action);
+    if (changed) await reload();
 }
 </script>
 
@@ -103,11 +111,10 @@ async function onCancel(block: CalendarBlock): Promise<void> {
         @previous="showPreviousWeek"
         @next="showNextWeek"
         @today="showCurrentWeek"
-        @withdraw="onWithdraw"
-        @cancel="onCancel"
+        @action="onBlockAction"
     >
         <template #actions>
-            <BaseTooltip text="Hide canceled and rejected reservations" class="shrink-0">
+            <BaseTooltip text="Hide canceled, rejected and expired reservations" class="shrink-0">
                 <SlidingCheckbox v-model="showActiveOnly" label="Active only" />
             </BaseTooltip>
         </template>

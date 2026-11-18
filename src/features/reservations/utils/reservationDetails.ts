@@ -56,6 +56,7 @@ const REASON_LABELS: Record<ReservationState, string> = {
     pending: "Reason",
     rejected: "Rejection reason",
     canceled: "Cancellation reason",
+    expired: "Reason",
 };
 
 export function reservationDetailRows(

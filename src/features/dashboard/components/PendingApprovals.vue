@@ -4,6 +4,8 @@ import apiClient from "@/api/client";
 import { apiErrorMessage } from "@/api/errors";
 import { usePagedList } from "@/composables/usePagedList";
 import { reservationRoutes } from "@/features/reservations/routes";
+import type { ReservationListItem } from "@/features/reservations/types";
+import { hasStarted } from "@/features/reservations/utils/reservationActions";
 import { reservationStatusCode } from "@/features/reservations/utils/reservationQueries";
 import { formatUserName } from "@/features/reservations/utils/reservationState";
 import ErrorText from "@/features/shared/ErrorText.vue";
@@ -14,6 +16,7 @@ import DashboardReservationRow from "./DashboardReservationRow.vue";
 import DashboardSection from "./DashboardSection.vue";
 
 const VISIBLE_REQUESTS = 3;
+const FETCHED_REQUESTS = 20;
 
 const { now } = defineProps<{
     now: Date;
@@ -28,18 +31,33 @@ const { data, isLoading, error, reload } = usePagedList(
         DateFrom: todayIso.value,
         SortBy: "date",
         SortDirection: "asc",
-        PageSize: VISIBLE_REQUESTS,
+        PageSize: FETCHED_REQUESTS,
     }),
 );
 
-const items = computed(() => data.value?.items ?? []);
+const notStartedItems = computed(() => {
+    const result: ReservationListItem[] = [];
+    if (!data.value) return result;
+    for (const item of data.value.items) {
+        if (!hasStarted(item.reservationInfo, now)) result.push(item);
+    }
+    return result;
+});
+
+const items = computed(() => notStartedItems.value.slice(0, VISIBLE_REQUESTS));
+
+const waitingCount = computed(() => {
+    if (!data.value) return undefined;
+    const startedCount = data.value.items.length - notStartedItems.value.length;
+    return data.value.totalCount - startedCount;
+});
 const listLink = { name: reservationRoutes.list.name, query: { status: "pending" } };
 
 defineExpose({ reload });
 </script>
 
 <template>
-    <DashboardSection title="Waiting for approval" :count="data?.totalCount">
+    <DashboardSection title="Waiting for approval" :count="waitingCount">
         <template #action>
             <TextLink :to="listLink">Review all</TextLink>
         </template>

@@ -11,6 +11,7 @@ const STATE_CLASSES: Record<ReservationState, string> = {
     pending: "bg-warning/10 border-warning text-warning-text",
     rejected: "bg-danger/10 border-danger text-danger",
     canceled: "bg-text-muted/10 border-text-muted/40 text-text-muted",
+    expired: "bg-text-muted/10 border-text-muted/40 text-text-muted italic",
 };
 </script>
 

@@ -6,6 +6,7 @@ export const BLOCK_CLASSES: Record<CalendarBlockKind, string> = {
     pending: "bg-warning/15 border-warning text-warning-text",
     rejected: "bg-danger/10 border-danger text-danger line-through",
     canceled: "bg-text-muted/10 border-text-muted/40 text-text-muted line-through",
+    expired: "bg-text-muted/10 border-text-muted/40 text-text-muted italic",
     event: "bg-primary/10 border-primary text-primary",
     closed: "bg-danger/10 border-danger text-danger",
 };
@@ -15,6 +16,7 @@ export const LEGEND: { kind: CalendarBlockKind; label: string }[] = [
     { kind: "pending", label: "Waiting for approval" },
     { kind: "rejected", label: "Rejected" },
     { kind: "canceled", label: "Canceled" },
+    { kind: "expired", label: "Expired" },
     { kind: "event", label: "Special hours" },
     { kind: "closed", label: "Closed (event)" },
 ];
@@ -31,6 +33,7 @@ export const PERSONAL_LEGEND_KINDS: readonly CalendarBlockKind[] = [
     "pending",
     "rejected",
     "canceled",
+    "expired",
 ];
 
 export const CLOSED_HOURS_BACKGROUND =

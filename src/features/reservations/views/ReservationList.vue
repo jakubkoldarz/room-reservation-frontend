@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { useIntervalFn, useNow } from "@vueuse/core";
+import { computed, watch } from "vue";
 import {
     BuildingOfficeIcon,
     CalendarDaysIcon,
@@ -12,9 +13,7 @@ import {
     XMarkIcon,
 } from "@heroicons/vue/24/solid";
 import apiClient from "@/api/client";
-import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage } from "@/api/errors";
-import type { ApiResult } from "@/api/apiCall";
 import { useListQuery } from "@/composables/useListQuery";
 import { usePagedList } from "@/composables/usePagedList";
 import { usePermissions } from "@/composables/usePermissions";
@@ -27,7 +26,6 @@ import MoreFiltersButton from "@/features/filters/components/MoreFiltersButton.v
 import MoreFiltersPanel from "@/features/filters/components/MoreFiltersPanel.vue";
 import { useMoreFilters } from "@/features/filters/composables/useMoreFilters";
 import type { Filter } from "@/features/filters/types";
-import { useConfirm, usePrompt } from "@/features/modal/composables/useConfirm";
 import PagerBlock from "@/features/pager/components/PagerBlock.vue";
 import { useAllRooms } from "@/features/rooms/composables/useAllRooms";
 import { useRoomDestination } from "@/features/rooms/composables/useRoomDestination";
@@ -39,11 +37,12 @@ import IconButton from "@/features/shared/IconButton.vue";
 import TextLink from "@/features/shared/TextLink.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
 import { toSortQueries } from "@/features/table/utils/sort";
-import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { useAllUsers } from "@/features/users/composables/useAllUsers";
 import ReservationStatusChip from "../components/ReservationStatusChip.vue";
-import { REASON_MAX_LENGTH, ReservationListQuerySchema } from "../schemas";
+import { ReservationListQuerySchema } from "../schemas";
+import { useModeratorReservationActions } from "../composables/useModeratorReservationActions";
 import type { ReservationListItem } from "../types";
+import { hasStarted } from "../utils/reservationActions";
 import {
     formatActionTime,
     formatReservationDate,
@@ -217,104 +216,34 @@ function stateOf(item: ReservationListItem) {
     return getReservationState(item.reservationInfo, item.roomInfo.requiresApproval);
 }
 
+const now = useNow({ scheduler: (tick) => useIntervalFn(tick, 60_000) });
+
+function canModerate(item: ReservationListItem): boolean {
+    return !hasStarted(item.reservationInfo, now.value);
+}
+
 function formatTimeRange(item: ReservationListItem): string {
     return formatReservationTime(item.reservationInfo);
 }
 
-function summary(item: ReservationListItem): string {
-    return `${item.roomInfo.identifier}, ${formatReservationDate(item.reservationInfo.date)}, ${formatTimeRange(item)}, booked by ${formatUserName(item.reservationInfo.createdBy.by)}.`;
-}
-
 const { roomLink } = useRoomDestination();
-const toasts = useToastsStore();
-const confirm = useConfirm();
-const prompt = usePrompt();
-const busyId = ref<string | null>(null);
-
-async function runAction(
-    item: ReservationListItem,
-    action: () => Promise<ApiResult<unknown>>,
-    success: { title: string; message: string },
-    failureTitle: string,
-): Promise<void> {
-    busyId.value = item.reservationInfo.id;
-    const result = await action();
-    busyId.value = null;
-
-    if (!result.ok) {
-        toasts.pushError({ title: failureTitle, message: apiErrorMessage(result.error) });
-        return;
-    }
-    toasts.pushSuccess(success);
-    await reload();
-}
+const moderator = useModeratorReservationActions();
+const busyId = moderator.busyId;
 
 async function approve(item: ReservationListItem): Promise<void> {
-    const confirmed = await confirm({
-        title: "Approve reservation?",
-        message: `${summary(item)} The person who booked it will get an email.`,
-        confirmText: "Approve",
-    });
-    if (!confirmed) return;
-
-    const params = { reservationId: item.reservationInfo.id };
-    await runAction(
-        item,
-        () => apiCall(() => apiClient.postReservationsReservationIdapprove(undefined, { params })),
-        { title: "Approved", message: `Reservation of ${item.roomInfo.identifier} was approved.` },
-        "Failed to approve",
-    );
+    const room = item.roomInfo;
+    const approved = await moderator.approve(item.reservationInfo, room.id, room.identifier);
+    if (approved) await reload();
 }
 
 async function reject(item: ReservationListItem): Promise<void> {
-    const reason = await prompt({
-        title: "Reject reservation?",
-        message: `${summary(item)} The person who booked it will get an email.`,
-        confirmText: "Reject",
-        danger: true,
-        input: { label: "Reason (optional)", maxLength: REASON_MAX_LENGTH },
-    });
-    if (reason === null) return;
-
-    const params = { reservationId: item.reservationInfo.id };
-    await runAction(
-        item,
-        () =>
-            apiCall(() =>
-                apiClient.postReservationsReservationIdreject(
-                    { reason: reason || null },
-                    { params },
-                ),
-            ),
-        { title: "Rejected", message: `Reservation of ${item.roomInfo.identifier} was rejected.` },
-        "Failed to reject",
-    );
+    const rejected = await moderator.reject(item.reservationInfo, item.roomInfo.identifier);
+    if (rejected) await reload();
 }
 
 async function forceCancel(item: ReservationListItem): Promise<void> {
-    const reason = await prompt({
-        title: "Cancel reservation?",
-        message: `${summary(item)} The person who booked it will get an email.`,
-        confirmText: "Cancel reservation",
-        cancelText: "Keep",
-        danger: true,
-        input: { label: "Reason (optional)", maxLength: REASON_MAX_LENGTH },
-    });
-    if (reason === null) return;
-
-    const params = { reservationId: item.reservationInfo.id };
-    await runAction(
-        item,
-        () =>
-            apiCall(() =>
-                apiClient.postReservationsReservationIdforceCancel(
-                    { reason: reason || null },
-                    { params },
-                ),
-            ),
-        { title: "Canceled", message: `Reservation of ${item.roomInfo.identifier} was canceled.` },
-        "Failed to cancel",
-    );
+    const canceled = await moderator.forceCancel(item.reservationInfo, item.roomInfo.identifier);
+    if (canceled) await reload();
 }
 </script>
 
@@ -421,7 +350,7 @@ async function forceCancel(item: ReservationListItem): Promise<void> {
             </template>
 
             <template #cell-actions="{ row }">
-                <span class="inline-flex items-center gap-1.5 align-middle">
+                <span v-if="canModerate(row)" class="inline-flex items-center gap-1.5 align-middle">
                     <template v-if="stateOf(row) === 'pending'">
                         <BaseTooltip v-if="canApprove" text="Approve">
                             <IconButton

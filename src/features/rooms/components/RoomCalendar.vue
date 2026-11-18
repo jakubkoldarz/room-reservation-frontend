@@ -7,7 +7,13 @@ import Skeleton from "@/features/shared/Skeleton.vue";
 import { computed, shallowRef, watch } from "vue";
 import ReservationActionsMenu from "@/features/reservations/components/ReservationActionsMenu.vue";
 import type { ReservationAction } from "@/features/reservations/types";
-import type { CalendarBlock, CalendarBlockKind, CalendarDay, CalendarSelection } from "../types";
+import type {
+    CalendarBlock,
+    CalendarBlockContent,
+    CalendarBlockKind,
+    CalendarDay,
+    CalendarSelection,
+} from "../types";
 import {
     BLOCK_CLASSES,
     CLOSED_HOURS_BACKGROUND,
@@ -31,6 +37,7 @@ const {
     selection = null,
     legendKinds = ROOM_LEGEND_KINDS,
     blockActions,
+    blocksSelection,
 } = defineProps<{
     days: readonly CalendarDay[];
     hours: { start: number; end: number };
@@ -45,6 +52,7 @@ const {
     selection?: CalendarSelection | null;
     legendKinds?: readonly CalendarBlockKind[];
     blockActions?: (block: CalendarBlock) => ReservationAction[];
+    blocksSelection?: (block: CalendarBlockContent) => boolean;
 }>();
 
 defineSlots<{
@@ -58,8 +66,7 @@ const emit = defineEmits<{
     next: [];
     today: [];
     select: [selection: CalendarSelection];
-    withdraw: [block: CalendarBlock];
-    cancel: [block: CalendarBlock];
+    action: [block: CalendarBlock, action: ReservationAction];
 }>();
 
 const openMenu = shallowRef<{
@@ -86,15 +93,11 @@ function onOpen(block: CalendarBlock, anchor: HTMLElement): void {
     openMenu.value = { block, anchor, actions: actionsOf(block) };
 }
 
-function onMenuAction(action: "withdraw" | "cancel"): void {
+function onMenuAction(action: ReservationAction): void {
     if (!openMenu.value) return;
     const block = openMenu.value.block;
     openMenu.value = null;
-    if (action === "withdraw") {
-        emit("withdraw", block);
-    } else {
-        emit("cancel", block);
-    }
+    emit("action", block, action);
 }
 
 watch(
@@ -153,6 +156,7 @@ watch(
                 :selectable
                 :selection
                 :is-actionable="isActionable"
+                :blocks-selection
                 @select="emit('select', $event)"
                 @open="onOpen"
             />
@@ -178,8 +182,7 @@ watch(
             :room-name="openMenu.block.room?.name ?? openMenu.block.title"
             :actions="openMenu.actions"
             @close="openMenu = null"
-            @withdraw="onMenuAction('withdraw')"
-            @cancel="onMenuAction('cancel')"
+            @action="onMenuAction"
         />
 
         <ul

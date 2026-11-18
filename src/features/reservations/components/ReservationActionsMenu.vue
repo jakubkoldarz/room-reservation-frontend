@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { NoSymbolIcon, PencilSquareIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import {
+    CheckIcon,
+    NoSymbolIcon,
+    PencilSquareIcon,
+    TrashIcon,
+    XMarkIcon,
+} from "@heroicons/vue/24/solid";
 import { onClickOutside, useEventListener } from "@vueuse/core";
 import { computed, nextTick, onMounted, ref, useId, useTemplateRef } from "vue";
 import { clamp } from "@/utils/clamp";
@@ -20,8 +26,7 @@ const { anchor, reservation, state, roomName, actions } = defineProps<{
 
 const emit = defineEmits<{
     close: [];
-    withdraw: [];
-    cancel: [];
+    action: [action: ReservationAction];
 }>();
 
 const GAP = 6;
@@ -71,12 +76,8 @@ function close(returnFocus = false): void {
     if (returnFocus) anchor.focus();
 }
 
-function choose(action: "withdraw" | "cancel"): void {
-    if (action === "withdraw") {
-        emit("withdraw");
-    } else {
-        emit("cancel");
-    }
+function choose(action: ReservationAction): void {
+    emit("action", action);
 }
 
 function onKeydown(event: KeyboardEvent): void {
@@ -181,6 +182,39 @@ onMounted(async () => {
                     tabindex="-1"
                     class="text-warning-text hover:bg-warning/10 focus-visible:bg-warning/10 flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left text-sm outline-none"
                     @click="choose('cancel')"
+                >
+                    <NoSymbolIcon class="size-4" />
+                    Cancel reservation
+                </button>
+                <button
+                    v-if="actions.includes('approve')"
+                    type="button"
+                    role="menuitem"
+                    tabindex="-1"
+                    class="text-success hover:bg-success/10 focus-visible:bg-success/10 flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left text-sm outline-none"
+                    @click="choose('approve')"
+                >
+                    <CheckIcon class="size-4" />
+                    Approve
+                </button>
+                <button
+                    v-if="actions.includes('reject')"
+                    type="button"
+                    role="menuitem"
+                    tabindex="-1"
+                    class="text-danger hover:bg-danger/10 focus-visible:bg-danger/10 flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left text-sm outline-none"
+                    @click="choose('reject')"
+                >
+                    <XMarkIcon class="size-4" />
+                    Reject
+                </button>
+                <button
+                    v-if="actions.includes('forceCancel')"
+                    type="button"
+                    role="menuitem"
+                    tabindex="-1"
+                    class="text-warning-text hover:bg-warning/10 focus-visible:bg-warning/10 flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left text-sm outline-none"
+                    @click="choose('forceCancel')"
                 >
                     <NoSymbolIcon class="size-4" />
                     Cancel reservation

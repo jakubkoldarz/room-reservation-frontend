@@ -12,19 +12,26 @@ import { Permission } from "@/features/auth/constants/permissions";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
 import { slotsForDate } from "@/features/availabilities/utils/schedule";
 import ReservationCreateDialog from "@/features/reservations/components/ReservationCreateDialog.vue";
+import { useModeratorReservationActions } from "@/features/reservations/composables/useModeratorReservationActions";
 import { useOwnReservationActions } from "@/features/reservations/composables/useOwnReservationActions";
-import type { ReservationDraft, ReservationRoom } from "@/features/reservations/types";
+import type {
+    ModeratorPermissions,
+    ReservationAction,
+    ReservationDraft,
+    ReservationRoom,
+} from "@/features/reservations/types";
 import {
+    calendarBlockActions,
     isOwnReservation,
-    ownReservationActions,
 } from "@/features/reservations/utils/reservationActions";
+import { blocksNewReservation } from "@/features/reservations/utils/reservationOverlap";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import { toIsoDate } from "@/utils/isoDate";
 import RoomCalendar from "../components/RoomCalendar.vue";
 import RoomInfoPanel from "../components/RoomInfoPanel.vue";
 import { useCalendarWeek } from "../composables/useCalendarWeek";
-import type { CalendarBlock, CalendarSelection, RoomSummary } from "../types";
+import type { CalendarBlock, CalendarBlockContent, CalendarSelection, RoomSummary } from "../types";
 import { buildCalendarDays, hourRange, minutesToHm } from "../utils/calendar";
 
 const route = useRoute();
@@ -88,23 +95,59 @@ const days = computed(() =>
 );
 
 const authStore = useAuthStore();
+const { hasPermission } = usePermissions();
 const { withdraw, cancel } = useOwnReservationActions();
+const moderator = useModeratorReservationActions();
 
-function blockActions(block: CalendarBlock) {
-    if (!isOwnReservation(block.reservation, authStore.user?.userInfo.id)) return [];
-    return ownReservationActions(block.kind, block.reservation, now.value);
+function moderatorPermissions(): ModeratorPermissions {
+    return {
+        canApprove: hasPermission(Permission.ReservationApprove),
+        canReject: hasPermission(Permission.ReservationReject),
+        canForceCancel: hasPermission(Permission.ReservationForceCancel),
+    };
 }
 
-async function onWithdraw(block: CalendarBlock): Promise<void> {
-    if (await withdraw(block.reservation, reservationRoom.value.name)) await refresh();
+function blockActions(block: CalendarBlock): ReservationAction[] {
+    const isOwn = isOwnReservation(block.reservation, authStore.user?.userInfo.id);
+    return calendarBlockActions(
+        block.kind,
+        block.reservation,
+        now.value,
+        isOwn,
+        moderatorPermissions(),
+    );
 }
 
-async function onCancel(block: CalendarBlock): Promise<void> {
-    if (await cancel(block.reservation, reservationRoom.value.name)) await refresh();
+function blocksSelection(block: CalendarBlockContent): boolean {
+    const requiresApproval = room.value?.details.roomInfo.requiresApproval ?? false;
+    return blocksNewReservation(
+        block.kind,
+        block.reservation,
+        requiresApproval,
+        authStore.user?.userInfo.id,
+    );
+}
+
+async function runBlockAction(block: CalendarBlock, action: ReservationAction): Promise<boolean> {
+    const reservation = block.reservation;
+    const roomName = reservationRoom.value.name;
+    if (!room.value) return false;
+
+    if (action === "withdraw") return withdraw(reservation, roomName);
+    if (action === "cancel") return cancel(reservation, roomName);
+    if (action === "approve")
+        return moderator.approve(reservation, room.value.details.roomInfo.id, roomName);
+    if (action === "reject") return moderator.reject(reservation, roomName);
+    if (action === "forceCancel") return moderator.forceCancel(reservation, roomName);
+    return false;
+}
+
+async function onBlockAction(block: CalendarBlock, action: ReservationAction): Promise<void> {
+    const changed = await runBlockAction(block, action);
+    if (changed) await refresh();
 }
 const hours = computed(() => hourRange(room.value?.availabilities ?? [], days.value));
 
-const { hasPermission } = usePermissions();
 const canReserve = computed(
     () => hasPermission(Permission.ReservationCreate) && room.value !== null,
 );
@@ -183,13 +226,13 @@ async function onCreated(): Promise<void> {
                 :selectable="canReserve"
                 :selection
                 :block-actions="blockActions"
+                :blocks-selection="blocksSelection"
                 class="min-w-0 flex-1 @5xl:order-1"
                 @previous="showPreviousWeek"
                 @next="showNextWeek"
                 @today="showCurrentWeek"
                 @select="onSelect"
-                @withdraw="onWithdraw"
-                @cancel="onCancel"
+                @action="onBlockAction"
             >
                 <template #actions>
                     <BaseTooltip v-if="canReserve" text="New reservation" class="@3xl:hidden">
@@ -215,6 +258,7 @@ async function onCreated(): Promise<void> {
         :draft
         :availabilities="room.availabilities"
         :events="room.events"
+        :reservations="room.reservations"
         @close="closeDialog"
         @created="onCreated"
         @conflict="refresh"

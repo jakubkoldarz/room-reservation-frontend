@@ -4,12 +4,19 @@ import { clamp } from "@/utils/clamp";
 import ReservationDetails from "@/features/reservations/components/ReservationDetails.vue";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
 import { toIsoDate } from "@/utils/isoDate";
-import type { CalendarBlock, CalendarDay, CalendarSelection, MinuteRange } from "../types";
+import type {
+    CalendarBlock,
+    CalendarBlockContent,
+    CalendarDay,
+    CalendarSelection,
+    MinuteRange,
+} from "../types";
 import { blockLines, minutesToHm, overrideLabel } from "../utils/calendar";
 import { BLOCK_CLASSES, CLOSED_HOURS_BACKGROUND } from "../utils/calendarStyles";
 import {
     SELECTION_STEP,
     hoverMinute,
+    isActiveBlock,
     rangeFromClick,
     rangeFromDrag,
     selectableBounds,
@@ -24,6 +31,7 @@ const {
     selectable = false,
     selection = null,
     isActionable,
+    blocksSelection = isActiveBlock,
 } = defineProps<{
     days: readonly CalendarDay[];
     hours: { start: number; end: number };
@@ -33,6 +41,7 @@ const {
     selectable?: boolean;
     selection?: CalendarSelection | null;
     isActionable?: (block: CalendarBlock) => boolean;
+    blocksSelection?: (block: CalendarBlockContent) => boolean;
 }>();
 
 const emit = defineEmits<{
@@ -157,7 +166,7 @@ function onPointerDown(day: CalendarDay, event: PointerEvent): void {
     if ((event.target as HTMLElement).closest("[data-calendar-block]")) return;
 
     const anchor = minuteAt(event);
-    const bounds = selectableBounds(day, anchor, earliestMinute(day));
+    const bounds = selectableBounds(day, anchor, earliestMinute(day), blocksSelection);
     if (!bounds) return;
 
     event.preventDefault();
@@ -178,7 +187,7 @@ function updateHover(day: CalendarDay, event: PointerEvent): void {
         hover.value = null;
         return;
     }
-    const minute = hoverMinute(day, minuteAt(event), earliestMinute(day));
+    const minute = hoverMinute(day, minuteAt(event), earliestMinute(day), blocksSelection);
     hover.value = minute === null ? null : { iso: day.iso, minute };
 }
 
