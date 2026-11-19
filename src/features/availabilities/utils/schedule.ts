@@ -31,8 +31,20 @@ export function slotsForDay(
     return slots;
 }
 
+export function eventsOn(events: readonly EventInfo[], iso: string): EventInfo[] {
+    const result: EventInfo[] = [];
+    for (const event of events) {
+        if (event.startDate <= iso && iso <= event.endDate) result.push(event);
+    }
+    return result;
+}
+
 export function eventOn(events: readonly EventInfo[], iso: string): EventInfo | undefined {
-    return events.find((event) => event.startDate <= iso && iso <= event.endDate);
+    let winner: EventInfo | undefined;
+    for (const event of eventsOn(events, iso)) {
+        if (!winner || event.priority > winner.priority) winner = event;
+    }
+    return winner;
 }
 
 export function slotsForDate(

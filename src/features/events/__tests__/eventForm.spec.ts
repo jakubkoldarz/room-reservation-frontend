@@ -3,7 +3,7 @@ import { createEventFormSchema, EventFormSchema } from "../schemas";
 import { toEventRequest } from "../utils/eventConflicts";
 
 function issues(input: Record<string, unknown>) {
-    const result = EventFormSchema.safeParse(input);
+    const result = EventFormSchema.safeParse({ priority: 1, ...input });
     return result.success ? [] : result.error.issues.map((issue) => issue.path.join("."));
 }
 
@@ -38,6 +38,12 @@ describe("EventFormSchema", () => {
         expect(issues({ ...base, startTime: "10:00", endTime: "14:00" })).toEqual([]);
     });
 
+    it("priorytet musi być jednym z trzech poziomów", () => {
+        const base = { name: "X", startDate: "2026-11-10", endDate: "2026-11-10", isClosed: true };
+        expect(issues({ ...base, priority: 0 })).toEqual([]);
+        expect(issues({ ...base, priority: 3 })).toEqual(["priority"]);
+    });
+
     it("data początku nie w przeszłości, koniec nie przed początkiem", () => {
         expect(
             issues({ name: "X", startDate: "2026-11-06", endDate: "2026-11-08", isClosed: true }),
@@ -50,7 +56,7 @@ describe("EventFormSchema", () => {
     it("edycja trwającego eventu: stara data początku zostaje, ale koniec nie w przeszłości", () => {
         const schema = createEventFormSchema("2026-11-05");
         const parse = (input: Record<string, unknown>) => {
-            const result = schema.safeParse(input);
+            const result = schema.safeParse({ priority: 1, ...input });
             return result.success ? [] : result.error.issues.map((issue) => issue.path.join("."));
         };
         const ongoing = {
@@ -72,11 +78,13 @@ describe("toEventRequest", () => {
             startDate: "2026-11-10",
             endDate: "2026-11-10",
             isClosed: true,
+            priority: 2,
         };
         expect(toEventRequest(closed, ["r1"])).toMatchObject({
             startTime: null,
             endTime: null,
             roomIds: ["r1"],
+            priority: 2,
         });
         expect(
             toEventRequest(

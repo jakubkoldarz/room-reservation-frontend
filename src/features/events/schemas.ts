@@ -83,6 +83,7 @@ export function createEventFormSchema(keptStartDate?: string) {
             .string({ required_error: "End date is required" })
             .regex(ISO_DATE, "End date is required"),
         isClosed: z.boolean(),
+        priority: z.number().int().min(0).max(2),
         startTime: z.string().optional(),
         endTime: z.string().optional(),
     });

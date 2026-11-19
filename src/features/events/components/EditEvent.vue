@@ -11,6 +11,7 @@ import { toIsoDate } from "@/utils/isoDate";
 import { createEventFormSchema } from "../schemas";
 import type { EventForm, EventInfo } from "../types";
 import { eventDayCount } from "../utils/eventFormat";
+import { DEFAULT_EVENT_PRIORITY, EVENT_PRIORITY_OPTIONS } from "../utils/eventPriority";
 
 const { event = null, readonly = false } = defineProps<{
     event?: EventInfo | null;
@@ -24,6 +25,7 @@ const { handleSubmit, errors, defineField, setErrors, values } = useForm({
         startDate: event?.startDate ?? "",
         endDate: event?.endDate ?? "",
         isClosed: event?.isClosed ?? true,
+        priority: event?.priority ?? DEFAULT_EVENT_PRIORITY,
         startTime: event?.startTime ? formatHm(event.startTime) : undefined,
         endTime: event?.endTime ? formatHm(event.endTime) : undefined,
     },
@@ -32,6 +34,7 @@ const [name, nameAttrs] = defineField("name");
 const [startDate, startDateAttrs] = defineField("startDate");
 const [endDate, endDateAttrs] = defineField("endDate");
 const [isClosed] = defineField("isClosed");
+const [priority] = defineField("priority");
 const [startTime, startTimeAttrs] = defineField("startTime");
 const [endTime, endTimeAttrs] = defineField("endTime");
 
@@ -56,6 +59,12 @@ const TYPES = [
 
 const visibleTypes = computed(() =>
     readonly ? TYPES.filter((type) => type.value === isClosed.value) : TYPES,
+);
+
+const visiblePriorities = computed(() =>
+    readonly
+        ? EVENT_PRIORITY_OPTIONS.filter((option) => option.value === priority.value)
+        : EVENT_PRIORITY_OPTIONS,
 );
 
 const dayCount = computed(() => {
@@ -173,6 +182,44 @@ defineExpose({ submit, showServerErrors });
                     <span class="text-text-muted text-xs">{{ type.description }}</span>
                 </span>
             </button>
+        </div>
+
+        <div class="flex flex-col gap-2">
+            <span class="text-sm font-semibold">Priority</span>
+            <div
+                role="radiogroup"
+                aria-label="Event priority"
+                :aria-readonly="readonly"
+                class="grid grid-cols-1 gap-2 @md:grid-cols-3"
+            >
+                <button
+                    v-for="option in visiblePriorities"
+                    :key="option.value"
+                    type="button"
+                    role="radio"
+                    :aria-checked="priority === option.value"
+                    :disabled="readonly"
+                    class="focus-visible:ring-primary flex flex-col gap-0.5 rounded-lg border p-3 text-left transition-colors outline-none focus-visible:ring-2"
+                    :class="
+                        priority === option.value
+                            ? 'border-primary bg-primary/10'
+                            : 'border-border hover:border-primary/40'
+                    "
+                    @click="priority = option.value"
+                >
+                    <span
+                        class="text-sm font-semibold"
+                        :class="priority === option.value ? 'text-primary' : 'text-text'"
+                    >
+                        {{ option.title }}
+                    </span>
+                    <span class="text-text-muted text-xs">{{ option.description }}</span>
+                </button>
+            </div>
+            <p v-if="!readonly" class="text-text-muted text-xs">
+                When events of different priorities cover the same day, the room follows the highest
+                one. Events with the same priority can't overlap.
+            </p>
         </div>
 
         <div v-if="!isClosed" class="grid grid-cols-2 gap-4">

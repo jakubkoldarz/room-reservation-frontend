@@ -37,6 +37,7 @@ function event(overrides: Partial<EventInfo> = {}): EventInfo {
         startDate: "2026-11-03",
         endDate: "2026-11-04",
         isClosed: false,
+        priority: 1,
         rooms: [],
         ...overrides,
     };
@@ -180,6 +181,27 @@ describe("buildCalendarDays", () => {
         ]);
     });
 
+    it("przy kilku eventach dnia godziny daje najwyższy priorytet, reszta jest przykryta", () => {
+        const days = buildCalendarDays({
+            ...base,
+            events: [
+                event({
+                    id: "low",
+                    name: "Holidays",
+                    priority: 0,
+                    startTime: "09:00:00",
+                    endTime: "13:00:00",
+                }),
+                event({ id: "high", name: "Renovation", priority: 2, isClosed: true }),
+            ],
+        });
+        expect(days[1].openIntervals).toEqual([]);
+        expect(days[1].allDay).toEqual([
+            expect.objectContaining({ title: "Renovation", isOverridden: false }),
+            expect.objectContaining({ title: "Holidays", isOverridden: true }),
+        ]);
+    });
+
     it("zamknięte wydarzenie w poniedziałek usuwa zwykłe godziny tego dnia", () => {
         const days = buildCalendarDays({
             ...base,
@@ -191,12 +213,36 @@ describe("buildCalendarDays", () => {
 
 describe("overrideLabel", () => {
     it("opis wydarzenia zamkniętego i z godzinami specjalnymi", () => {
-        expect(overrideLabel({ id: "1", title: "Exams", isClosed: true, hours: null })).toBe(
-            "Closed: Exams",
-        );
         expect(
-            overrideLabel({ id: "1", title: "Open day", isClosed: false, hours: "09:00–11:00" }),
+            overrideLabel({
+                id: "1",
+                title: "Exams",
+                isClosed: true,
+                hours: null,
+                isOverridden: false,
+            }),
+        ).toBe("Closed: Exams");
+        expect(
+            overrideLabel({
+                id: "1",
+                title: "Open day",
+                isClosed: false,
+                hours: "09:00–11:00",
+                isOverridden: false,
+            }),
         ).toBe("Open day · special hours 09:00–11:00");
+    });
+
+    it("event przykryty wyższym priorytetem ma dopisek", () => {
+        expect(
+            overrideLabel({
+                id: "1",
+                title: "Exams",
+                isClosed: true,
+                hours: null,
+                isOverridden: true,
+            }),
+        ).toBe("Closed: Exams (replaced by a higher priority event)");
     });
 });
 

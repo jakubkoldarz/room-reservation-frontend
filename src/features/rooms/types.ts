@@ -58,6 +58,7 @@ export type CalendarAllDay = {
     title: string;
     isClosed: boolean;
     hours: string | null;
+    isOverridden: boolean;
 };
 
 export type CalendarDay = {

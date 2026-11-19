@@ -1,6 +1,7 @@
 import type { Availability } from "@/features/availabilities/types";
 import {
     eventOn,
+    eventsOn,
     formatHm,
     slotsForDate,
     toMinutes,
@@ -210,18 +211,36 @@ function reservationBlock(
     };
 }
 
-function eventOverride(event: EventInfo): CalendarAllDay {
+function eventOverride(event: EventInfo, isOverridden: boolean): CalendarAllDay {
     let hours: string | null = null;
     if (!event.isClosed && event.startTime && event.endTime) {
         hours = `${formatHm(event.startTime)}–${formatHm(event.endTime)}`;
     }
 
-    return { id: event.id, title: event.name, isClosed: hours === null, hours };
+    return { id: event.id, title: event.name, isClosed: hours === null, hours, isOverridden };
+}
+
+function compareByPriorityDescending(a: EventInfo, b: EventInfo): number {
+    return b.priority - a.priority;
+}
+
+function dayOverrides(events: readonly EventInfo[], iso: string): CalendarAllDay[] {
+    const winner = eventOn(events, iso);
+    const dayEvents = eventsOn(events, iso);
+    dayEvents.sort(compareByPriorityDescending);
+
+    const overrides: CalendarAllDay[] = [];
+    for (const event of dayEvents) {
+        overrides.push(eventOverride(event, event !== winner));
+    }
+    return overrides;
 }
 
 export function overrideLabel(item: CalendarAllDay): string {
-    if (item.isClosed) return `Closed: ${item.title}`;
-    return `${item.title} · special hours ${item.hours}`;
+    let label = `${item.title} · special hours ${item.hours}`;
+    if (item.isClosed) label = `Closed: ${item.title}`;
+    if (item.isOverridden) return `${label} (replaced by a higher priority event)`;
+    return label;
 }
 
 export function blockLines(
@@ -338,9 +357,7 @@ export function buildCalendarDays(options: {
             });
         }
 
-        const allDay: CalendarAllDay[] = [];
-        const event = eventOn(options.events, iso);
-        if (event) allDay.push(eventOverride(event));
+        const allDay = dayOverrides(options.events, iso);
 
         days.push({
             date,

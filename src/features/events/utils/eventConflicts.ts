@@ -15,6 +15,7 @@ export function toEventRequest(values: EventForm, roomIds: string[]) {
         startDate: values.startDate,
         endDate: values.endDate,
         isClosed: values.isClosed,
+        priority: values.priority,
         startTime: values.isClosed ? null : `${values.startTime}:00`,
         endTime: values.isClosed ? null : `${values.endTime}:00`,
     };
@@ -22,5 +23,5 @@ export function toEventRequest(values: EventForm, roomIds: string[]) {
 
 export function overlapMessage(events: readonly ConflictingEvent[]): string {
     const list = events.map((event) => `${event.name} (${formatEventDates(event)})`).join(", ");
-    return `Some rooms already have an event on these days: ${list}.`;
+    return `Some rooms already have an event with the same priority on these days: ${list}.`;
 }

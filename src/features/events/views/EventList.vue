@@ -49,6 +49,7 @@ import { EventListQuerySchema } from "../schemas";
 import type { ConflictingReservation } from "@/features/rooms/types";
 import type { EventInfo, EventPeriod } from "../types";
 import { eventDayCount, eventHours, eventPeriod, formatEventDates } from "../utils/eventFormat";
+import { eventPriorityLabel } from "../utils/eventPriority";
 import { toEventQueries } from "../utils/eventQueries";
 
 type EventMoreFilterKey = "building" | "room" | "type";
@@ -254,6 +255,10 @@ const periodNotice = computed(() => {
     if (query.value.when === "all") return null;
     return "Showing ongoing and upcoming events.";
 });
+
+function priorityLabel(event: EventInfo): string {
+    return eventPriorityLabel(event.priority);
+}
 </script>
 
 <template>
@@ -322,15 +327,18 @@ const periodNotice = computed(() => {
                     {{ row.name }}
                 </TextLink>
                 <span v-else class="text-text block truncate font-medium">{{ row.name }}</span>
-                <span
-                    class="block text-xs"
-                    :class="
-                        eventPeriod(row, todayIso) === 'ongoing'
-                            ? 'text-primary font-medium'
-                            : 'text-text-muted'
-                    "
-                >
-                    {{ PERIOD_LABELS[eventPeriod(row, todayIso)] }}
+                <span class="flex items-center gap-1.5 text-xs">
+                    <span
+                        :class="
+                            eventPeriod(row, todayIso) === 'ongoing'
+                                ? 'text-primary font-medium'
+                                : 'text-text-muted'
+                        "
+                    >
+                        {{ PERIOD_LABELS[eventPeriod(row, todayIso)] }}
+                    </span>
+                    <span class="text-text-muted">·</span>
+                    <span class="text-text-muted">{{ priorityLabel(row) }} priority</span>
                 </span>
             </template>
 

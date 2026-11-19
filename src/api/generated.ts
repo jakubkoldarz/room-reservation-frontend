@@ -31,9 +31,10 @@ const BuildingDetailsResponseDto = z.object({ buildingInfo: BasicBuildingRespons
 const EquipmentResponseDto = z.object({ id: z.string().uuid(), name: z.string(), icon: z.string() });
 const PagedResponseDtoOfEquipmentResponseDto = z.object({ items: z.array(EquipmentResponseDto), totalCount: z.number().int(), page: z.number().int(), pageSize: z.number().int(), totalPages: z.number().int(), hasNextPage: z.boolean() });
 const EquipmentRequestDto = z.object({ name: z.string().max(50), icon: z.string().max(50) });
-const EventResponseDto = z.object({ id: z.string().uuid(), name: z.string(), startDate: z.string(), endDate: z.string(), isClosed: z.boolean(), startTime: z.union([z.null(), z.string()]).optional(), endTime: z.union([z.null(), z.string()]).optional(), rooms: z.array(BasicRoomResponseDto) });
+const EventPriority = z.number();
+const EventResponseDto = z.object({ id: z.string().uuid(), name: z.string(), startDate: z.string(), endDate: z.string(), isClosed: z.boolean(), startTime: z.union([z.null(), z.string()]).optional(), endTime: z.union([z.null(), z.string()]).optional(), priority: EventPriority.int(), rooms: z.array(BasicRoomResponseDto) });
 const PagedResponseDtoOfEventResponseDto = z.object({ items: z.array(EventResponseDto), totalCount: z.number().int(), page: z.number().int(), pageSize: z.number().int(), totalPages: z.number().int(), hasNextPage: z.boolean() });
-const EventRequestDto = z.object({ name: z.string().max(100), roomIds: z.array(z.string().uuid()), startDate: z.string(), endDate: z.string(), isClosed: z.boolean(), startTime: z.union([z.null(), z.string()]).optional(), endTime: z.union([z.null(), z.string()]).optional() });
+const EventRequestDto = z.object({ name: z.string().max(100), roomIds: z.array(z.string().uuid()), startDate: z.string(), endDate: z.string(), isClosed: z.boolean(), startTime: z.union([z.null(), z.string()]).optional(), endTime: z.union([z.null(), z.string()]).optional(), priority: EventPriority.int() });
 const PermissionResponseDto = z.object({ id: z.string().uuid(), name: z.string() });
 const PagedResponseDtoOfPermissionResponseDto = z.object({ items: z.array(PermissionResponseDto), totalCount: z.number().int(), page: z.number().int(), pageSize: z.number().int(), totalPages: z.number().int(), hasNextPage: z.boolean() });
 const ReservationActorResponseDto = z.object({ at: z.string().datetime({ offset: true }), by: BasicUserResponseDto });
@@ -84,6 +85,7 @@ export const schemas = {
 	EquipmentResponseDto,
 	PagedResponseDtoOfEquipmentResponseDto,
 	EquipmentRequestDto,
+	EventPriority,
 	EventResponseDto,
 	PagedResponseDtoOfEventResponseDto,
 	EventRequestDto,
@@ -1307,6 +1309,11 @@ const endpoints = makeApi([
 				name: "roomId",
 				type: "Path",
 				schema: z.string().uuid()
+			},
+			{
+				name: "userId",
+				type: "Query",
+				schema: z.string().uuid().optional()
 			},
 		],
 		response: RoomDetailsResponseDto,

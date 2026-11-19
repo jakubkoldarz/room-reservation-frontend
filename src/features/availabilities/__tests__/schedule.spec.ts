@@ -32,6 +32,7 @@ function event(overrides: Partial<EventInfo> = {}): EventInfo {
         startDate: "2026-11-02",
         endDate: "2026-11-02",
         isClosed: false,
+        priority: 1,
         rooms: [],
         ...overrides,
     };
@@ -202,6 +203,22 @@ describe("slotsForDate", () => {
 
     it("wydarzenie zamknięte → brak godzin", () => {
         expect(slotsForDate(weekdays, monday(0), [event({ isClosed: true })])).toEqual([]);
+    });
+
+    it("przy kilku wydarzeniach wygrywa najwyższy priorytet, niezależnie od kolejności", () => {
+        const low = event({ id: "low", priority: 0, startTime: "08:00:00", endTime: "20:00:00" });
+        const medium = event({
+            id: "medium",
+            priority: 1,
+            startTime: "10:00:00",
+            endTime: "12:00:00",
+        });
+        const high = event({ id: "high", priority: 2, isClosed: true });
+
+        expect(slotsForDate(weekdays, monday(0), [low, medium])).toEqual([
+            slot(MONDAY, "10:00:00", "12:00:00"),
+        ]);
+        expect(slotsForDate(weekdays, monday(0), [high, low, medium])).toEqual([]);
     });
 });
 

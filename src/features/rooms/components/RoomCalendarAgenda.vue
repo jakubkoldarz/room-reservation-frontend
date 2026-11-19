@@ -85,7 +85,10 @@ function openingHours(day: CalendarDay): string {
                     v-for="item in day.allDay"
                     :key="item.id"
                     class="rounded border-l-4 px-3 py-1.5 text-sm font-medium"
-                    :class="item.isClosed ? BLOCK_CLASSES.closed : BLOCK_CLASSES.event"
+                    :class="[
+                        item.isClosed ? BLOCK_CLASSES.closed : BLOCK_CLASSES.event,
+                        { 'line-through opacity-50': item.isOverridden },
+                    ]"
                 >
                     {{ overrideLabel(item) }}
                 </li>

@@ -260,7 +260,10 @@ function weekday(date: Date): string {
                     :key="item.id"
                     :text="overrideLabel(item)"
                     class="min-w-0 truncate rounded border-l-4 px-1.5 py-0.5 text-xs font-medium"
-                    :class="item.isClosed ? BLOCK_CLASSES.closed : BLOCK_CLASSES.event"
+                    :class="[
+                        item.isClosed ? BLOCK_CLASSES.closed : BLOCK_CLASSES.event,
+                        { 'line-through opacity-50': item.isOverridden },
+                    ]"
                 >
                     <span class="truncate">{{ item.title }}</span>
                 </BaseTooltip>
