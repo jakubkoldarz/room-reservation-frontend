@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ReservationDetails from "@/features/reservations/components/ReservationDetails.vue";
-import Badge from "@/features/shared/Badge.vue";
+import BaseBadge from "@/features/shared/BaseBadge.vue";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
 import type { CalendarBlock, CalendarDay } from "../types";
 import { minutesToHm, overrideLabel } from "../utils/calendar";
@@ -73,7 +73,7 @@ function openingHours(day: CalendarDay): string {
                 <span class="font-semibold" :class="{ 'text-primary': day.isToday }">
                     {{ dayLabel(day.date) }}
                 </span>
-                <Badge v-if="day.isToday" class="px-2!">Today</Badge>
+                <BaseBadge v-if="day.isToday" class="px-2!">Today</BaseBadge>
                 <span class="grow"></span>
                 <span v-if="showOpeningHours" class="text-text-muted text-xs">
                     {{ openingHours(day) }}

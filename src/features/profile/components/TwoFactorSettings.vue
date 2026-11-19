@@ -5,9 +5,9 @@ import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage, type ApiError } from "@/api/errors";
 import PasswordInput from "@/features/auth/components/PasswordInput.vue";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
-import Badge from "@/features/shared/Badge.vue";
+import BaseBadge from "@/features/shared/BaseBadge.vue";
 import BaseButton from "@/features/shared/BaseButton.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import OutlineButton from "@/features/shared/OutlineButton.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 
@@ -80,16 +80,16 @@ function closeDisableForm(): void {
 </script>
 
 <template>
-    <Container>
+    <BaseContainer>
         <h2 class="text-lg font-semibold">Two-step verification</h2>
         <hr class="border-border mt-2 mb-4" />
 
         <section class="flex flex-col gap-3">
             <div class="flex items-start gap-3">
                 <div class="flex min-w-0 flex-col items-start gap-1">
-                    <Badge :type="has2faEnabled ? 'success' : 'warning'" class="px-2!">
+                    <BaseBadge :type="has2faEnabled ? 'success' : 'warning'" class="px-2!">
                         {{ has2faEnabled ? "On" : "Off" }}
-                    </Badge>
+                    </BaseBadge>
                     <p class="text-text-muted text-xs">
                         {{
                             has2faEnabled
@@ -137,5 +137,5 @@ function closeDisableForm(): void {
                 </div>
             </form>
         </section>
-    </Container>
+    </BaseContainer>
 </template>

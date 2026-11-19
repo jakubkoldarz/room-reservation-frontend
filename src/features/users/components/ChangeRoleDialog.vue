@@ -9,7 +9,7 @@ import { permissionSummary } from "@/features/roles/utils/permissionGroups";
 import BaseButton from "@/features/shared/BaseButton.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import OutlineButton from "@/features/shared/OutlineButton.vue";
-import Skeleton from "@/features/shared/Skeleton.vue";
+import LoadingSkeleton from "@/features/shared/LoadingSkeleton.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import type { UserListItem } from "../types";
 
@@ -116,7 +116,7 @@ async function submit(): Promise<void> {
             <ErrorText :error="formError" class="mb-0! text-left" role="alert" />
 
             <div v-if="isLoading" class="flex flex-col gap-2">
-                <Skeleton v-for="n in 4" :key="n" class="h-12 w-full" />
+                <LoadingSkeleton v-for="n in 4" :key="n" class="h-12 w-full" />
             </div>
             <div
                 v-else

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { usePermissions } from "@/composables/usePermissions";
 import { Permission } from "@/features/auth/constants/permissions";
-import Badge from "@/features/shared/Badge.vue";
+import BaseBadge from "@/features/shared/BaseBadge.vue";
 import BaseButton from "@/features/shared/BaseButton.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import OutlineButton from "@/features/shared/OutlineButton.vue";
-import Skeleton from "@/features/shared/Skeleton.vue";
+import LoadingSkeleton from "@/features/shared/LoadingSkeleton.vue";
 import router from "@/router";
 import {
     BuildingOfficeIcon,
@@ -43,11 +43,11 @@ async function gotoAddRoom() {
 </script>
 
 <template>
-    <Container class="flex w-full flex-col justify-start">
+    <BaseContainer class="flex w-full flex-col justify-start">
         <template v-if="isLoading">
             <div class="flex w-full animate-pulse flex-col gap-1">
-                <Skeleton class="w-full" />
-                <Skeleton class="mt-4 w-full" />
+                <LoadingSkeleton class="w-full" />
+                <LoadingSkeleton class="mt-4 w-full" />
 
                 <div
                     v-if="
@@ -55,18 +55,21 @@ async function gotoAddRoom() {
                     "
                     class="mt-4 flex flex-wrap gap-2"
                 >
-                    <Skeleton
+                    <LoadingSkeleton
                         v-if="hasPermission(Permission.BuildingEdit)"
                         class="w-32 rounded-lg"
                     />
-                    <Skeleton v-if="hasPermission(Permission.RoomAdd)" class="w-28 rounded-lg" />
+                    <LoadingSkeleton
+                        v-if="hasPermission(Permission.RoomAdd)"
+                        class="w-28 rounded-lg"
+                    />
                 </div>
             </div>
         </template>
 
         <template v-else>
             <h1 class="text-lg font-bold sm:text-xl">{{ name }}</h1>
-            <Badge v-if="identifier" class="mt-1 self-start">{{ identifier }}</Badge>
+            <BaseBadge v-if="identifier" class="mt-1 self-start">{{ identifier }}</BaseBadge>
             <div class="mt-4 flex flex-wrap gap-2" v-if="localization || floorsCount">
                 <p v-if="localization" class="flex items-center gap-1 text-sm">
                     <MapPinIcon class="size-5" /> {{ localization }}
@@ -106,5 +109,5 @@ async function gotoAddRoom() {
                 </OutlineButton>
             </div>
         </template>
-    </Container>
+    </BaseContainer>
 </template>

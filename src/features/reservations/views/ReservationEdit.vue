@@ -14,9 +14,9 @@ import NumberCircle from "@/features/buildings/components/NumberCircle.vue";
 import { profileRoutes } from "@/features/profile/routes";
 import type { RoomSummary } from "@/features/rooms/types";
 import { parseIsoDate } from "@/features/rooms/utils/calendar";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import FormHeader from "@/features/shared/FormHeader.vue";
-import Skeleton from "@/features/shared/Skeleton.vue";
+import LoadingSkeleton from "@/features/shared/LoadingSkeleton.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import EditReservation from "../components/EditReservation.vue";
 import ReservationDayTimeline from "../components/ReservationDayTimeline.vue";
@@ -263,7 +263,7 @@ async function handleSave(): Promise<void> {
                 @change="range = $event"
             />
 
-            <Container v-if="room" class="flex flex-col gap-4">
+            <BaseContainer v-if="room" class="flex flex-col gap-4">
                 <div>
                     <div class="flex flex-wrap items-center gap-2">
                         <NumberCircle>2</NumberCircle>
@@ -289,14 +289,14 @@ async function handleSave(): Promise<void> {
                 <p role="alert" class="text-danger min-h-5 text-sm">
                     {{ problem ?? saveError }}
                 </p>
-            </Container>
+            </BaseContainer>
         </template>
 
         <template v-else-if="isLoading">
-            <Container v-for="n in 2" :key="n" class="flex animate-pulse flex-col gap-3">
-                <Skeleton class="w-1/3" />
-                <Skeleton v-for="line in 4" :key="line" class="w-full" />
-            </Container>
+            <BaseContainer v-for="n in 2" :key="n" class="flex animate-pulse flex-col gap-3">
+                <LoadingSkeleton class="w-1/3" />
+                <LoadingSkeleton v-for="line in 4" :key="line" class="w-full" />
+            </BaseContainer>
         </template>
     </div>
 </template>

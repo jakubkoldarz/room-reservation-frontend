@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import NumberCircle from "./NumberCircle.vue";
 import BaseInput from "@/features/shared/BaseInput.vue";
 import { useClipboard } from "@vueuse/core";
@@ -80,7 +80,7 @@ const [floorsCount, floorsCountAttrs] = defineField("floorsCount");
 </script>
 
 <template>
-    <Container class="@container flex flex-col gap-2">
+    <BaseContainer class="@container flex flex-col gap-2">
         <div>
             <div class="flex items-center gap-2">
                 <NumberCircle>1</NumberCircle>
@@ -162,5 +162,5 @@ const [floorsCount, floorsCountAttrs] = defineField("floorsCount");
                 type="number"
             />
         </div>
-    </Container>
+    </BaseContainer>
 </template>

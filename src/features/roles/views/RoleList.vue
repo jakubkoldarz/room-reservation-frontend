@@ -16,8 +16,8 @@ import { defineFilters } from "@/features/filters/types";
 import { useConfirm } from "@/features/modal/composables/useConfirm";
 import PagerBlock from "@/features/pager/components/PagerBlock.vue";
 import { isConflict } from "@/features/rooms/utils/conflicts";
-import Badge from "@/features/shared/Badge.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseBadge from "@/features/shared/BaseBadge.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import IconButton from "@/features/shared/IconButton.vue";
 import LinkButton from "@/features/shared/LinkButton.vue";
@@ -121,7 +121,7 @@ async function deleteRole(role: Role): Promise<void> {
 </script>
 
 <template>
-    <Container class="@container px-0! py-0!">
+    <BaseContainer class="@container px-0! py-0!">
         <div
             class="border-border flex flex-col flex-wrap items-center justify-between gap-2 border-b p-4 @md:flex-row"
         >
@@ -172,8 +172,8 @@ async function deleteRole(role: Role): Promise<void> {
                         {{ row.name }}
                     </TextLink>
                     <span v-else class="text-text truncate font-medium">{{ row.name }}</span>
-                    <Badge v-if="row.isDefault" type="success" class="px-2!">Default</Badge>
-                    <Badge v-if="row.isSuperAdmin" class="px-2!">Super admin</Badge>
+                    <BaseBadge v-if="row.isDefault" type="success" class="px-2!">Default</BaseBadge>
+                    <BaseBadge v-if="row.isSuperAdmin" class="px-2!">Super admin</BaseBadge>
                 </span>
             </template>
 
@@ -198,5 +198,5 @@ async function deleteRole(role: Role): Promise<void> {
                 </IconButton>
             </template>
         </DataTable>
-    </Container>
+    </BaseContainer>
 </template>

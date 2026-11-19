@@ -15,7 +15,7 @@ import { approvalShortLabel, formatCapacity, formatFloor } from "@/features/room
 import BaseButton from "@/features/shared/BaseButton.vue";
 import BaseInput from "@/features/shared/BaseInput.vue";
 import ComboBox from "@/features/shared/ComboBox.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import TextLink from "@/features/shared/TextLink.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { toIsoDate } from "@/utils/isoDate";
@@ -148,7 +148,7 @@ const submit = handleSubmit(async (values) => {
 </script>
 
 <template>
-    <Container class="@container px-0! py-0!">
+    <BaseContainer class="@container px-0! py-0!">
         <div
             class="bg-secondary flex items-baseline justify-between gap-3 rounded-t-md px-4 py-3 sm:px-6"
         >
@@ -230,5 +230,5 @@ const submit = handleSubmit(async (values) => {
                 </BaseButton>
             </div>
         </form>
-    </Container>
+    </BaseContainer>
 </template>

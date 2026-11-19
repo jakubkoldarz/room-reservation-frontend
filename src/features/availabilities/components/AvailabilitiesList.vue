@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useDate } from "@/composables/useDate";
-import Skeleton from "@/features/shared/Skeleton.vue";
+import LoadingSkeleton from "@/features/shared/LoadingSkeleton.vue";
 import type { Availability } from "../types";
 import { DAYS_MONDAY_FIRST, formatHours, toMinutes } from "../utils/schedule";
 
@@ -132,7 +132,7 @@ function markLabel(hour: number): string {
 
     <ul v-else class="flex flex-col gap-2">
         <li v-for="dayOfWeek in DAYS_MONDAY_FIRST" :key="dayOfWeek">
-            <Skeleton class="w-full" />
+            <LoadingSkeleton class="w-full" />
         </li>
     </ul>
 </template>

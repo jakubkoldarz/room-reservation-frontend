@@ -14,9 +14,9 @@ import { authRoutes } from "@/features/auth/routes";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
 import type { RefreshToken } from "@/features/auth/types";
 import { useConfirm } from "@/features/modal/composables/useConfirm";
-import Badge from "@/features/shared/Badge.vue";
+import BaseBadge from "@/features/shared/BaseBadge.vue";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import IconButton from "@/features/shared/IconButton.vue";
 import OutlineButton from "@/features/shared/OutlineButton.vue";
 import DataTable from "@/features/table/components/DataTable.vue";
@@ -111,7 +111,7 @@ async function revokeAll(): Promise<void> {
 </script>
 
 <template>
-    <Container class="@container px-0! py-0!">
+    <BaseContainer class="@container px-0! py-0!">
         <div class="border-border flex flex-wrap items-center gap-2 border-b p-4">
             <h2 class="text-lg font-semibold">Active sessions</h2>
             <span class="text-text-muted text-sm">{{ sessions.length }}</span>
@@ -137,9 +137,9 @@ async function revokeAll(): Promise<void> {
                     <BaseTooltip :text="row.userAgent ?? 'No user agent'" class="min-w-0 truncate">
                         <span class="truncate font-medium">{{ row.label }}</span>
                     </BaseTooltip>
-                    <Badge v-if="row.id === currentId" type="success" class="shrink-0 px-2!">
+                    <BaseBadge v-if="row.id === currentId" type="success" class="shrink-0 px-2!">
                         This browser
-                    </Badge>
+                    </BaseBadge>
                 </span>
                 <span class="text-text-muted block truncate text-xs">
                     {{ row.ipAddress ? `IP ${row.ipAddress}` : "Unknown IP" }}
@@ -160,5 +160,5 @@ async function revokeAll(): Promise<void> {
                 </IconButton>
             </template>
         </DataTable>
-    </Container>
+    </BaseContainer>
 </template>

@@ -8,7 +8,7 @@ import { formatHm } from "@/features/availabilities/utils/schedule";
 import { useRoomDestination } from "@/features/rooms/composables/useRoomDestination";
 import { formatFloor } from "@/features/rooms/utils/formatRoom";
 import BaseInput from "@/features/shared/BaseInput.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import TextLink from "@/features/shared/TextLink.vue";
 import { PURPOSE_MAX_LENGTH, ReservationEditFormSchema } from "../schemas";
 import type { ReservationListItem, ReservationState, ReservationTimeRange } from "../types";
@@ -74,7 +74,7 @@ defineExpose({ submit, showServerErrors, setTimes });
 </script>
 
 <template>
-    <Container class="@container flex flex-col gap-4">
+    <BaseContainer class="@container flex flex-col gap-4">
         <div>
             <div class="flex flex-wrap items-center gap-2">
                 <NumberCircle>1</NumberCircle>
@@ -173,5 +173,5 @@ defineExpose({ submit, showServerErrors, setTimes });
             This room requires approval. If you change the time, the reservation will wait for
             approval again.
         </p>
-    </Container>
+    </BaseContainer>
 </template>

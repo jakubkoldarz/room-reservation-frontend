@@ -4,9 +4,9 @@ import { CheckIcon } from "@heroicons/vue/24/solid";
 import NumberCircle from "@/features/buildings/components/NumberCircle.vue";
 import { iconFor } from "@/features/equipment/icons";
 import type { Equipment } from "@/features/equipment/types";
-import Container from "@/features/shared/Container.vue";
-import Searchbar from "@/features/shared/Searchbar.vue";
-import Skeleton from "@/features/shared/Skeleton.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
+import SearchInput from "@/features/shared/SearchInput.vue";
+import LoadingSkeleton from "@/features/shared/LoadingSkeleton.vue";
 import { MAX_ROOM_EQUIPMENT } from "../schemas";
 
 const {
@@ -45,7 +45,7 @@ function toggle(item: Equipment): void {
 </script>
 
 <template>
-    <Container class="@container flex flex-col gap-2">
+    <BaseContainer class="@container flex flex-col gap-2">
         <div>
             <div class="flex items-center gap-2">
                 <NumberCircle>2</NumberCircle>
@@ -64,10 +64,10 @@ function toggle(item: Equipment): void {
             <hr class="border-border my-2" />
         </div>
 
-        <Searchbar v-model="search" placeholder="Search equipment..." class="border-border" />
+        <SearchInput v-model="search" placeholder="Search equipment..." class="border-border" />
 
         <div v-if="isLoading" class="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2 p-1">
-            <Skeleton v-for="n in 6" :key="n" class="h-10 w-full" />
+            <LoadingSkeleton v-for="n in 6" :key="n" class="h-10 w-full" />
         </div>
 
         <div
@@ -102,5 +102,5 @@ function toggle(item: Equipment): void {
             No equipment matches "{{ search }}".
         </p>
         <p v-if="error" class="text-danger text-sm">{{ error }}</p>
-    </Container>
+    </BaseContainer>
 </template>

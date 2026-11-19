@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { BadgeType } from "./types";
 
-const props = defineProps<{
+defineProps<{
     type?: BadgeType;
 }>();
 

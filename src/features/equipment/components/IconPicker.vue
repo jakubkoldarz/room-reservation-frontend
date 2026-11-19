@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import Searchbar from "@/features/shared/Searchbar.vue";
+import SearchInput from "@/features/shared/SearchInput.vue";
 import { iconFor, iconLabel, searchIcons } from "../icons";
 
 const { error } = defineProps<{
@@ -25,7 +25,7 @@ const results = computed(() => searchIcons(search.value));
             <span v-else class="text-text-muted">No icon selected</span>
         </div>
 
-        <Searchbar v-model="search" placeholder="Search icons..." class="border-border" />
+        <SearchInput v-model="search" placeholder="Search icons..." class="border-border" />
 
         <div
             class="grid max-h-72 grid-cols-[repeat(auto-fill,minmax(5rem,1fr))] gap-2 overflow-y-auto p-1"

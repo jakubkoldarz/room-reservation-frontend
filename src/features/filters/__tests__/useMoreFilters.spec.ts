@@ -35,7 +35,6 @@ describe("useMoreFilters", () => {
 
         await clear();
 
-        expect(setFilters).toHaveBeenCalledOnce();
-        expect(setFilters).toHaveBeenCalledWith({ street: "", postalCode: "" });
+        expect(setFilters).toHaveBeenCalledExactlyOnceWith({ street: "", postalCode: "" });
     });
 });

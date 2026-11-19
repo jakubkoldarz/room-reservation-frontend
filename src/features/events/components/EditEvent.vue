@@ -5,7 +5,7 @@ import { useForm } from "vee-validate";
 import { computed } from "vue";
 import NumberCircle from "@/features/buildings/components/NumberCircle.vue";
 import BaseInput from "@/features/shared/BaseInput.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import { formatHm } from "@/features/availabilities/utils/schedule";
 import { toIsoDate } from "@/utils/isoDate";
 import { createEventFormSchema } from "../schemas";
@@ -95,7 +95,7 @@ defineExpose({ submit, showServerErrors });
 </script>
 
 <template>
-    <Container class="@container flex flex-col gap-4">
+    <BaseContainer class="@container flex flex-col gap-4">
         <div>
             <div class="flex items-center gap-2">
                 <NumberCircle>1</NumberCircle>
@@ -246,5 +246,5 @@ defineExpose({ submit, showServerErrors });
                 :error-message="errors.endTime"
             />
         </div>
-    </Container>
+    </BaseContainer>
 </template>

@@ -23,9 +23,9 @@ import { eventRoutes } from "@/features/events/routes";
 import type { EventInfo } from "@/features/events/types";
 import { eventHours, formatEventDates } from "@/features/events/utils/eventFormat";
 import BaseButton from "@/features/shared/BaseButton.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import PlainButton from "@/features/shared/PlainButton.vue";
-import Skeleton from "@/features/shared/Skeleton.vue";
+import LoadingSkeleton from "@/features/shared/LoadingSkeleton.vue";
 import TextLink from "@/features/shared/TextLink.vue";
 import { roomRoutes } from "../routes";
 import type { RoomSummary } from "../types";
@@ -92,10 +92,10 @@ async function goToEdit(): Promise<void> {
 </script>
 
 <template>
-    <Container class="flex flex-col gap-5">
+    <BaseContainer class="flex flex-col gap-5">
         <template v-if="isLoading || !room || !info || !building">
-            <Skeleton class="w-2/3" />
-            <Skeleton v-for="n in 6" :key="n" class="w-full" />
+            <LoadingSkeleton class="w-2/3" />
+            <LoadingSkeleton v-for="n in 6" :key="n" class="w-full" />
         </template>
 
         <template v-else>
@@ -239,5 +239,5 @@ async function goToEdit(): Promise<void> {
                 <PencilSquareIcon class="size-5" /> Edit room
             </BaseButton>
         </template>
-    </Container>
+    </BaseContainer>
 </template>

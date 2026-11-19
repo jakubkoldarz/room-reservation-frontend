@@ -7,7 +7,7 @@ const slots = defineSlots<{
     suffix?(): unknown;
 }>();
 
-const props = defineProps<{
+defineProps<{
     label?: string;
     floatingLabel?: boolean;
     errorMessage?: string;

@@ -15,9 +15,9 @@ import type { Filter } from "@/features/filters/types";
 import PagerBlock from "@/features/pager/components/PagerBlock.vue";
 import { formatUserName } from "@/features/reservations/utils/reservationState";
 import { useAllRoles } from "@/features/roles/composables/useAllRoles";
-import Badge from "@/features/shared/Badge.vue";
+import BaseBadge from "@/features/shared/BaseBadge.vue";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import IconButton from "@/features/shared/IconButton.vue";
 import type { SelectOption } from "@/features/shared/types";
@@ -125,7 +125,7 @@ async function handleRoleChanged(): Promise<void> {
 </script>
 
 <template>
-    <Container class="@container px-0! py-0!">
+    <BaseContainer class="@container px-0! py-0!">
         <div
             class="border-border flex flex-col flex-wrap items-center justify-between gap-2 border-b p-4 @md:flex-row"
         >
@@ -154,7 +154,7 @@ async function handleRoleChanged(): Promise<void> {
                     <span class="text-text truncate font-medium">
                         {{ formatUserName(row.userInfo) }}
                     </span>
-                    <Badge v-if="isCurrentUser(row)" class="px-2!">You</Badge>
+                    <BaseBadge v-if="isCurrentUser(row)" class="px-2!">You</BaseBadge>
                 </span>
             </template>
 
@@ -186,5 +186,5 @@ async function handleRoleChanged(): Promise<void> {
             @close="closeRoleDialog"
             @changed="handleRoleChanged"
         />
-    </Container>
+    </BaseContainer>
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import type { RoleInfo } from "@/features/users/types";
 import type { PermissionActionKind } from "../types";
 import { ACTION_KIND_LABELS, groupPermissions } from "../utils/permissions";
@@ -30,7 +30,7 @@ function kindLabel(kind: PermissionActionKind): string {
 </script>
 
 <template>
-    <Container>
+    <BaseContainer>
         <div class="flex flex-wrap items-baseline gap-x-2">
             <h2 class="text-lg font-semibold">Permissions</h2>
             <span class="text-text-muted text-sm">from the {{ roleInfo.role }} role</span>
@@ -72,5 +72,5 @@ function kindLabel(kind: PermissionActionKind): string {
             </ul>
         </template>
         <p v-else class="text-text-muted pt-3 text-sm">This role has no permissions.</p>
-    </Container>
+    </BaseContainer>
 </template>

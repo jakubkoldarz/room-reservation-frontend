@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { RouteLocationRaw } from "vue-router";
 
-const props = withDefaults(
+withDefaults(
     defineProps<{
         active?: boolean | undefined;
         to: RouteLocationRaw;

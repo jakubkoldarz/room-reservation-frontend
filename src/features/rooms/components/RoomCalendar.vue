@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/vue/24/solid";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import IconButton from "@/features/shared/IconButton.vue";
 import OutlineButton from "@/features/shared/OutlineButton.vue";
-import Skeleton from "@/features/shared/Skeleton.vue";
+import LoadingSkeleton from "@/features/shared/LoadingSkeleton.vue";
 import { computed, shallowRef, watch } from "vue";
 import ReservationActionsMenu from "@/features/reservations/components/ReservationActionsMenu.vue";
 import type { ReservationAction } from "@/features/reservations/types";
@@ -107,7 +107,7 @@ watch(
 </script>
 
 <template>
-    <Container class="@container px-0! py-0!">
+    <BaseContainer class="@container px-0! py-0!">
         <div class="border-border flex items-center gap-3 border-b p-4">
             <div class="flex min-w-0 flex-1 flex-col @md:flex-row @md:items-baseline @md:gap-2">
                 <h2 class="text-lg leading-tight font-semibold">{{ title ?? weekLabel }}</h2>
@@ -162,7 +162,7 @@ watch(
             />
         </div>
         <div v-if="isLoading" class="flex animate-pulse flex-col gap-3 p-4 @3xl:hidden">
-            <Skeleton v-for="n in 7" :key="n" class="w-full" />
+            <LoadingSkeleton v-for="n in 7" :key="n" class="w-full" />
         </div>
         <RoomCalendarAgenda
             v-else
@@ -200,5 +200,5 @@ watch(
                 Outside opening hours
             </li>
         </ul>
-    </Container>
+    </BaseContainer>
 </template>

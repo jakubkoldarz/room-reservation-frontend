@@ -2,9 +2,9 @@
 import { CheckIcon } from "@heroicons/vue/24/solid";
 import { computed } from "vue";
 import NumberCircle from "@/features/buildings/components/NumberCircle.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import PlainButton from "@/features/shared/PlainButton.vue";
-import Skeleton from "@/features/shared/Skeleton.vue";
+import LoadingSkeleton from "@/features/shared/LoadingSkeleton.vue";
 import type { PermissionItem, PermissionOptionGroup } from "../types";
 import {
     countSelected,
@@ -69,7 +69,7 @@ function clearSelection(): void {
 </script>
 
 <template>
-    <Container class="@container flex flex-col gap-3">
+    <BaseContainer class="@container flex flex-col gap-3">
         <div>
             <div class="flex flex-wrap items-center gap-2">
                 <NumberCircle>2</NumberCircle>
@@ -96,7 +96,7 @@ function clearSelection(): void {
         </div>
 
         <div v-if="isLoading" class="flex flex-col gap-2">
-            <Skeleton v-for="n in 5" :key="n" class="h-12 w-full" />
+            <LoadingSkeleton v-for="n in 5" :key="n" class="h-12 w-full" />
         </div>
 
         <ul v-else class="flex flex-col gap-2">
@@ -144,5 +144,5 @@ function clearSelection(): void {
         <p v-if="!isLoading && permissions.length === 0" class="text-text-muted text-sm">
             No permissions available.
         </p>
-    </Container>
+    </BaseContainer>
 </template>

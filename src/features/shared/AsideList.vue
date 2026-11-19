@@ -4,9 +4,9 @@ import IconButton from "./IconButton.vue";
 import type { RouteLocationRaw } from "vue-router";
 import { computed, nextTick } from "vue";
 import { ref } from "vue";
-import Searchbar from "./Searchbar.vue";
-import Badge from "./Badge.vue";
-import Skeleton from "./Skeleton.vue";
+import SearchInput from "./SearchInput.vue";
+import BaseBadge from "./BaseBadge.vue";
+import LoadingSkeleton from "./LoadingSkeleton.vue";
 
 const props = withDefaults(
     defineProps<{
@@ -32,7 +32,7 @@ const emit = defineEmits<{
 }>();
 
 const isSearchbarActive = ref(false);
-const searchbarRef = ref<InstanceType<typeof Searchbar>>();
+const searchbarRef = ref<InstanceType<typeof SearchInput>>();
 
 async function onSearchbarClick() {
     isSearchbarActive.value = !isSearchbarActive.value;
@@ -70,12 +70,12 @@ const emptyMessage = computed(() => {
                     </RouterLink>
                     <span v-else>{{ title }}</span>
                 </p>
-                <Badge v-if="totalCount && !isLoading" class="ml-2 px-2!">
+                <BaseBadge v-if="totalCount && !isLoading" class="ml-2 px-2!">
                     {{ totalCount }}
-                </Badge>
+                </BaseBadge>
             </div>
             <div v-else class="flex min-h-8 w-full items-center">
-                <Searchbar
+                <SearchInput
                     v-model="searchbarModel"
                     ref="searchbarRef"
                     :placeholder="props.searchbarPlaceholder"
@@ -89,7 +89,7 @@ const emptyMessage = computed(() => {
             </IconButton>
         </div>
         <ul v-if="isLoading && !isSearchbarActive" class="flex flex-col gap-1">
-            <li :key="n" v-for="n in props.displayCount"><Skeleton class="w-full" /></li>
+            <li :key="n" v-for="n in props.displayCount"><LoadingSkeleton class="w-full" /></li>
         </ul>
         <ul v-else class="flex min-h-27 flex-col gap-1">
             <li v-if="isEmpty" class="text-text-muted flex h-6 items-center text-sm">

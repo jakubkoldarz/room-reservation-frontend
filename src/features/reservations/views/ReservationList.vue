@@ -31,7 +31,7 @@ import { useAllRooms } from "@/features/rooms/composables/useAllRooms";
 import { useRoomDestination } from "@/features/rooms/composables/useRoomDestination";
 import { formatFloor } from "@/features/rooms/utils/formatRoom";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import IconButton from "@/features/shared/IconButton.vue";
 import TextLink from "@/features/shared/TextLink.vue";
@@ -248,7 +248,7 @@ async function forceCancel(item: ReservationListItem): Promise<void> {
 </script>
 
 <template>
-    <Container class="@container px-0! py-0!">
+    <BaseContainer class="@container px-0! py-0!">
         <div
             class="border-border flex flex-col flex-wrap items-center justify-between gap-2 border-b p-4 @md:flex-row"
         >
@@ -389,5 +389,5 @@ async function forceCancel(item: ReservationListItem): Promise<void> {
                 </span>
             </template>
         </DataTable>
-    </Container>
+    </BaseContainer>
 </template>

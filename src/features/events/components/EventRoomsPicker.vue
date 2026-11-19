@@ -4,10 +4,10 @@ import { computed, ref, watch } from "vue";
 import NumberCircle from "@/features/buildings/components/NumberCircle.vue";
 import type { RoomListItem } from "@/features/rooms/types";
 import { formatFloor } from "@/features/rooms/utils/formatRoom";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import PlainButton from "@/features/shared/PlainButton.vue";
-import Searchbar from "@/features/shared/Searchbar.vue";
-import Skeleton from "@/features/shared/Skeleton.vue";
+import SearchInput from "@/features/shared/SearchInput.vue";
+import LoadingSkeleton from "@/features/shared/LoadingSkeleton.vue";
 import type { BuildingRoomGroup } from "../types";
 import { groupRoomsByBuilding, selectionState, toggleRooms } from "../utils/roomGroups";
 
@@ -90,7 +90,7 @@ const selectedBuildings = computed(
 </script>
 
 <template>
-    <Container class="@container flex flex-col gap-3">
+    <BaseContainer class="@container flex flex-col gap-3">
         <div>
             <div class="flex flex-wrap items-center gap-2">
                 <NumberCircle>2</NumberCircle>
@@ -119,14 +119,14 @@ const selectedBuildings = computed(
             <hr class="border-border mt-2" />
         </div>
 
-        <Searchbar
+        <SearchInput
             v-model="search"
             placeholder="Search rooms or buildings..."
             class="border-border"
         />
 
         <div v-if="isLoading" class="flex flex-col gap-2">
-            <Skeleton v-for="n in 4" :key="n" class="h-12 w-full" />
+            <LoadingSkeleton v-for="n in 4" :key="n" class="h-12 w-full" />
         </div>
 
         <ul v-else class="flex max-h-[28rem] flex-col gap-2 overflow-y-auto p-0.5">
@@ -217,5 +217,5 @@ const selectedBuildings = computed(
             No rooms or buildings match "{{ search }}".
         </p>
         <p v-if="error" class="text-danger text-sm">{{ error }}</p>
-    </Container>
+    </BaseContainer>
 </template>

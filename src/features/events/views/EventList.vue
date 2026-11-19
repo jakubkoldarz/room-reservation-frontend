@@ -35,7 +35,7 @@ import {
     reservationsAffectedMessage,
 } from "@/features/rooms/utils/conflicts";
 import BaseTooltip from "@/features/shared/BaseTooltip.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import IconButton from "@/features/shared/IconButton.vue";
 import LinkButton from "@/features/shared/LinkButton.vue";
@@ -262,7 +262,7 @@ function priorityLabel(event: EventInfo): string {
 </script>
 
 <template>
-    <Container class="@container px-0! py-0!">
+    <BaseContainer class="@container px-0! py-0!">
         <div
             class="border-border flex flex-col flex-wrap items-center justify-between gap-2 border-b p-4 @md:flex-row"
         >
@@ -388,5 +388,5 @@ function priorityLabel(event: EventInfo): string {
                 </IconButton>
             </template>
         </DataTable>
-    </Container>
+    </BaseContainer>
 </template>

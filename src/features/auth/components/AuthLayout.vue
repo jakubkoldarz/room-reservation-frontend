@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { CheckIcon } from "@heroicons/vue/16/solid";
-import Logo from "@/features/shared/Logo.vue";
+import AppLogo from "@/features/shared/AppLogo.vue";
 import BookingBoardPreview from "./BookingBoardPreview.vue";
 
 const { steps = [], currentStep = 0 } = defineProps<{
@@ -34,14 +34,14 @@ const STEP_BADGE_CLASSES = {
         <aside
             class="bg-secondary hidden flex-col gap-10 px-10 py-8 lg:flex lg:w-[46%] xl:w-1/2 xl:px-16"
         >
-            <Logo />
+            <AppLogo />
             <div class="mx-auto flex w-full max-w-130 grow flex-col justify-center">
                 <BookingBoardPreview />
             </div>
         </aside>
 
         <header class="bg-secondary shrink-0 px-4 pt-3 pb-20 sm:px-8 lg:hidden">
-            <Logo />
+            <AppLogo />
         </header>
 
         <main class="flex grow flex-col items-center px-4 pb-10 sm:px-8 lg:justify-center lg:py-10">

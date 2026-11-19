@@ -5,7 +5,7 @@ import { useForm } from "vee-validate";
 import { computed, watch } from "vue";
 import NumberCircle from "@/features/buildings/components/NumberCircle.vue";
 import BaseInput from "@/features/shared/BaseInput.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import { EquipmentFormSchema } from "../schemas";
 import type { Equipment, EquipmentForm } from "../types";
 import IconPicker from "./IconPicker.vue";
@@ -49,7 +49,7 @@ async function copyId(): Promise<void> {
 </script>
 
 <template>
-    <Container class="@container flex flex-col gap-4">
+    <BaseContainer class="@container flex flex-col gap-4">
         <div>
             <div class="flex items-center gap-2">
                 <NumberCircle>1</NumberCircle>
@@ -83,5 +83,5 @@ async function copyId(): Promise<void> {
         </div>
 
         <IconPicker v-model="icon" :error="errors.icon" />
-    </Container>
+    </BaseContainer>
 </template>

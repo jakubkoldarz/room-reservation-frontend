@@ -6,7 +6,7 @@ const model = defineModel<string>();
 const inputId = useId();
 const inputRef = ref<HTMLInputElement>();
 
-const props = defineProps<{
+defineProps<{
     placeholder?: string;
 }>();
 

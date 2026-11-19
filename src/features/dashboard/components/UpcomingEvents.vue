@@ -10,7 +10,7 @@ import type { EventInfo } from "@/features/events/types";
 import { eventHours, formatEventDates } from "@/features/events/utils/eventFormat";
 import { BLOCK_CLASSES } from "@/features/rooms/utils/calendarStyles";
 import ErrorText from "@/features/shared/ErrorText.vue";
-import Skeleton from "@/features/shared/Skeleton.vue";
+import LoadingSkeleton from "@/features/shared/LoadingSkeleton.vue";
 import TextLink from "@/features/shared/TextLink.vue";
 import { toIsoDate } from "@/utils/isoDate";
 import DashboardSection from "./DashboardSection.vue";
@@ -52,7 +52,7 @@ function roomsLabel(event: EventInfo): string {
         </template>
 
         <div v-if="isLoading && events.length === 0" class="flex flex-col gap-2">
-            <Skeleton v-for="n in VISIBLE_EVENTS" :key="n" class="w-full" />
+            <LoadingSkeleton v-for="n in VISIBLE_EVENTS" :key="n" class="w-full" />
         </div>
         <ErrorText v-else-if="error" :error="apiErrorMessage(error)" class="mb-0! text-left" />
         <p v-else-if="events.length === 0" class="text-text-muted text-sm">No upcoming events.</p>

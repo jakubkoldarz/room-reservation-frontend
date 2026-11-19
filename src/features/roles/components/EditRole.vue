@@ -4,7 +4,7 @@ import { useForm } from "vee-validate";
 import { computed, watch } from "vue";
 import NumberCircle from "@/features/buildings/components/NumberCircle.vue";
 import BaseInput from "@/features/shared/BaseInput.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import SlidingCheckbox from "@/features/shared/SlidingCheckbox.vue";
 import { RoleFormSchema } from "../schemas";
 import type { Role, RoleForm } from "../types";
@@ -62,7 +62,7 @@ defineExpose({ submit, showServerErrors, showNameError });
 </script>
 
 <template>
-    <Container class="@container flex flex-col gap-4">
+    <BaseContainer class="@container flex flex-col gap-4">
         <div>
             <div class="flex items-center gap-2">
                 <NumberCircle>1</NumberCircle>
@@ -115,5 +115,5 @@ defineExpose({ submit, showServerErrors, showNameError });
                 />
             </div>
         </div>
-    </Container>
+    </BaseContainer>
 </template>

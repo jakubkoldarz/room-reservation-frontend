@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { ArrowLeftIcon, CheckIcon, XMarkIcon } from "@heroicons/vue/24/solid";
-import Badge from "./Badge.vue";
+import BaseBadge from "./BaseBadge.vue";
 import BaseButton from "./BaseButton.vue";
-import Container from "./Container.vue";
+import BaseContainer from "./BaseContainer.vue";
 import OutlineButton from "./OutlineButton.vue";
-import Skeleton from "./Skeleton.vue";
+import LoadingSkeleton from "./LoadingSkeleton.vue";
 
 const {
     mode,
@@ -35,13 +35,13 @@ const BADGES = {
 </script>
 
 <template>
-    <Container class="py-3 sm:sticky sm:top-0 sm:z-10 sm:py-3">
+    <BaseContainer class="py-3 sm:sticky sm:top-0 sm:z-10 sm:py-3">
         <div class="flex items-center justify-between gap-4">
             <div class="flex min-w-0 flex-1 items-center gap-2">
-                <Badge :type="BADGES[mode].type" class="shrink-0">
+                <BaseBadge :type="BADGES[mode].type" class="shrink-0">
                     {{ BADGES[mode].label }}
-                </Badge>
-                <Skeleton v-if="isLoading" class="w-40" />
+                </BaseBadge>
+                <LoadingSkeleton v-if="isLoading" class="w-40" />
                 <h1 v-else-if="title" class="min-w-0 truncate font-bold sm:text-lg" :title>
                     {{ title }}
                 </h1>
@@ -77,5 +77,5 @@ const BADGES = {
                 </BaseButton>
             </div>
         </div>
-    </Container>
+    </BaseContainer>
 </template>

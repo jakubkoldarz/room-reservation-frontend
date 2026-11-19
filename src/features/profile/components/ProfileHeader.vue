@@ -6,7 +6,7 @@ import {
     UserCircleIcon,
 } from "@heroicons/vue/24/solid";
 import { computed, useTemplateRef, type Component } from "vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import type { UserDetails } from "@/features/users/types";
 import type { ProfileTab } from "../types";
 
@@ -80,7 +80,7 @@ function onKeydown(event: KeyboardEvent, index: number): void {
 </script>
 
 <template>
-    <Container class="overflow-hidden px-0! py-0!">
+    <BaseContainer class="overflow-hidden px-0! py-0!">
         <div class="bg-secondary flex items-center gap-4 px-4 py-5 sm:px-6">
             <span
                 class="bg-primary text-surface ring-surface grid size-14 shrink-0 place-items-center rounded-full text-xl font-semibold ring-2"
@@ -127,5 +127,5 @@ function onKeydown(event: KeyboardEvent, index: number): void {
                 {{ item.label }}
             </button>
         </div>
-    </Container>
+    </BaseContainer>
 </template>

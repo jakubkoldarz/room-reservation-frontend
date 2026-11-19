@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Availability } from "../types";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import PlainButton from "@/features/shared/PlainButton.vue";
 import AvailabilitiesList from "./AvailabilitiesList.vue";
 
@@ -17,7 +17,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-    <Container class="@container">
+    <BaseContainer class="@container">
         <div class="flex">
             <h2 class="text-lg font-semibold">{{ title }}</h2>
             <div class="grow"></div>
@@ -25,5 +25,5 @@ const emit = defineEmits<{
         </div>
         <hr class="border-border mt-2 mb-4" />
         <AvailabilitiesList :items="props.items" :is-loading="isLoading" />
-    </Container>
+    </BaseContainer>
 </template>

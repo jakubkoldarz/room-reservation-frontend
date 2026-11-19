@@ -7,8 +7,8 @@ import NumberCircle from "@/features/buildings/components/NumberCircle.vue";
 import type { Building } from "@/features/buildings/types";
 import BaseInput from "@/features/shared/BaseInput.vue";
 import ComboBox from "@/features/shared/ComboBox.vue";
-import Container from "@/features/shared/Container.vue";
-import Skeleton from "@/features/shared/Skeleton.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
+import LoadingSkeleton from "@/features/shared/LoadingSkeleton.vue";
 import SlidingCheckbox from "@/features/shared/SlidingCheckbox.vue";
 import { MAX_ROOM_CAPACITY, MAX_ROOM_FLOOR, MIN_ROOM_FLOOR, RoomFormSchema } from "../schemas";
 import type { RoomDetails, RoomForm } from "../types";
@@ -105,7 +105,7 @@ defineExpose({ submit, showServerErrors });
 </script>
 
 <template>
-    <Container class="@container flex flex-col gap-2">
+    <BaseContainer class="@container flex flex-col gap-2">
         <div>
             <div class="flex items-center gap-2">
                 <NumberCircle>1</NumberCircle>
@@ -118,7 +118,7 @@ defineExpose({ submit, showServerErrors });
         </div>
 
         <div v-if="isLoading" class="grid grid-cols-1 gap-4 @lg:grid-cols-2 @xl:grid-cols-3">
-            <Skeleton v-for="n in 6" :key="n" class="h-9 w-full rounded-lg" />
+            <LoadingSkeleton v-for="n in 6" :key="n" class="h-9 w-full rounded-lg" />
         </div>
 
         <div v-else class="grid grid-cols-1 gap-4 @lg:grid-cols-2 @xl:grid-cols-3">
@@ -204,5 +204,5 @@ defineExpose({ submit, showServerErrors });
                 </p>
             </div>
         </div>
-    </Container>
+    </BaseContainer>
 </template>

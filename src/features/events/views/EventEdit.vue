@@ -6,9 +6,9 @@ import apiClient from "@/api/client";
 import { apiCall } from "@/api/apiCall";
 import { apiErrorMessage, type ApiError } from "@/api/errors";
 import { useAllRooms } from "@/features/rooms/composables/useAllRooms";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import FormHeader from "@/features/shared/FormHeader.vue";
-import Skeleton from "@/features/shared/Skeleton.vue";
+import LoadingSkeleton from "@/features/shared/LoadingSkeleton.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { toIsoDate } from "@/utils/isoDate";
 import EditEvent from "../components/EditEvent.vue";
@@ -177,10 +177,10 @@ async function handleSave(): Promise<void> {
             />
         </template>
         <template v-else-if="isLoading">
-            <Container v-for="n in 2" :key="n" class="flex animate-pulse flex-col gap-3">
-                <Skeleton class="w-1/3" />
-                <Skeleton v-for="line in 4" :key="line" class="w-full" />
-            </Container>
+            <BaseContainer v-for="n in 2" :key="n" class="flex animate-pulse flex-col gap-3">
+                <LoadingSkeleton class="w-1/3" />
+                <LoadingSkeleton v-for="line in 4" :key="line" class="w-full" />
+            </BaseContainer>
         </template>
     </div>
 </template>

@@ -4,7 +4,7 @@ import { ChevronDownIcon, ChevronUpDownIcon, ChevronUpIcon } from "@heroicons/vu
 import { BarsArrowDownIcon, BarsArrowUpIcon, InboxIcon } from "@heroicons/vue/24/solid";
 import ComboBox from "@/features/shared/ComboBox.vue";
 import IconButton from "@/features/shared/IconButton.vue";
-import Skeleton from "@/features/shared/Skeleton.vue";
+import LoadingSkeleton from "@/features/shared/LoadingSkeleton.vue";
 import type { SelectOption } from "@/features/shared/types";
 import type { Column, SortState } from "../types";
 
@@ -184,7 +184,7 @@ function alignClass(align?: Column["align"]) {
         </ul>
 
         <div v-if="isLoading" class="flex flex-col gap-4 p-4">
-            <Skeleton v-for="i in skeletonRows" :key="i" class="w-full" />
+            <LoadingSkeleton v-for="i in skeletonRows" :key="i" class="w-full" />
         </div>
 
         <div v-else-if="items.length === 0" class="flex flex-col items-center gap-2 px-4 py-12">

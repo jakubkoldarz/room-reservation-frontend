@@ -7,8 +7,8 @@ import {
     UserIcon,
 } from "@heroicons/vue/24/solid";
 import { computed } from "vue";
-import Badge from "@/features/shared/Badge.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseBadge from "@/features/shared/BaseBadge.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import TextLink from "@/features/shared/TextLink.vue";
 import type { UserDetails } from "@/features/users/types";
 
@@ -24,7 +24,7 @@ const securityTab = { query: { tab: "security" } };
 </script>
 
 <template>
-    <Container>
+    <BaseContainer>
         <h2 class="text-lg font-semibold">Account</h2>
         <hr class="border-border mt-2" />
 
@@ -42,12 +42,12 @@ const securityTab = { query: { tab: "security" } };
                 </dt>
                 <dd class="flex min-w-0 flex-wrap items-center gap-2">
                     <span class="text-text font-medium break-all">{{ user.email }}</span>
-                    <Badge
+                    <BaseBadge
                         :type="user.accountStatus.hasEmailVerified ? 'success' : 'warning'"
                         class="px-2!"
                     >
                         {{ user.accountStatus.hasEmailVerified ? "Verified" : "Not verified" }}
-                    </Badge>
+                    </BaseBadge>
                     <span v-if="user.pendingEmail" class="text-text-muted w-full text-xs">
                         Change to {{ user.pendingEmail }} is not confirmed.
                     </span>
@@ -66,12 +66,12 @@ const securityTab = { query: { tab: "security" } };
                     <ShieldCheckIcon class="text-text-muted/70 size-4" /> Two-step verification
                 </dt>
                 <dd class="flex items-center gap-3">
-                    <Badge
+                    <BaseBadge
                         :type="user.accountStatus.has2faEnabled ? 'success' : 'warning'"
                         class="px-2!"
                     >
                         {{ user.accountStatus.has2faEnabled ? "On" : "Off" }}
-                    </Badge>
+                    </BaseBadge>
                     <TextLink :to="securityTab" class="text-primary! text-xs">Change</TextLink>
                 </dd>
             </div>
@@ -88,5 +88,5 @@ const securityTab = { query: { tab: "security" } };
                 </dd>
             </div>
         </dl>
-    </Container>
+    </BaseContainer>
 </template>

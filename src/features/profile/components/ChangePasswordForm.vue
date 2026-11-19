@@ -10,7 +10,7 @@ import PasswordInput from "@/features/auth/components/PasswordInput.vue";
 import { authRoutes } from "@/features/auth/routes";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
 import BaseButton from "@/features/shared/BaseButton.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import { ChangePasswordFormSchema } from "../schemas";
 
@@ -62,7 +62,7 @@ const changePassword = handleSubmit(async (values) => {
 </script>
 
 <template>
-    <Container>
+    <BaseContainer>
         <h2 class="text-lg font-semibold">Change password</h2>
         <hr class="border-border mt-2 mb-4" />
 
@@ -93,5 +93,5 @@ const changePassword = handleSubmit(async (values) => {
                 Change password
             </BaseButton>
         </form>
-    </Container>
+    </BaseContainer>
 </template>

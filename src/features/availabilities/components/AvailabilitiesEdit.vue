@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import type { Availability, DayMessages } from "../types";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import { useAvailabilityRow } from "../composables/useAvailabilityRow";
 import SlidingCheckbox from "@/features/shared/SlidingCheckbox.vue";
-import Skeleton from "@/features/shared/Skeleton.vue";
+import LoadingSkeleton from "@/features/shared/LoadingSkeleton.vue";
 import BaseInput from "@/features/shared/BaseInput.vue";
 const {
     isLoading = false,
@@ -28,7 +28,7 @@ function onOpenChange(dayOfWeek: number, isOpen: boolean | undefined): void {
 </script>
 
 <template>
-    <Container class="@container">
+    <BaseContainer class="@container">
         <slot />
         <ul v-if="!isLoading" class="divide-border flex flex-col divide-y">
             <li
@@ -104,8 +104,8 @@ function onOpenChange(dayOfWeek: number, isOpen: boolean | undefined): void {
 
         <ul v-else>
             <li v-for="row in rows" :key="row.day" class="flex items-center py-2">
-                <Skeleton class="w-full" />
+                <LoadingSkeleton class="w-full" />
             </li>
         </ul>
-    </Container>
+    </BaseContainer>
 </template>

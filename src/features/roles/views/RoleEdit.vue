@@ -9,10 +9,10 @@ import { usePermissions } from "@/composables/usePermissions";
 import { Permission } from "@/features/auth/constants/permissions";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
 import RolePermissions from "@/features/profile/components/RolePermissions.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import FormHeader from "@/features/shared/FormHeader.vue";
-import Skeleton from "@/features/shared/Skeleton.vue";
+import LoadingSkeleton from "@/features/shared/LoadingSkeleton.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import EditRole from "../components/EditRole.vue";
 import RolePermissionsPicker from "../components/RolePermissionsPicker.vue";
@@ -165,10 +165,10 @@ async function handleSave(): Promise<void> {
                 <RolePermissions v-else :role-info="roleInfo" />
             </template>
             <template v-else-if="isLoading">
-                <Container v-for="n in 2" :key="n" class="flex animate-pulse flex-col gap-3">
-                    <Skeleton class="w-1/3" />
-                    <Skeleton v-for="line in 4" :key="line" class="w-full" />
-                </Container>
+                <BaseContainer v-for="n in 2" :key="n" class="flex animate-pulse flex-col gap-3">
+                    <LoadingSkeleton class="w-1/3" />
+                    <LoadingSkeleton v-for="line in 4" :key="line" class="w-full" />
+                </BaseContainer>
             </template>
         </template>
     </div>

@@ -15,10 +15,10 @@ import {
     isEmailTaken,
     verificationCodeErrorMessage,
 } from "@/features/auth/utils/authErrors";
-import Badge from "@/features/shared/Badge.vue";
+import BaseBadge from "@/features/shared/BaseBadge.vue";
 import BaseButton from "@/features/shared/BaseButton.vue";
 import BaseInput from "@/features/shared/BaseInput.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import ErrorText from "@/features/shared/ErrorText.vue";
 import OutlineButton from "@/features/shared/OutlineButton.vue";
 import PlainButton from "@/features/shared/PlainButton.vue";
@@ -179,7 +179,7 @@ async function confirm(): Promise<void> {
 </script>
 
 <template>
-    <Container>
+    <BaseContainer>
         <h2 class="text-lg font-semibold">Email</h2>
         <hr class="border-border mt-2 mb-4" />
 
@@ -187,7 +187,7 @@ async function confirm(): Promise<void> {
             <div class="flex items-center gap-2">
                 <EnvelopeIcon class="text-text-muted/70 size-4 shrink-0" />
                 <span class="min-w-0 text-sm font-medium break-all">{{ email }}</span>
-                <Badge type="success" class="shrink-0 px-2!">Verified</Badge>
+                <BaseBadge type="success" class="shrink-0 px-2!">Verified</BaseBadge>
             </div>
             <p v-if="pendingEmail" class="text-text-muted text-xs">
                 Change to <span class="font-medium">{{ pendingEmail }}</span> was not confirmed.
@@ -274,5 +274,5 @@ async function confirm(): Promise<void> {
                 </PlainButton>
             </div>
         </form>
-    </Container>
+    </BaseContainer>
 </template>

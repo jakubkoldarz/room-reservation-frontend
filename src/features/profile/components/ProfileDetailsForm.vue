@@ -9,7 +9,7 @@ import { ProfileFormSchema } from "@/features/auth/schemas";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
 import BaseButton from "@/features/shared/BaseButton.vue";
 import BaseInput from "@/features/shared/BaseInput.vue";
-import Container from "@/features/shared/Container.vue";
+import BaseContainer from "@/features/shared/BaseContainer.vue";
 import { useToastsStore } from "@/features/toasts/stores/useToastsStore";
 import type { User } from "@/features/users/types";
 
@@ -56,7 +56,7 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
-    <Container>
+    <BaseContainer>
         <h2 class="text-lg font-semibold">Personal details</h2>
         <hr class="border-border mt-2 mb-4" />
         <form class="flex flex-col gap-3" novalidate @submit="onSubmit">
@@ -83,5 +83,5 @@ const onSubmit = handleSubmit(async (values) => {
                 Save
             </BaseButton>
         </form>
-    </Container>
+    </BaseContainer>
 </template>

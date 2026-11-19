@@ -11,7 +11,7 @@ import { dashboardRoutes } from "../dashboard/routes";
 import { profileRoutes } from "../profile/routes";
 import BaseTooltip from "./BaseTooltip.vue";
 import IconButton from "./IconButton.vue";
-import Logo from "./Logo.vue";
+import AppLogo from "./AppLogo.vue";
 
 const route = useRoute();
 const { hasPermission } = usePermissions();
@@ -59,7 +59,7 @@ const emit = defineEmits<{
             class="focus-visible:ring-text-secondary shrink-0 rounded outline-none focus-visible:ring-2"
             :class="[isMobileSearchOpen ? 'hidden' : 'flex', 'sm:flex']"
         >
-            <Logo />
+            <AppLogo />
         </RouterLink>
         <div
             :class="[
